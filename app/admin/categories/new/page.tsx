@@ -1,19 +1,11 @@
-import { redirect } from "next/navigation"
-import { CategoryForm } from "@/components/CategoryForm"
-import { createClient } from "@/lib/supabase/server"
+﻿import { CategoryForm } from "@/components/CategoryForm"
+import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
 
 export default async function NewCategoryPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/admin/login")
-  }
+  await requireAdminUserOrRedirect()
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="mx-auto w-full max-w-3xl">
       <CategoryForm mode="create" />
     </div>
   )

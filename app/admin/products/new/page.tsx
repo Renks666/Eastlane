@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation"
-import { ProductForm } from "@/components/ProductForm"
-import { createClient } from "@/lib/supabase/server"
+﻿import { ProductForm } from "@/components/ProductForm"
+import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
+import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
 
 type Category = {
   id: number
@@ -8,14 +8,8 @@ type Category = {
 }
 
 export default async function NewProductPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/admin/login")
-  }
+  await requireAdminUserOrRedirect()
+  const supabase = await createServerSupabaseClient()
 
   const { data: categories, error } = await supabase
     .from("categories")
@@ -23,15 +17,11 @@ export default async function NewProductPage() {
     .order("name", { ascending: true })
 
   if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <p className="text-red-600">Failed to load categories: {error.message}</p>
-      </div>
-    )
+    return <p className="text-red-600">Failed to load categories: {error.message}</p>
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="mx-auto w-full max-w-5xl">
       <ProductForm mode="create" categories={(categories ?? []) as Category[]} />
     </div>
   )

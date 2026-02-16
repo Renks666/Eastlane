@@ -14,6 +14,9 @@ function formatRub(price: number) {
 export function FloatingCart() {
   const [isOpen, setIsOpen] = useState(false)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+  const [contactChannel, setContactChannel] = useState<"telegram" | "phone">("telegram")
+  const [contactValue, setContactValue] = useState("")
+  const [customerName, setCustomerName] = useState("")
   const [isPending, startTransition] = useTransition()
   const { items, total, increment, decrement, removeItem, clear } = useCart()
 
@@ -33,7 +36,9 @@ export function FloatingCart() {
       const result = await createOrder({
         items,
         comment: "",
-        contactChannel: "telegram",
+        customerName: customerName.trim(),
+        contactChannel,
+        contactValue: contactValue.trim(),
       })
 
       if (!result.ok) {
@@ -45,9 +50,14 @@ export function FloatingCart() {
       clear()
       setIsCheckoutOpen(false)
       setIsOpen(false)
+      setCustomerName("")
+      setContactValue("")
+      setContactChannel("telegram")
 
       const telegramUrl = "https://t.me/fearr666"
-      window.open(telegramUrl, "_blank", "noopener,noreferrer")
+      if (contactChannel === "telegram") {
+        window.open(telegramUrl, "_blank", "noopener,noreferrer")
+      }
     })
   }
 
@@ -195,16 +205,51 @@ export function FloatingCart() {
               Мы свяжемся с вами для подтверждения заказа и деталей.
             </p>
 
+            <div className="mt-4 space-y-3">
+              <input
+                type="text"
+                value={customerName}
+                onChange={(event) => setCustomerName(event.target.value)}
+                placeholder="Ваше имя"
+                className="h-10 w-full rounded-xl border border-[#d8cfb7] bg-white px-3 text-sm text-[#0f1720] outline-none focus:border-[#b29152]"
+              />
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setContactChannel("telegram")}
+                  className={`rounded-xl border px-3 py-2 text-sm transition ${contactChannel === "telegram" ? "border-[#b29152] bg-[#faf8f2] text-[#0f3f33]" : "border-[#d8cfb7] bg-white text-[#5f6e65]"}`}
+                >
+                  Telegram
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContactChannel("phone")}
+                  className={`rounded-xl border px-3 py-2 text-sm transition ${contactChannel === "phone" ? "border-[#b29152] bg-[#faf8f2] text-[#0f3f33]" : "border-[#d8cfb7] bg-white text-[#5f6e65]"}`}
+                >
+                  Телефон
+                </button>
+              </div>
+
+              <input
+                type="text"
+                value={contactValue}
+                onChange={(event) => setContactValue(event.target.value)}
+                placeholder={contactChannel === "telegram" ? "@username или t.me/..." : "+7 (900) 000-00-00"}
+                className="h-10 w-full rounded-xl border border-[#d8cfb7] bg-white px-3 text-sm text-[#0f1720] outline-none focus:border-[#b29152]"
+              />
+            </div>
+
             <button
               type="button"
               onClick={submitOrder}
-              disabled={isPending || items.length === 0}
+              disabled={isPending || items.length === 0 || !contactValue.trim() || !customerName.trim()}
               className="mt-5 flex w-full items-center gap-3 rounded-xl border border-[#d8cfb7] bg-[#faf8f2] p-3 text-left transition hover:border-[#b29152] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#b29152] text-white">
                 <Send className="h-5 w-5" />
               </span>
-              <span className="text-sm font-medium">Напишите нам в Telegram</span>
+              <span className="text-sm font-medium">Подтвердить заказ</span>
             </button>
 
             <div className="mt-4">

@@ -1,8 +1,9 @@
-"use client"
+﻿"use client"
 
 import { useTransition } from "react"
 import { toast } from "sonner"
-import { updateOrderStatus, type OrderStatus } from "@/app/admin/orders/actions"
+import { updateOrderStatus } from "@/app/admin/orders/actions"
+import type { OrderStatus } from "@/src/domains/order/types"
 
 type OrderStatusSelectProps = {
   orderId: number
@@ -10,11 +11,11 @@ type OrderStatusSelectProps = {
 }
 
 const options: Array<{ value: OrderStatus; label: string }> = [
-  { value: "new", label: "Новый" },
-  { value: "confirmed", label: "Подтвержден" },
-  { value: "processing", label: "В работе" },
-  { value: "done", label: "Завершен" },
-  { value: "cancelled", label: "Отменен" },
+  { value: "new", label: "New" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "processing", label: "Processing" },
+  { value: "done", label: "Done" },
+  { value: "cancelled", label: "Cancelled" },
 ]
 
 export function OrderStatusSelect({ orderId, status }: OrderStatusSelectProps) {
@@ -24,16 +25,16 @@ export function OrderStatusSelect({ orderId, status }: OrderStatusSelectProps) {
     <select
       defaultValue={status}
       disabled={isPending}
-      className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+      className="h-9 rounded-md border border-border bg-background px-2 text-sm shadow-sm outline-none ring-0 focus:border-primary"
       onChange={(event) => {
         const nextStatus = event.target.value as OrderStatus
         startTransition(async () => {
           const result = await updateOrderStatus(orderId, nextStatus)
           if (!result.ok) {
-            toast.error(result.error ?? "Не удалось обновить статус.")
+            toast.error(result.error ?? "Failed to update status.")
             return
           }
-          toast.success("Статус обновлен.")
+          toast.success("Status updated.")
         })
       }}
     >

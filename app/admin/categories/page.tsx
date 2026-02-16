@@ -1,9 +1,9 @@
-import Link from "next/link"
-import { redirect } from "next/navigation"
+﻿import Link from "next/link"
 import { CategoryDeleteButton } from "@/app/admin/categories/CategoryDeleteButton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { createClient } from "@/lib/supabase/server"
+import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
+import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
 
 type CategoryRow = {
   id: number
@@ -11,15 +11,16 @@ type CategoryRow = {
   slug: string
 }
 
-export default async function AdminCategoriesPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+type AdminCategoriesPageProps = {
+  searchParams: Promise<{ q?: string }>
+}
 
-  if (!user) {
-    redirect("/admin/login")
-  }
+export default async function AdminCategoriesPage({ searchParams }: AdminCategoriesPageProps) {
+  await requireAdminUserOrRedirect()
+  const { q } = await searchParams
+  const queryText = q?.trim().toLowerCase() ?? ""
+
+  const supabase = await createServerSupabaseClient()
 
   const { data, error } = await supabase
     .from("categories")
@@ -27,21 +28,24 @@ export default async function AdminCategoriesPage() {
     .order("name", { ascending: true })
 
   if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <p className="text-red-600">Failed to load categories: {error.message}</p>
-      </div>
-    )
+    return <p className="text-red-600">Failed to load categories: {error.message}</p>
   }
 
-  const categories = (data ?? []) as CategoryRow[]
+  const categories = ((data ?? []) as CategoryRow[]).filter((category) => {
+    if (!queryText) return true
+    return (
+      category.name.toLowerCase().includes(queryText) ||
+      category.slug.toLowerCase().includes(queryText)
+    )
+  })
 
   return (
-    <div className="container mx-auto space-y-6 p-4 md:p-6">
+    <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Categories</h1>
+          <h2 className="text-xl font-semibold text-foreground">Categories</h2>
           <p className="text-sm text-muted-foreground">Manage product categories.</p>
+          {queryText ? <p className="mt-1 text-xs text-muted-foreground">Filter: {queryText}</p> : null}
         </div>
         <Button asChild>
           <Link href="/admin/categories/new">Create category</Link>
@@ -49,15 +53,13 @@ export default async function AdminCategoriesPage() {
       </div>
 
       {categories.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">
-            No categories yet. Create your first category.
-          </CardContent>
+        <Card className="rounded-xl border-border shadow-sm">
+          <CardContent className="p-8 text-center text-muted-foreground">No categories found.</CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="rounded-xl border-border shadow-sm">
           <CardContent className="p-0">
-            <div className="grid grid-cols-[1fr_1fr_auto] gap-3 border-b px-4 py-3 text-sm font-medium">
+            <div className="grid grid-cols-[1fr_1fr_auto] gap-3 border-b border-border px-4 py-3 text-sm font-medium">
               <span>Name</span>
               <span>Slug</span>
               <span className="text-right">Actions</span>
@@ -66,7 +68,7 @@ export default async function AdminCategoriesPage() {
             {categories.map((category) => (
               <div
                 key={category.id}
-                className="grid grid-cols-[1fr_1fr_auto] items-center gap-3 border-b px-4 py-3 last:border-b-0"
+                className="grid grid-cols-[1fr_1fr_auto] items-center gap-3 border-b border-border px-4 py-3 last:border-b-0"
               >
                 <span className="font-medium">{category.name}</span>
                 <span className="text-sm text-muted-foreground">{category.slug}</span>

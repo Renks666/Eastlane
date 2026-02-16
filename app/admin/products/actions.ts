@@ -1,10 +1,15 @@
-"use server"
+﻿"use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
-
-const PRODUCT_IMAGES_BUCKET = "product-images"
+import { requireAdminUser } from "@/src/shared/lib/auth/require-admin"
+import { logger } from "@/src/shared/lib/logger"
+import { toActionError } from "@/src/shared/lib/action-result"
+import {
+  removeProductImagesByUrls,
+  reorderImagesWithMain,
+  resolveMainImageUrl,
+  uploadProductImages,
+} from "@/src/domains/product/services/product-image-service"
 
 type ActionResult = {
   ok: boolean
@@ -18,10 +23,6 @@ type ProductPayload = {
   categoryId: number
   sizes: string[]
   colors: string[]
-}
-
-function buildNewImageKey(file: File) {
-  return `new:${file.name}:${file.size}:${file.lastModified}`
 }
 
 function parseJsonStringArray(value: FormDataEntryValue | null, field: string): string[] {
@@ -72,106 +73,10 @@ function parsePayload(formData: FormData): ProductPayload {
   }
 }
 
-function extractStoragePathFromPublicUrl(url: string): string | null {
-  if (!url) return null
-
-  const marker = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`
-  const markerIndex = url.indexOf(marker)
-  if (markerIndex === -1) return null
-
-  const path = url.slice(markerIndex + marker.length)
-  if (!path) return null
-
-  return decodeURIComponent(path)
-}
-
-async function requireAuthenticatedUser() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    throw new Error("Unauthorized.")
-  }
-
-  return { supabase, user }
-}
-
-async function uploadFiles(files: File[], userId: string) {
-  const adminSupabase = createAdminClient()
-  const uploadedPaths: string[] = []
-  const uploadedUrls: string[] = []
-  const uploadedByKey = new Map<string, string>()
-
-  for (const file of files) {
-    const extension = file.name.includes(".") ? file.name.split(".").pop() : undefined
-    const safeExt = extension ? extension.toLowerCase() : "bin"
-    const path = `${userId}/${Date.now()}-${crypto.randomUUID()}.${safeExt}`
-
-    const { error: uploadError } = await adminSupabase.storage
-      .from(PRODUCT_IMAGES_BUCKET)
-      .upload(path, file, {
-        upsert: false,
-        contentType: file.type || undefined,
-      })
-
-    if (uploadError) {
-      if (uploadedPaths.length > 0) {
-        await adminSupabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(uploadedPaths)
-      }
-      throw new Error(`Image upload failed: ${uploadError.message}`)
-    }
-
-    uploadedPaths.push(path)
-    const { data } = adminSupabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path)
-    uploadedUrls.push(data.publicUrl)
-    uploadedByKey.set(buildNewImageKey(file), data.publicUrl)
-  }
-
-  return { uploadedPaths, uploadedUrls, uploadedByKey }
-}
-
-async function removeImageUrls(urls: string[]) {
-  if (!urls.length) return
-  const adminSupabase = createAdminClient()
-  const paths = urls
-    .map(extractStoragePathFromPublicUrl)
-    .filter((path): path is string => Boolean(path))
-
-  if (!paths.length) return
-
-  const { error } = await adminSupabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(paths)
-  if (error) {
-    throw new Error(`Failed to remove images: ${error.message}`)
-  }
-}
-
-function resolveMainImageUrl(
-  mainImageKey: string | null,
-  keptImages: string[],
-  uploadedByKey: Map<string, string>
-) {
-  if (!mainImageKey) return null
-
-  if (mainImageKey.startsWith("existing:")) {
-    const existingUrl = mainImageKey.slice("existing:".length)
-    return keptImages.includes(existingUrl) ? existingUrl : null
-  }
-
-  if (mainImageKey.startsWith("new:")) {
-    return uploadedByKey.get(mainImageKey) ?? null
-  }
-
-  return null
-}
-
-function reorderImagesWithMain(images: string[], mainImageUrl: string | null) {
-  if (!mainImageUrl) return images
-  if (!images.includes(mainImageUrl)) return images
-
-  return [mainImageUrl, ...images.filter((url) => url !== mainImageUrl)]
+function revalidateProductPaths() {
+  revalidatePath("/admin/products")
+  revalidatePath("/")
+  revalidatePath("/catalog")
 }
 
 export async function createProduct(formData: FormData): Promise<ActionResult> {
@@ -186,9 +91,9 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
     const {
       supabase,
       user: { id: userId },
-    } = await requireAuthenticatedUser()
+    } = await requireAdminUser()
 
-    const { uploadedUrls, uploadedByKey } = await uploadFiles(newImages, userId)
+    const { uploadedUrls, uploadedByKey } = await uploadProductImages(newImages, userId)
     const mainImageUrl = resolveMainImageUrl(mainImageKey, [], uploadedByKey)
     const finalImages = reorderImagesWithMain(uploadedUrls, mainImageUrl)
 
@@ -204,18 +109,18 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
 
     if (error) {
       if (uploadedUrls.length > 0) {
-        await removeImageUrls(uploadedUrls)
+        await removeProductImagesByUrls(uploadedUrls)
       }
       throw new Error(`Failed to create product: ${error.message}`)
     }
 
-    revalidatePath("/admin/products")
-    revalidatePath("/")
+    revalidateProductPaths()
     return { ok: true }
   } catch (error) {
+    logger.error("admin.products.create", "Failed to create product", error)
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Unexpected error.",
+      error: toActionError(error),
     }
   }
 }
@@ -237,7 +142,7 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
     const {
       supabase,
       user: { id: userId },
-    } = await requireAuthenticatedUser()
+    } = await requireAdminUser()
 
     const { data: currentProduct, error: currentError } = await supabase
       .from("products")
@@ -253,7 +158,7 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
     const removedSet = new Set(removedImages)
     const keptImages = currentImages.filter((url) => !removedSet.has(url))
 
-    const { uploadedUrls, uploadedByKey } = await uploadFiles(newImages, userId)
+    const { uploadedUrls, uploadedByKey } = await uploadProductImages(newImages, userId)
     const mainImageUrl = resolveMainImageUrl(mainImageKey, keptImages, uploadedByKey)
     const finalImages = reorderImagesWithMain([...keptImages, ...uploadedUrls], mainImageUrl)
 
@@ -272,22 +177,22 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
 
     if (updateError) {
       if (uploadedUrls.length > 0) {
-        await removeImageUrls(uploadedUrls)
+        await removeProductImagesByUrls(uploadedUrls)
       }
       throw new Error(`Failed to update product: ${updateError.message}`)
     }
 
     if (removedImages.length > 0) {
-      await removeImageUrls(removedImages)
+      await removeProductImagesByUrls(removedImages)
     }
 
-    revalidatePath("/admin/products")
-    revalidatePath("/")
+    revalidateProductPaths()
     return { ok: true }
   } catch (error) {
+    logger.error("admin.products.update", "Failed to update product", { id, error })
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Unexpected error.",
+      error: toActionError(error),
     }
   }
 }
@@ -298,7 +203,7 @@ export async function deleteProduct(id: number): Promise<ActionResult> {
       throw new Error("Invalid product ID.")
     }
 
-    const { supabase } = await requireAuthenticatedUser()
+    const { supabase } = await requireAdminUser()
     const { data: product, error: productError } = await supabase
       .from("products")
       .select("images")
@@ -311,7 +216,7 @@ export async function deleteProduct(id: number): Promise<ActionResult> {
 
     const images = (product.images ?? []) as string[]
     if (images.length > 0) {
-      await removeImageUrls(images)
+      await removeProductImagesByUrls(images)
     }
 
     const { error: deleteError } = await supabase.from("products").delete().eq("id", id)
@@ -319,13 +224,13 @@ export async function deleteProduct(id: number): Promise<ActionResult> {
       throw new Error(`Failed to delete product: ${deleteError.message}`)
     }
 
-    revalidatePath("/admin/products")
-    revalidatePath("/")
+    revalidateProductPaths()
     return { ok: true }
   } catch (error) {
+    logger.error("admin.products.delete", "Failed to delete product", { id, error })
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Unexpected error.",
+      error: toActionError(error),
     }
   }
 }

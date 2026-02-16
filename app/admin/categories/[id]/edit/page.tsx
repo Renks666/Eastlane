@@ -1,6 +1,7 @@
-import { notFound, redirect } from "next/navigation"
+﻿import { notFound } from "next/navigation"
 import { CategoryForm } from "@/components/CategoryForm"
-import { createClient } from "@/lib/supabase/server"
+import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
+import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
 
 type EditCategoryPageProps = {
   params: Promise<{ id: string }>
@@ -14,14 +15,8 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
     notFound()
   }
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/admin/login")
-  }
+  await requireAdminUserOrRedirect()
+  const supabase = await createServerSupabaseClient()
 
   const { data: category, error } = await supabase
     .from("categories")
@@ -34,7 +29,7 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="mx-auto w-full max-w-3xl">
       <CategoryForm mode="edit" category={category} />
     </div>
   )

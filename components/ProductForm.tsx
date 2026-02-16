@@ -89,6 +89,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
 
   const isShoeCategory = selectedCategoryName.trim().toLowerCase() === "обувь"
   const sizeOptions = isShoeCategory ? SHOE_SIZE_OPTIONS : SIZE_OPTIONS
+  const sizeSet = useMemo(() => new Set<string>(sizeOptions), [sizeOptions])
 
   const previewUrls = useMemo(
     () =>
@@ -148,9 +149,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
     }
 
     const formData = new FormData()
-    const normalizedSizes = parsed.data.sizes.filter((size) =>
-      sizeOptions.includes(size as (typeof sizeOptions)[number])
-    )
+    const normalizedSizes = parsed.data.sizes.filter((size) => sizeSet.has(size))
     formData.set("name", parsed.data.name)
     formData.set("description", parsed.data.description ?? "")
     formData.set("price", String(parsed.data.price))
@@ -180,7 +179,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-full rounded-xl border-border shadow-sm">
       <CardHeader>
         <CardTitle>{mode === "create" ? "New Product" : "Edit Product"}</CardTitle>
       </CardHeader>

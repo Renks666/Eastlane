@@ -1,0 +1,55 @@
+﻿# Architecture
+
+## Layers
+
+1. `app/*`
+- Route handlers and page composition.
+- Minimal business logic.
+
+2. `src/domains/*`
+- Domain rules and use-case services.
+- Repository access to Supabase.
+
+3. `src/shared/*`
+- Cross-cutting infrastructure: auth guard, logger, action error helpers, reusable UI.
+
+## Domains
+
+### Catalog
+
+- `types.ts`: `CatalogFilterParams` DTO.
+- `services/filter-params.ts`: parse/serialize URL filters.
+- `repositories/catalog-repository.ts`: category/products/filter metadata queries.
+
+### Order
+
+- `types.ts`: `OrderStatus`, `ContactChannel`, checkout payload.
+- `services/checkout-service.ts`: payload validation + item normalization + totals.
+- `services/order-service.ts`: orchestration for create order / update status.
+- `repositories/order-repository.ts`: all order DB operations.
+
+### Product
+
+- `services/product-image-service.ts`: upload/remove/reorder product images in Supabase Storage.
+
+### Content
+
+- `types.ts`: typed content section interfaces.
+- `default-content.ts`: fallback storefront content.
+- `repositories/site-sections-repository.ts`: pull overrides from `site_sections`.
+- `services/storefront-content-service.ts`: merge defaults + DB content.
+
+## Security
+
+- `middleware.ts` protects `/admin/*` routes.
+- `requireAdminUser()` used in server actions.
+- Admin can be defined by:
+  - `user.app_metadata.role === "admin"`, or
+  - `user.user_metadata.role === "admin"`, or
+  - email in `ADMIN_EMAILS`.
+
+## Error Handling and Logging
+
+- Server actions return `{ ok: boolean, error?: string }` style objects.
+- `src/shared/lib/logger.ts` used for centralized action logging.
+- `src/shared/lib/action-result.ts` normalizes unknown errors.

@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# EASTLANE
 
-## Getting Started
+Next.js storefront + admin panel for a fashion store. The project uses Supabase (PostgreSQL/Auth/Storage), server actions, and a domain-oriented structure.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router
+- TypeScript + React
+- Tailwind CSS + shadcn/ui
+- Supabase: Auth, Postgres, Storage
+
+## Project Structure
+
+- `app/*`: routing and composition layer (pages + server actions entrypoints)
+- `src/domains/catalog/*`: catalog filters DTO/parser + repository
+- `src/domains/order/*`: checkout validation, order services, order repository, statuses/types
+- `src/domains/product/*`: product image service (upload/remove/reorder)
+- `src/domains/content/*`: storefront content model/defaults/repository/service
+- `src/shared/lib/*`: supabase clients, auth guards, logger, action result helpers
+- `src/shared/ui/admin/*`: shared admin UI blocks
+- `docs/sql/*`: SQL schema/migrations snippets
+
+## Environment Variables
+
+Required:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Optional:
+
+- `ADMIN_EMAILS` - comma-separated admin emails (`user1@example.com,user2@example.com`).
+  - If omitted, admin fallback allows authenticated users (for backward compatibility).
+
+## SQL Setup
+
+Run in Supabase SQL editor:
+
+1. `docs/sql/orders.sql`
+2. `docs/sql/site_sections.sql`
+
+## Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Build: `npm run build`
+- Start: `npm run start`
+- Ensure all env variables are configured in deployment environment.
 
-## Learn More
+## Key Flows
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Checkout model: `cart -> order -> manager confirmation` (no online payment yet)
+- Contact channel supports `telegram | phone`
+- Storefront content can be overridden from `site_sections` table
+- Admin area is protected by auth + role check

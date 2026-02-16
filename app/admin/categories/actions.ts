@@ -1,7 +1,9 @@
-"use server"
+﻿"use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
+import { requireAdminUser } from "@/src/shared/lib/auth/require-admin"
+import { logger } from "@/src/shared/lib/logger"
+import { toActionError } from "@/src/shared/lib/action-result"
 
 type ActionResult = {
   ok: boolean
@@ -41,25 +43,9 @@ function parsePayload(formData: FormData): CategoryPayload {
   return { name, slug }
 }
 
-async function requireAuthenticatedUser() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    throw new Error("Unauthorized.")
-  }
-
-  return supabase
-}
-
-async function ensureSlugUnique(supabase: Awaited<ReturnType<typeof createClient>>, slug: string, excludeId?: number) {
+async function ensureSlugUnique(supabase: Awaited<ReturnType<typeof requireAdminUser>>["supabase"], slug: string, excludeId?: number) {
   const query = supabase.from("categories").select("id").eq("slug", slug)
-  const { data, error } = excludeId
-    ? await query.neq("id", excludeId).limit(1)
-    : await query.limit(1)
+  const { data, error } = excludeId ? await query.neq("id", excludeId).limit(1) : await query.limit(1)
 
   if (error) {
     throw new Error(`Failed to validate slug: ${error.message}`)
@@ -74,12 +60,13 @@ function revalidateCategoryPaths() {
   revalidatePath("/admin/categories")
   revalidatePath("/admin/products")
   revalidatePath("/")
+  revalidatePath("/catalog")
 }
 
 export async function createCategory(formData: FormData): Promise<ActionResult> {
   try {
     const payload = parsePayload(formData)
-    const supabase = await requireAuthenticatedUser()
+    const { supabase } = await requireAdminUser()
 
     await ensureSlugUnique(supabase, payload.slug)
 
@@ -95,9 +82,10 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
     revalidateCategoryPaths()
     return { ok: true }
   } catch (error) {
+    logger.error("admin.categories.create", "Failed to create category", error)
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Unexpected error.",
+      error: toActionError(error),
     }
   }
 }
@@ -109,7 +97,7 @@ export async function updateCategory(id: number, formData: FormData): Promise<Ac
     }
 
     const payload = parsePayload(formData)
-    const supabase = await requireAuthenticatedUser()
+    const { supabase } = await requireAdminUser()
     await ensureSlugUnique(supabase, payload.slug, id)
 
     const { error } = await supabase
@@ -127,9 +115,10 @@ export async function updateCategory(id: number, formData: FormData): Promise<Ac
     revalidateCategoryPaths()
     return { ok: true }
   } catch (error) {
+    logger.error("admin.categories.update", "Failed to update category", { id, error })
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Unexpected error.",
+      error: toActionError(error),
     }
   }
 }
@@ -140,7 +129,7 @@ export async function deleteCategory(id: number): Promise<ActionResult> {
       throw new Error("Invalid category ID.")
     }
 
-    const supabase = await requireAuthenticatedUser()
+    const { supabase } = await requireAdminUser()
 
     const { count, error: countError } = await supabase
       .from("products")
@@ -163,9 +152,10 @@ export async function deleteCategory(id: number): Promise<ActionResult> {
     revalidateCategoryPaths()
     return { ok: true }
   } catch (error) {
+    logger.error("admin.categories.delete", "Failed to delete category", { id, error })
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Unexpected error.",
+      error: toActionError(error),
     }
   }
 }

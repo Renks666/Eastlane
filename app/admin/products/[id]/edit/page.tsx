@@ -1,6 +1,7 @@
-import { notFound, redirect } from "next/navigation"
+﻿import { notFound } from "next/navigation"
 import { ProductForm } from "@/components/ProductForm"
-import { createClient } from "@/lib/supabase/server"
+import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
+import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
 
 type EditPageProps = {
   params: Promise<{ id: string }>
@@ -19,31 +20,20 @@ export default async function EditProductPage({ params }: EditPageProps) {
     notFound()
   }
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  await requireAdminUserOrRedirect()
+  const supabase = await createServerSupabaseClient()
 
-  if (!user) {
-    redirect("/admin/login")
-  }
-
-  const [{ data: categories, error: categoriesError }, { data: product, error: productError }] =
-    await Promise.all([
-      supabase.from("categories").select("id, name").order("name", { ascending: true }),
-      supabase
-        .from("products")
-        .select("id, name, description, price, category_id, sizes, colors, images")
-        .eq("id", productId)
-        .single(),
-    ])
+  const [{ data: categories, error: categoriesError }, { data: product, error: productError }] = await Promise.all([
+    supabase.from("categories").select("id, name").order("name", { ascending: true }),
+    supabase
+      .from("products")
+      .select("id, name, description, price, category_id, sizes, colors, images")
+      .eq("id", productId)
+      .single(),
+  ])
 
   if (categoriesError) {
-    return (
-      <div className="container mx-auto p-6">
-        <p className="text-red-600">Failed to load categories: {categoriesError.message}</p>
-      </div>
-    )
+    return <p className="text-red-600">Failed to load categories: {categoriesError.message}</p>
   }
 
   if (productError || !product) {
@@ -51,7 +41,7 @@ export default async function EditProductPage({ params }: EditPageProps) {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="mx-auto w-full max-w-5xl">
       <ProductForm
         mode="edit"
         categories={(categories ?? []) as Category[]}

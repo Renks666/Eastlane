@@ -89,7 +89,7 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full max-w-2xl rounded-xl border-border shadow-sm">
       <CardHeader>
         <CardTitle>{mode === "create" ? "Create Category" : "Edit Category"}</CardTitle>
       </CardHeader>
