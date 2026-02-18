@@ -23,7 +23,7 @@ export function MobileMenu({ className }: MobileMenuProps) {
     <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <button
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:hidden ${className}`}
+              className={`inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:hidden ${className}`}
               aria-label="Открыть меню"
             >
               <Menu className="h-5 w-5" />
