@@ -62,7 +62,7 @@ export function FloatingCart() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-[calc(100%-2rem)] max-w-[420px] sm:w-[390px]">
+    <div className="fixed bottom-2 right-4 z-50 w-[calc(100%-2rem)] max-w-[420px] sm:bottom-4 sm:w-[390px]">
       <div className="rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] shadow-2xl max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
         {!isOpen && (
           <button
