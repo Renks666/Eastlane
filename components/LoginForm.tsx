@@ -66,7 +66,7 @@ export function LoginForm() {
         <CardFooter className="justify-center pt-5">
           <Button
             type="submit"
-            className="h-9 w-auto min-w-[8rem] rounded-md bg-[var(--color-brand-forest)] px-6 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[var(--color-brand-forest-dark)] disabled:opacity-50"
+            className="h-9 w-full min-w-[8rem] rounded-md bg-[var(--color-brand-forest)] px-6 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[var(--color-brand-forest-dark)] disabled:opacity-50 sm:w-auto"
             disabled={loading}
           >
             {loading ? "Вход..." : "Войти"}

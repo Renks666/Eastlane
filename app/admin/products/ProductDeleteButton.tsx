@@ -18,9 +18,10 @@ import {
 type ProductDeleteButtonProps = {
   productId: number
   productName: string
+  className?: string
 }
 
-export function ProductDeleteButton({ productId, productName }: ProductDeleteButtonProps) {
+export function ProductDeleteButton({ productId, productName, className }: ProductDeleteButtonProps) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
@@ -42,7 +43,7 @@ export function ProductDeleteButton({ productId, productName }: ProductDeleteBut
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive" size="sm">
+        <Button variant="destructive" size="sm" className={className}>
           Удалить
         </Button>
       </DialogTrigger>

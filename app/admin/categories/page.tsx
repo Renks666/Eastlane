@@ -33,10 +33,7 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
 
   const categories = ((data ?? []) as CategoryRow[]).filter((category) => {
     if (!queryText) return true
-    return (
-      category.name.toLowerCase().includes(queryText) ||
-      category.slug.toLowerCase().includes(queryText)
-    )
+    return category.name.toLowerCase().includes(queryText) || category.slug.toLowerCase().includes(queryText)
   })
 
   return (
@@ -49,7 +46,7 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
         </div>
         <Button
           asChild
-          className="!bg-[color:var(--color-brand-forest)] !text-white hover:!bg-[color:var(--color-brand-forest-dark)]"
+          className="w-full !bg-[color:var(--color-brand-forest)] !text-white hover:!bg-[color:var(--color-brand-forest-dark)] sm:w-auto"
         >
           <Link href="/admin/categories/new">Создать категорию</Link>
         </Button>
@@ -60,31 +57,52 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
           <CardContent className="p-8 text-center text-muted-foreground">Категории не найдены.</CardContent>
         </Card>
       ) : (
-        <Card className="rounded-xl border-border shadow-sm">
-          <CardContent className="p-0">
-            <div className="grid grid-cols-[1fr_1fr_auto] gap-3 border-b border-border px-4 py-3 text-sm font-medium">
-              <span>Название</span>
-              <span>Slug</span>
-              <span className="text-right">Действия</span>
-            </div>
-
+        <>
+          <div className="space-y-3 md:hidden">
             {categories.map((category) => (
-              <div
-                key={category.id}
-                className="grid grid-cols-[1fr_1fr_auto] items-center gap-3 border-b border-border px-4 py-3 last:border-b-0"
-              >
-                <span className="font-medium">{category.name}</span>
-                <span className="text-sm text-muted-foreground">{category.slug}</span>
-                <div className="flex justify-end gap-2">
-                  <Button asChild size="sm" variant="outline">
-                    <Link href={`/admin/categories/${category.id}/edit`}>Изменить</Link>
-                  </Button>
-                  <CategoryDeleteButton categoryId={category.id} categoryName={category.name} />
-                </div>
-              </div>
+              <Card key={category.id} className="rounded-xl border-border shadow-sm">
+                <CardContent className="space-y-3 p-4">
+                  <div className="space-y-1">
+                    <p className="font-medium text-foreground">{category.name}</p>
+                    <p className="text-sm text-muted-foreground">{category.slug}</p>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
+                      <Link href={`/admin/categories/${category.id}/edit`}>Изменить</Link>
+                    </Button>
+                    <CategoryDeleteButton categoryId={category.id} categoryName={category.name} className="w-full sm:w-auto" />
+                  </div>
+                </CardContent>
+              </Card>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+
+          <Card className="hidden rounded-xl border-border shadow-sm md:block">
+            <CardContent className="p-0">
+              <div className="grid grid-cols-[1fr_1fr_auto] gap-3 border-b border-border px-4 py-3 text-sm font-medium">
+                <span>Название</span>
+                <span>Slug</span>
+                <span className="text-right">Действия</span>
+              </div>
+
+              {categories.map((category) => (
+                <div
+                  key={category.id}
+                  className="grid grid-cols-[1fr_1fr_auto] items-center gap-3 border-b border-border px-4 py-3 last:border-b-0"
+                >
+                  <span className="font-medium">{category.name}</span>
+                  <span className="text-sm text-muted-foreground">{category.slug}</span>
+                  <div className="flex justify-end gap-2">
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/admin/categories/${category.id}/edit`}>Изменить</Link>
+                    </Button>
+                    <CategoryDeleteButton categoryId={category.id} categoryName={category.name} />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   )

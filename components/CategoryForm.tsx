@@ -138,11 +138,17 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
 
             {formError && <p className="text-sm text-destructive">{formError}</p>}
           </CardContent>
-          <CardFooter className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.push("/admin/categories")} disabled={isPending}>
+          <CardFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/admin/categories")}
+              disabled={isPending}
+              className="w-full sm:w-auto"
+            >
               Отмена
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
               {isPending ? "Сохранение..." : mode === "create" ? "Создать категорию" : "Сохранить"}
             </Button>
           </CardFooter>

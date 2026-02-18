@@ -67,7 +67,9 @@ export default async function AdminPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Выручка</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-price tabular-nums text-2xl font-semibold text-black">{new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(totalRevenue))} ₽</p>
+            <p className="font-price tabular-nums text-2xl font-semibold text-black">
+              {new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(totalRevenue))} ₽
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -76,14 +78,14 @@ export default async function AdminPage() {
         <CardHeader>
           <CardTitle className="text-sm font-semibold">Быстрые действия</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <Button asChild>
+        <CardContent className="grid gap-2 sm:flex sm:flex-wrap sm:gap-3">
+          <Button asChild className="w-full sm:w-auto">
             <Link href="/admin/products">Товары</Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
             <Link href="/admin/categories">Категории</Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
             <Link href="/admin/orders">Заказы</Link>
           </Button>
         </CardContent>
@@ -93,7 +95,25 @@ export default async function AdminPage() {
         <div className="border-b border-border px-5 py-4">
           <h3 className="text-sm font-semibold">Последние заказы</h3>
         </div>
-        <div className="overflow-x-auto">
+
+        <div className="space-y-3 p-4 md:hidden">
+          {orders.slice(0, 6).map((order) => (
+            <Card key={order.id} className="rounded-lg border-border shadow-none">
+              <CardContent className="space-y-2 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-medium text-foreground">#{order.id}</p>
+                  <span className="text-xs text-muted-foreground">{statusLabels[order.status] ?? order.status}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{order.contact_value || order.contact_channel}</p>
+                <p className="font-price tabular-nums text-right text-sm font-semibold text-black">
+                  {new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(Number(order.total_amount)))} ₽
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[620px] text-sm">
             <thead className="bg-muted/40">
               <tr>

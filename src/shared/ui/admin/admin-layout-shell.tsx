@@ -9,6 +9,7 @@ import {
   ChevronRight,
   LayoutDashboard,
   LogOut,
+  Menu,
   Package,
   Search,
   ShoppingCart,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
@@ -69,6 +71,8 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   const supabase = createClient()
 
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [isSigningOut, startSignOut] = useTransition()
   const [latestCreatedAt, setLatestCreatedAt] = useState<string | null>(null)
@@ -82,6 +86,17 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
     if (pathname.startsWith("/admin/orders")) return "Поиск по ID, контакту, статусу..."
     if (pathname.startsWith("/admin/categories")) return "Поиск по названию или slug..."
     return "Поиск по названию товара или категории..."
+  }, [pathname])
+
+  useEffect(() => {
+    const closeOnRouteChange = window.setTimeout(() => {
+      setMobileNavOpen(false)
+      setMobileSearchOpen(false)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(closeOnRouteChange)
+    }
   }, [pathname])
 
   useEffect(() => {
@@ -128,14 +143,16 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
     return <>{children}</>
   }
 
-  const runSearch = () => {
+  const runSearch = (closeMobileSearch = false) => {
     const value = query.trim()
     if (!value) {
       router.push(searchRoute)
+      if (closeMobileSearch) setMobileSearchOpen(false)
       return
     }
     const next = new URLSearchParams({ q: value })
     router.push(`${searchRoute}?${next.toString()}`)
+    if (closeMobileSearch) setMobileSearchOpen(false)
   }
 
   const handleSignOut = () => {
@@ -168,9 +185,72 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
 
   return (
     <div className="admin-theme flex min-h-screen w-full bg-background">
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetContent side="left" className="w-[280px] p-0 sm:w-[320px]">
+          <SheetHeader className="border-b border-border px-4 py-4">
+            <SheetTitle className="text-left text-base font-semibold text-foreground">Админ-панель</SheetTitle>
+          </SheetHeader>
+
+          <nav className="space-y-1 p-2">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+
+              return (
+                <Link
+                  key={item.title}
+                  href={item.href}
+                  onClick={() => setMobileNavOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{item.title}</span>
+                </Link>
+              )
+            })}
+          </nav>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
+        <SheetContent side="top" className="gap-2 border-b border-border p-0">
+          <SheetHeader className="px-4 pb-2 pt-5 sm:px-6">
+            <SheetTitle className="text-left text-base">Поиск</SheetTitle>
+          </SheetHeader>
+          <div className="px-4 pb-5 sm:px-6">
+            <div className="flex items-center gap-2">
+              <div className="relative min-w-0 flex-1">
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder={searchPlaceholder}
+                  className="h-9 w-full bg-secondary pl-8 text-sm"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") runSearch(true)
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                className="h-9 rounded-md border border-border px-3 text-xs text-muted-foreground transition-colors hover:bg-accent"
+                onClick={() => runSearch(true)}
+              >
+                Найти
+              </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <aside
         className={cn(
-          "sticky top-0 flex h-screen flex-col border-r border-border bg-card transition-all duration-200",
+          "sticky top-0 hidden h-screen flex-col border-r border-border bg-card transition-all duration-200 md:flex",
           collapsed ? "w-16" : "w-60"
         )}
       >
@@ -216,7 +296,17 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 flex min-h-14 flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-4 py-2 sm:px-6">
-          <h1 className="truncate text-lg font-semibold text-foreground">{title}</h1>
+          <div className="flex min-w-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent md:hidden"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <h1 className="truncate text-lg font-semibold text-foreground">{title}</h1>
+          </div>
 
           <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
             <div className="relative hidden md:flex md:min-w-[180px] md:max-w-[320px] md:flex-1 md:items-center md:gap-2">
@@ -233,11 +323,20 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
               <button
                 type="button"
                 className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
-                onClick={runSearch}
+                onClick={() => runSearch()}
               >
                 Найти
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setMobileSearchOpen(true)}
+              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent md:hidden"
+              aria-label="Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
 
             <button
               type="button"
@@ -255,16 +354,18 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
               type="button"
               onClick={handleSignOut}
               disabled={isSigningOut}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-accent disabled:opacity-50"
+              className="inline-flex h-9 items-center gap-1 rounded-md border border-border px-2 text-xs font-medium text-muted-foreground transition hover:bg-accent disabled:opacity-50 sm:px-2.5"
+              aria-label="Sign out"
             >
               <LogOut className="h-3.5 w-3.5" />
-              {isSigningOut ? "Выход..." : "Выйти"}
+              <span className="hidden sm:inline">{isSigningOut ? "Выход..." : "Выйти"}</span>
             </button>
           </div>
         </header>
 
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
     </div>
   )
 }
+

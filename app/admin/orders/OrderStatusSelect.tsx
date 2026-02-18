@@ -4,10 +4,12 @@ import { useTransition } from "react"
 import { toast } from "sonner"
 import { updateOrderStatus } from "@/app/admin/orders/actions"
 import type { OrderStatus } from "@/src/domains/order/types"
+import { cn } from "@/lib/utils"
 
 type OrderStatusSelectProps = {
   orderId: number
   status: OrderStatus
+  className?: string
 }
 
 const options: Array<{ value: OrderStatus; label: string }> = [
@@ -18,14 +20,17 @@ const options: Array<{ value: OrderStatus; label: string }> = [
   { value: "cancelled", label: "Отменён" },
 ]
 
-export function OrderStatusSelect({ orderId, status }: OrderStatusSelectProps) {
+export function OrderStatusSelect({ orderId, status, className }: OrderStatusSelectProps) {
   const [isPending, startTransition] = useTransition()
 
   return (
     <select
       defaultValue={status}
       disabled={isPending}
-      className="h-9 rounded-md border border-border bg-background px-2 text-sm shadow-sm outline-none ring-0 focus:border-primary"
+      className={cn(
+        "h-9 rounded-md border border-border bg-background px-2 text-sm shadow-sm outline-none ring-0 focus:border-primary",
+        className
+      )}
       onChange={(event) => {
         const nextStatus = event.target.value as OrderStatus
         startTransition(async () => {

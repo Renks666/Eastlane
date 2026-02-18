@@ -225,7 +225,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
       </div>
 
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap gap-2">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 whitespace-nowrap md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0">
           {statusFilterOptions.map((option) => {
             const queryString = buildQueryString({ q: queryText, status: option.value, sort: sortValue, page: 1 })
             const isActive = option.value === statusFilter
@@ -233,7 +233,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
               <Link
                 key={option.value}
                 href={`/admin/orders${queryString ? `?${queryString}` : ""}`}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                   isActive
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border bg-background text-muted-foreground hover:bg-muted"
@@ -245,8 +245,8 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           })}
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>Сортировка:</span>
+        <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 text-xs text-muted-foreground whitespace-nowrap md:mx-0 md:overflow-visible md:px-0 md:pb-0">
+          <span className="shrink-0">Сортировка:</span>
           {sortOptions.map((option) => {
             const queryString = buildQueryString({ q: queryText, status: statusFilter, sort: option.value, page: 1 })
             const isActive = option.value === sortValue
@@ -254,7 +254,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
               <Link
                 key={option.value}
                 href={`/admin/orders${queryString ? `?${queryString}` : ""}`}
-                className={`rounded-md border px-2 py-1 transition ${
+                className={`shrink-0 rounded-md border px-2 py-1 transition ${
                   isActive
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border text-muted-foreground hover:bg-muted"
@@ -268,93 +268,150 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
       </div>
 
       {pageOrders.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground shadow-sm sm:p-8">
           Заказы не найдены.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-          <div className="border-b border-border px-5 py-4">
-            <h3 className="text-sm font-semibold text-foreground">Список заказов</h3>
+        <>
+          <div className="space-y-3 md:hidden">
+            {pageOrders.map((order) => {
+              const meta = statusMeta(order.status)
+              return (
+                <Card key={order.id} className="rounded-xl border-border shadow-sm">
+                  <CardContent className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-foreground">#{order.id}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleString("ru-RU")}</p>
+                      </div>
+                      <span className={`rounded-full border px-2 py-1 text-xs font-medium ${meta.className}`}>{meta.label}</span>
+                    </div>
+
+                    <div className="space-y-1 text-sm">
+                      <p className="font-medium text-foreground">{order.customer_name || "Без имени"}</p>
+                      <p className="text-muted-foreground">{order.contact_value || "Нет контакта"}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-full border border-border bg-muted px-2 py-1 text-foreground">
+                        {channelLabel(order.contact_channel)}
+                      </span>
+                      <span>{order.order_items.length} позиций</span>
+                    </div>
+
+                    <p className="font-price tabular-nums text-right text-lg font-semibold text-black">{formatRub(order.total_amount)}</p>
+
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground">Статус</p>
+                      <OrderStatusSelect orderId={order.id} status={order.status} className="w-full" />
+                    </div>
+
+                    <details className="rounded-lg border border-border bg-muted/20 p-3">
+                      <summary className="cursor-pointer text-xs font-medium text-foreground">Состав заказа</summary>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        {order.order_items.map((item) => (
+                          <span key={item.id} className="rounded-md border border-border bg-background px-2 py-1">
+                            {item.product_name_snapshot}
+                            {item.size_snapshot ? ` (${item.size_snapshot})` : ""} x{item.quantity}
+                          </span>
+                        ))}
+                        {order.comment ? (
+                          <span className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-indigo-700">
+                            Комментарий: {order.comment}
+                          </span>
+                        ) : null}
+                      </div>
+                    </details>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
 
-          <div className="max-h-[62vh] overflow-auto">
-            <table className="w-full min-w-[980px] text-sm">
-              <thead className="sticky top-0 z-10 bg-muted/90 text-muted-foreground backdrop-blur">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium">Заказ</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium">Клиент</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium">Канал</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium">Статус</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium">Дата</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium">Сумма</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium">Действие</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageOrders.map((order) => {
-                  const meta = statusMeta(order.status)
-                  return (
-                    <Fragment key={order.id}>
-                      <tr className="border-t border-border align-top hover:bg-muted/20">
-                        <td className="px-4 py-3">
-                          <p className="font-semibold text-foreground">#{order.id}</p>
-                          <p className="text-xs text-muted-foreground">{order.order_items.length} позиций</p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-foreground">{order.customer_name}</p>
-                          <p className="text-xs text-muted-foreground">{order.contact_value || "Нет контакта"}</p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="rounded-full border border-border bg-muted px-2 py-1 text-xs font-medium text-foreground">
-                            {channelLabel(order.contact_channel)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`rounded-full border px-2 py-1 text-xs font-medium ${meta.className}`}>
-                            {meta.label}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {new Date(order.created_at).toLocaleString("ru-RU")}
-                        </td>
-                        <td className="font-price tabular-nums px-4 py-3 text-right font-semibold text-black">{formatRub(order.total_amount)}</td>
-                        <td className="px-4 py-3 text-right">
-                          <OrderStatusSelect orderId={order.id} status={order.status} />
-                        </td>
-                      </tr>
+          <div className="hidden overflow-hidden rounded-xl border border-border bg-card shadow-sm md:block">
+            <div className="border-b border-border px-5 py-4">
+              <h3 className="text-sm font-semibold text-foreground">Список заказов</h3>
+            </div>
 
-                      <tr className="border-t border-border/70 bg-muted/10">
-                        <td colSpan={7} className="px-4 py-3">
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            {order.order_items.map((item) => (
-                              <span key={item.id} className="rounded-md border border-border bg-background px-2 py-1">
-                                {item.product_name_snapshot}
-                                {item.size_snapshot ? ` (${item.size_snapshot})` : ""} x{item.quantity}
-                              </span>
-                            ))}
-                            {order.comment ? (
-                              <span className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-indigo-700">
-                                Комментарий: {order.comment}
-                              </span>
-                            ) : null}
-                          </div>
-                        </td>
-                      </tr>
-                    </Fragment>
-                  )
-                })}
-              </tbody>
-            </table>
+            <div className="max-h-[62vh] overflow-auto">
+              <table className="w-full min-w-[980px] text-sm">
+                <thead className="sticky top-0 z-10 bg-muted/90 text-muted-foreground backdrop-blur">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium">Заказ</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium">Клиент</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium">Канал</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium">Статус</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium">Дата</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium">Сумма</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium">Действие</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageOrders.map((order) => {
+                    const meta = statusMeta(order.status)
+                    return (
+                      <Fragment key={order.id}>
+                        <tr className="border-t border-border align-top hover:bg-muted/20">
+                          <td className="px-4 py-3">
+                            <p className="font-semibold text-foreground">#{order.id}</p>
+                            <p className="text-xs text-muted-foreground">{order.order_items.length} позиций</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="font-medium text-foreground">{order.customer_name || "Без имени"}</p>
+                            <p className="text-xs text-muted-foreground">{order.contact_value || "Нет контакта"}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="rounded-full border border-border bg-muted px-2 py-1 text-xs font-medium text-foreground">
+                              {channelLabel(order.contact_channel)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full border px-2 py-1 text-xs font-medium ${meta.className}`}>
+                              {meta.label}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {new Date(order.created_at).toLocaleString("ru-RU")}
+                          </td>
+                          <td className="font-price tabular-nums px-4 py-3 text-right font-semibold text-black">{formatRub(order.total_amount)}</td>
+                          <td className="px-4 py-3 text-right">
+                            <OrderStatusSelect orderId={order.id} status={order.status} />
+                          </td>
+                        </tr>
+
+                        <tr className="border-t border-border/70 bg-muted/10">
+                          <td colSpan={7} className="px-4 py-3">
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                              {order.order_items.map((item) => (
+                                <span key={item.id} className="rounded-md border border-border bg-background px-2 py-1">
+                                  {item.product_name_snapshot}
+                                  {item.size_snapshot ? ` (${item.size_snapshot})` : ""} x{item.quantity}
+                                </span>
+                              ))}
+                              {order.comment ? (
+                                <span className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-indigo-700">
+                                  Комментарий: {order.comment}
+                                </span>
+                              ) : null}
+                            </div>
+                          </td>
+                        </tr>
+                      </Fragment>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between border-t border-border px-5 py-3 text-xs text-muted-foreground">
+          <div className="flex flex-col gap-2 border-t border-border px-4 py-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <span>
               Страница {currentPage} из {totalPages}
             </span>
             <div className="flex items-center gap-2">
               <Link
                 href={`/admin/orders${prevQuery ? `?${prevQuery}` : ""}`}
-                className={`rounded-md border px-2 py-1 transition ${
+                className={`inline-flex h-9 items-center rounded-md border px-3 py-1 transition ${
                   currentPage <= 1
                     ? "pointer-events-none border-border/60 text-muted-foreground/40"
                     : "border-border text-foreground hover:bg-muted"
@@ -364,7 +421,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
               </Link>
               <Link
                 href={`/admin/orders${nextQuery ? `?${nextQuery}` : ""}`}
-                className={`rounded-md border px-2 py-1 transition ${
+                className={`inline-flex h-9 items-center rounded-md border px-3 py-1 transition ${
                   currentPage >= totalPages
                     ? "pointer-events-none border-border/60 text-muted-foreground/40"
                     : "border-border text-foreground hover:bg-muted"
@@ -374,7 +431,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
               </Link>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   )

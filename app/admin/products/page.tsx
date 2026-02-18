@@ -52,7 +52,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
         </div>
         <Button
           asChild
-          className="!bg-[color:var(--color-brand-forest)] !text-white hover:!bg-[color:var(--color-brand-forest-dark)]"
+          className="w-full !bg-[color:var(--color-brand-forest)] !text-white hover:!bg-[color:var(--color-brand-forest-dark)] sm:w-auto"
         >
           <Link href="/admin/products/new">Создать товар</Link>
         </Button>
@@ -82,11 +82,11 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button asChild variant="outline" size="sm">
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                  <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                     <Link href={`/admin/products/${product.id}/edit`}>Изменить</Link>
                   </Button>
-                  <ProductDeleteButton productId={product.id} productName={product.name} />
+                  <ProductDeleteButton productId={product.id} productName={product.name} className="w-full sm:w-auto" />
                 </div>
               </CardContent>
             </Card>

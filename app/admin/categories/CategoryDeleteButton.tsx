@@ -18,9 +18,10 @@ import {
 type CategoryDeleteButtonProps = {
   categoryId: number
   categoryName: string
+  className?: string
 }
 
-export function CategoryDeleteButton({ categoryId, categoryName }: CategoryDeleteButtonProps) {
+export function CategoryDeleteButton({ categoryId, categoryName, className }: CategoryDeleteButtonProps) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
@@ -42,7 +43,7 @@ export function CategoryDeleteButton({ categoryId, categoryName }: CategoryDelet
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive" size="sm">
+        <Button variant="destructive" size="sm" className={className}>
           Удалить
         </Button>
       </DialogTrigger>

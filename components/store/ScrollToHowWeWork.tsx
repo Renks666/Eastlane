@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, type ReactNode } from "react"
 
 const HEADER_HEIGHT = 80 // sticky header h-20 ≈ 80px
@@ -38,9 +39,9 @@ export function ScrollToHowWeWorkLink({
   }
 
   return (
-    <a href="/#how-we-work" onClick={handleClick} className={className}>
+    <Link href="/#how-we-work" onClick={handleClick} className={className}>
       {children}
-    </a>
+    </Link>
   )
 }
 
