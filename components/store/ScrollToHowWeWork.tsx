@@ -41,12 +41,17 @@ export function ScrollToHowWeWorkLink({
   )
 }
 
-/** Начальная прокрутка при загрузке с хешем #how-we-work (например, из другой страницы) */
+/** Начальная прокрутка при переходе с другой страницы с хешем #how-we-work. При refresh — не прокручиваем (страница вверху). */
 export function ScrollToHowWeWorkOnMount() {
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hash === "#how-we-work") {
-      scrollToHowWeWork()
-    }
+    if (typeof window === "undefined" || window.location.hash !== "#how-we-work") return
+
+    const navEntry = performance.getEntriesByType("navigation")[0] as
+      | PerformanceNavigationTiming
+      | undefined
+    if (navEntry?.type === "reload") return // при обновлении — не трогаем, ScrollRestoration скроллит вверх
+
+    scrollToHowWeWork()
   }, [])
   return null
 }

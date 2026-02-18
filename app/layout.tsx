@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Source_Sans_3 } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { ScrollRestoration } from "@/components/ScrollRestoration";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,6 +35,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${sourceSans3.variable} antialiased`}
       >
+        <ScrollRestoration />
         {children}
         <Toaster 
           position="top-right" 
