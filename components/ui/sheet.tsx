@@ -76,10 +76,10 @@ function SheetContent({
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close
-            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-brand-beige-dark)] focus:ring-offset-2 disabled:pointer-events-none"
+            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-secondary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-tertiary)] transition hover:bg-[color:var(--color-bg-accent)] hover:text-[color:var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-brand-beige-dark)] focus:ring-offset-2 disabled:pointer-events-none"
             aria-label="Закрыть меню"
           >
-            <XIcon className="h-5 w-5" />
+            <XIcon className="h-4 w-4" strokeWidth={1.75} />
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Content>
