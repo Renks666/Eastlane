@@ -6,6 +6,7 @@ import { getStorefrontContent } from "@/src/domains/content/services/storefront-
 import { StoreShell } from "@/components/store/StoreShell"
 import { AnimatedProductGrid } from "@/components/store/AnimatedProductGrid"
 import HeroShutterText from "@/components/ui/hero-shutter-text"
+import { ShineBorder, HowWeWorkTimeline } from "@/components/ui/shine-border"
 
 type ProductPreview = {
   id: number
@@ -108,6 +109,20 @@ export default async function HomePage() {
             categoryName: product.categories?.[0]?.name ?? "Каталог",
           }))}
         />
+      </section>
+
+      {/* Как мы работаем */}
+      <section className="mx-auto max-w-7xl px-6 pb-16 md:px-12">
+        <div className="mx-auto max-w-[900px]">
+          <div className="relative rounded-2xl md:rounded-3xl">
+            <ShineBorder
+              borderWidth={1}
+              duration={16}
+              shineColor={["#FF2D9A", "#7B61FF", "#00E0FF"]}
+            />
+            <HowWeWorkTimeline />
+          </div>
+        </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-6 pb-20 md:px-12">
