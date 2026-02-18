@@ -7,6 +7,7 @@ import { StoreShell } from "@/components/store/StoreShell"
 import { AnimatedProductGrid } from "@/components/store/AnimatedProductGrid"
 import HeroShutterText from "@/components/ui/hero-shutter-text"
 import { ShineBorder, HowWeWorkTimeline } from "@/components/ui/shine-border"
+import { ScrollToHowWeWorkLink, ScrollToHowWeWorkOnMount } from "@/components/store/ScrollToHowWeWork"
 
 type ProductPreview = {
   id: number
@@ -35,6 +36,7 @@ export default async function HomePage() {
 
   return (
     <StoreShell>
+      <ScrollToHowWeWorkOnMount />
       <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-16 pt-12 md:grid-cols-[1.15fr_1fr] md:px-12 md:pt-20">
         <div className="rounded-3xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-6 shadow-[0_18px_48px_-34px_rgba(18,39,33,0.25)] md:p-7">
           <div className="max-w-xl">
@@ -49,9 +51,9 @@ export default async function HomePage() {
             <Link href={content.hero.primaryCtaHref} className="inline-flex items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-forest)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[color:var(--color-brand-forest-dark)]">
               {content.hero.primaryCtaLabel} <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href={content.hero.secondaryCtaHref} className="inline-flex items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-5 py-3 text-sm font-medium text-[color:var(--color-text-tertiary)] transition hover:bg-[color:var(--color-bg-accent)]">
+            <ScrollToHowWeWorkLink className="inline-flex items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-5 py-3 text-sm font-medium text-[color:var(--color-text-tertiary)] transition hover:bg-[color:var(--color-bg-accent)]">
               {content.hero.secondaryCtaLabel}
-            </Link>
+            </ScrollToHowWeWorkLink>
           </div>
         </div>
         <div className="relative hidden overflow-hidden rounded-3xl border border-[color:var(--color-brand-forest-light)] bg-[color:var(--color-brand-forest-light)] p-6 md:block">
@@ -112,7 +114,7 @@ export default async function HomePage() {
       </section>
 
       {/* Как мы работаем */}
-      <section className="mx-auto max-w-7xl px-6 pb-16 md:px-12">
+      <section id="how-we-work" className="mx-auto max-w-7xl px-6 pb-16 md:px-12">
         <div className="mx-auto max-w-[900px]">
           <div className="relative rounded-2xl md:rounded-3xl">
             <ShineBorder

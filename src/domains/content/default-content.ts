@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   AboutSectionContent,
   BenefitsSectionContent,
   ContactsSectionContent,
@@ -16,7 +16,7 @@ export const defaultHeroSection: HeroSectionContent = {
   primaryCtaLabel: "Перейти в каталог",
   primaryCtaHref: "/catalog",
   secondaryCtaLabel: "Как мы работаем",
-  secondaryCtaHref: "/about",
+  secondaryCtaHref: "/#how-we-work",
 }
 
 export const defaultBenefitsSection: BenefitsSectionContent = {
