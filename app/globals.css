@@ -307,11 +307,12 @@
 [data-sonner-toast].eastlane-toast-success {
   background: #ffffff !important;
   background-color: #ffffff !important;
+  border: 2px solid #0f5a49 !important;
 }
 
 .eastlane-toast-success::before,
 [data-sonner-toast].eastlane-toast-success::before {
-  background: #0f5a49 !important;
+  display: none;
 }
 
 .eastlane-toast-success [data-icon],
