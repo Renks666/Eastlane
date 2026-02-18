@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useTransition } from "react"
 import { toast } from "sonner"
@@ -11,11 +11,11 @@ type OrderStatusSelectProps = {
 }
 
 const options: Array<{ value: OrderStatus; label: string }> = [
-  { value: "new", label: "New" },
-  { value: "confirmed", label: "Confirmed" },
-  { value: "processing", label: "Processing" },
-  { value: "done", label: "Done" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "new", label: "Новый" },
+  { value: "confirmed", label: "Подтверждён" },
+  { value: "processing", label: "В работе" },
+  { value: "done", label: "Выполнен" },
+  { value: "cancelled", label: "Отменён" },
 ]
 
 export function OrderStatusSelect({ orderId, status }: OrderStatusSelectProps) {
@@ -31,10 +31,10 @@ export function OrderStatusSelect({ orderId, status }: OrderStatusSelectProps) {
         startTransition(async () => {
           const result = await updateOrderStatus(orderId, nextStatus)
           if (!result.ok) {
-            toast.error(result.error ?? "Failed to update status.")
+            toast.error(result.error ?? "Не удалось обновить статус.")
             return
           }
-          toast.success("Status updated.")
+          toast.success("Статус обновлён.")
         })
       }}
     >

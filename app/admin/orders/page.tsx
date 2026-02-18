@@ -39,19 +39,19 @@ type AdminOrdersPageProps = {
 const PAGE_SIZE = 8
 
 const statusFilterOptions: Array<{ value: "all" | OrderStatus; label: string }> = [
-  { value: "all", label: "All" },
-  { value: "new", label: "New" },
-  { value: "confirmed", label: "Confirmed" },
-  { value: "processing", label: "Processing" },
-  { value: "done", label: "Done" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: "all", label: "Все" },
+  { value: "new", label: "Новые" },
+  { value: "confirmed", label: "Подтверждённые" },
+  { value: "processing", label: "В работе" },
+  { value: "done", label: "Выполненные" },
+  { value: "cancelled", label: "Отменённые" },
 ]
 
 const sortOptions = [
-  { value: "created_desc", label: "Newest first" },
-  { value: "created_asc", label: "Oldest first" },
-  { value: "total_desc", label: "Total: high to low" },
-  { value: "total_asc", label: "Total: low to high" },
+  { value: "created_desc", label: "Сначала новые" },
+  { value: "created_asc", label: "Сначала старые" },
+  { value: "total_desc", label: "Сумма: по убыванию" },
+  { value: "total_asc", label: "Сумма: по возрастанию" },
 ] as const
 
 type SortValue = (typeof sortOptions)[number]["value"]
@@ -62,24 +62,24 @@ function formatRub(price: number) {
 
 function statusMeta(status: OrderStatus) {
   if (status === "done") {
-    return { label: "Done", className: "border-emerald-200 bg-emerald-50 text-emerald-700" }
+    return { label: "Выполнен", className: "border-emerald-200 bg-emerald-50 text-emerald-700" }
   }
   if (status === "processing") {
-    return { label: "Processing", className: "border-blue-200 bg-blue-50 text-blue-700" }
+    return { label: "В работе", className: "border-blue-200 bg-blue-50 text-blue-700" }
   }
   if (status === "confirmed") {
-    return { label: "Confirmed", className: "border-indigo-200 bg-indigo-50 text-indigo-700" }
+    return { label: "Подтверждён", className: "border-indigo-200 bg-indigo-50 text-indigo-700" }
   }
   if (status === "cancelled") {
-    return { label: "Cancelled", className: "border-rose-200 bg-rose-50 text-rose-700" }
+    return { label: "Отменён", className: "border-rose-200 bg-rose-50 text-rose-700" }
   }
 
-  return { label: "New", className: "border-amber-200 bg-amber-50 text-amber-700" }
+  return { label: "Новый", className: "border-amber-200 bg-amber-50 text-amber-700" }
 }
 
 function channelLabel(channel: string) {
   if (channel === "telegram") return "Telegram"
-  if (channel === "phone") return "Phone"
+  if (channel === "phone") return "Телефон"
   return channel
 }
 
@@ -181,14 +181,14 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-foreground">Orders</h2>
-        <p className="text-sm text-muted-foreground">Track and manage customer orders.</p>
+        <h2 className="text-xl font-semibold text-foreground">Заказы</h2>
+        <p className="text-sm text-muted-foreground">Просмотр и управление заказами.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="rounded-xl border-border shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Visible Orders</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Заказов в выборке</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{totalOrders}</p>
@@ -197,7 +197,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
 
         <Card className="rounded-xl border-border shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">New</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Новые</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{newCount}</p>
@@ -206,7 +206,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
 
         <Card className="rounded-xl border-border shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Processing</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">В работе</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{processingCount}</p>
@@ -215,11 +215,11 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
 
         <Card className="rounded-xl border-border shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Выручка</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="font-price tabular-nums text-2xl font-semibold text-black">{formatRub(totalRevenue)}</p>
-            <p className="text-xs text-muted-foreground">Done: {doneCount}</p>
+            <p className="text-xs text-muted-foreground">Выполнено: {doneCount}</p>
           </CardContent>
         </Card>
       </div>
@@ -246,7 +246,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         </div>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>Sort:</span>
+          <span>Сортировка:</span>
           {sortOptions.map((option) => {
             const queryString = buildQueryString({ q: queryText, status: statusFilter, sort: option.value, page: 1 })
             const isActive = option.value === sortValue
@@ -269,25 +269,25 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
 
       {pageOrders.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-sm">
-          No orders found.
+          Заказы не найдены.
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
           <div className="border-b border-border px-5 py-4">
-            <h3 className="text-sm font-semibold text-foreground">Orders List</h3>
+            <h3 className="text-sm font-semibold text-foreground">Список заказов</h3>
           </div>
 
           <div className="max-h-[62vh] overflow-auto">
             <table className="w-full min-w-[980px] text-sm">
               <thead className="sticky top-0 z-10 bg-muted/90 text-muted-foreground backdrop-blur">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium">Order</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium">Customer</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium">Channel</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium">Created</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium">Total</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium">Action</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium">Заказ</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium">Клиент</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium">Канал</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium">Статус</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium">Дата</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium">Сумма</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium">Действие</th>
                 </tr>
               </thead>
               <tbody>
@@ -298,11 +298,11 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                       <tr className="border-t border-border align-top hover:bg-muted/20">
                         <td className="px-4 py-3">
                           <p className="font-semibold text-foreground">#{order.id}</p>
-                          <p className="text-xs text-muted-foreground">{order.order_items.length} items</p>
+                          <p className="text-xs text-muted-foreground">{order.order_items.length} позиций</p>
                         </td>
                         <td className="px-4 py-3">
                           <p className="font-medium text-foreground">{order.customer_name}</p>
-                          <p className="text-xs text-muted-foreground">{order.contact_value || "No contact"}</p>
+                          <p className="text-xs text-muted-foreground">{order.contact_value || "Нет контакта"}</p>
                         </td>
                         <td className="px-4 py-3">
                           <span className="rounded-full border border-border bg-muted px-2 py-1 text-xs font-medium text-foreground">
@@ -334,7 +334,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                             ))}
                             {order.comment ? (
                               <span className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-indigo-700">
-                                Note: {order.comment}
+                                Комментарий: {order.comment}
                               </span>
                             ) : null}
                           </div>
@@ -349,7 +349,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
 
           <div className="flex items-center justify-between border-t border-border px-5 py-3 text-xs text-muted-foreground">
             <span>
-              Page {currentPage} of {totalPages}
+              Страница {currentPage} из {totalPages}
             </span>
             <div className="flex items-center gap-2">
               <Link
@@ -360,7 +360,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                     : "border-border text-foreground hover:bg-muted"
                 }`}
               >
-                Previous
+                Назад
               </Link>
               <Link
                 href={`/admin/orders${nextQuery ? `?${nextQuery}` : ""}`}
@@ -370,7 +370,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                     : "border-border text-foreground hover:bg-muted"
                 }`}
               >
-                Next
+                Вперёд
               </Link>
             </div>
           </div>

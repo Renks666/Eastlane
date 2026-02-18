@@ -1,4 +1,4 @@
-﻿import Link from "next/link"
+import Link from "next/link"
 import { CategoryDeleteButton } from "@/app/admin/categories/CategoryDeleteButton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -28,7 +28,7 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
     .order("name", { ascending: true })
 
   if (error) {
-    return <p className="text-red-600">Failed to load categories: {error.message}</p>
+    return <p className="text-red-600">Не удалось загрузить категории: {error.message}</p>
   }
 
   const categories = ((data ?? []) as CategoryRow[]).filter((category) => {
@@ -43,26 +43,26 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-foreground">Categories</h2>
-          <p className="text-sm text-muted-foreground">Manage product categories.</p>
-          {queryText ? <p className="mt-1 text-xs text-muted-foreground">Filter: {queryText}</p> : null}
+          <h2 className="text-xl font-semibold text-foreground">Категории</h2>
+          <p className="text-sm text-muted-foreground">Управление категориями товаров.</p>
+          {queryText ? <p className="mt-1 text-xs text-muted-foreground">Фильтр: {queryText}</p> : null}
         </div>
         <Button asChild>
-          <Link href="/admin/categories/new">Create category</Link>
+          <Link href="/admin/categories/new">Создать категорию</Link>
         </Button>
       </div>
 
       {categories.length === 0 ? (
         <Card className="rounded-xl border-border shadow-sm">
-          <CardContent className="p-8 text-center text-muted-foreground">No categories found.</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Категории не найдены.</CardContent>
         </Card>
       ) : (
         <Card className="rounded-xl border-border shadow-sm">
           <CardContent className="p-0">
             <div className="grid grid-cols-[1fr_1fr_auto] gap-3 border-b border-border px-4 py-3 text-sm font-medium">
-              <span>Name</span>
+              <span>Название</span>
               <span>Slug</span>
-              <span className="text-right">Actions</span>
+              <span className="text-right">Действия</span>
             </div>
 
             {categories.map((category) => (
@@ -74,7 +74,7 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
                 <span className="text-sm text-muted-foreground">{category.slug}</span>
                 <div className="flex justify-end gap-2">
                   <Button asChild size="sm" variant="outline">
-                    <Link href={`/admin/categories/${category.id}/edit`}>Edit</Link>
+                    <Link href={`/admin/categories/${category.id}/edit`}>Изменить</Link>
                   </Button>
                   <CategoryDeleteButton categoryId={category.id} categoryName={category.name} />
                 </div>

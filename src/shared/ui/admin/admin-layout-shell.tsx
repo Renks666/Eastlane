@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -37,17 +37,17 @@ type OrderNotificationResponse = {
 const LAST_SEEN_ORDER_KEY = "eastlane.admin.notifications.lastSeenOrderCreatedAt"
 
 const navItems: NavItem[] = [
-  { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { title: "Products", href: "/admin/products", icon: Package },
-  { title: "Categories", href: "/admin/categories", icon: Shapes },
-  { title: "Orders", href: "/admin/orders", icon: ShoppingCart },
+  { title: "Обзор", href: "/admin", icon: LayoutDashboard },
+  { title: "Товары", href: "/admin/products", icon: Package },
+  { title: "Категории", href: "/admin/categories", icon: Shapes },
+  { title: "Заказы", href: "/admin/orders", icon: ShoppingCart },
 ]
 
 function resolveTitle(pathname: string) {
-  if (pathname.startsWith("/admin/orders")) return "Orders"
-  if (pathname.startsWith("/admin/products")) return "Products"
-  if (pathname.startsWith("/admin/categories")) return "Categories"
-  return "Dashboard"
+  if (pathname.startsWith("/admin/orders")) return "Заказы"
+  if (pathname.startsWith("/admin/products")) return "Товары"
+  if (pathname.startsWith("/admin/categories")) return "Категории"
+  return "Обзор"
 }
 
 function resolveSearchRoute(pathname: string) {
@@ -79,9 +79,9 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   const searchRoute = resolveSearchRoute(pathname)
 
   const searchPlaceholder = useMemo(() => {
-    if (pathname.startsWith("/admin/orders")) return "Search by id, contact, status..."
-    if (pathname.startsWith("/admin/categories")) return "Search by name or slug..."
-    return "Search by product name or category..."
+    if (pathname.startsWith("/admin/orders")) return "Поиск по ID, контакту, статусу..."
+    if (pathname.startsWith("/admin/categories")) return "Поиск по названию или slug..."
+    return "Поиск по названию товара или категории..."
   }, [pathname])
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
         toast.error(error.message)
         return
       }
-      toast.success("Signed out")
+      toast.success("Выход выполнен")
       router.push("/admin/login")
       router.refresh()
     })
@@ -158,9 +158,9 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
     setHasUnreadOrderNotifications(false)
 
     if (newOrdersCount > 0) {
-      toast.info(`New orders: ${newOrdersCount}`)
+      toast.info(`Новых заказов: ${newOrdersCount}`)
     } else {
-      toast.info("No new orders")
+      toast.info("Нет новых заказов")
     }
 
     router.push("/admin/orders?status=new")
@@ -175,7 +175,7 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
         )}
       >
         <div className="flex h-14 items-center border-b border-border px-4">
-          {!collapsed ? <span className="text-lg font-semibold tracking-tight text-foreground">Eastlane Admin</span> : null}
+          {!collapsed ? <span className="text-lg font-semibold tracking-tight text-foreground">Админ-панель</span> : null}
           <button
             type="button"
             onClick={() => setCollapsed((value) => !value)}
@@ -183,7 +183,7 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
               "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent",
               collapsed ? "mx-auto" : "ml-auto"
             )}
-            aria-label="Toggle sidebar"
+            aria-label="Свернуть/развернуть меню"
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
@@ -235,7 +235,7 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
                 className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
                 onClick={runSearch}
               >
-                Find
+                Найти
               </button>
             </div>
 
@@ -243,7 +243,7 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
               type="button"
               onClick={openNotifications}
               className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent"
-              aria-label="Notifications"
+              aria-label="Уведомления"
             >
               <Bell className="h-4 w-4" />
               {hasUnreadOrderNotifications ? (
@@ -258,7 +258,7 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
               className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-accent disabled:opacity-50"
             >
               <LogOut className="h-3.5 w-3.5" />
-              {isSigningOut ? "Signing out..." : "Logout"}
+              {isSigningOut ? "Выход..." : "Выйти"}
             </button>
           </div>
         </header>

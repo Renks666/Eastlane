@@ -13,12 +13,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 
 const categorySchema = z.object({
-  name: z.string().trim().min(1, "Category name is required."),
+  name: z.string().trim().min(1, "Укажите название категории."),
   slug: z
     .string()
     .trim()
-    .min(1, "Slug is required.")
-    .regex(/^[a-z0-9-]+$/, "Slug may contain only lowercase letters, numbers and hyphens."),
+    .min(1, "Укажите slug.")
+    .regex(/^[a-z0-9-]+$/, "Slug может содержать только строчные латинские буквы, цифры и дефис."),
 })
 
 type CategoryFormValues = z.infer<typeof categorySchema>
@@ -77,12 +77,12 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
         mode === "create" ? await createCategory(formData) : await updateCategory(category!.id, formData)
 
       if (!result.ok) {
-        setFormError(result.error ?? "Operation failed.")
-        toast.error(result.error ?? "Operation failed.")
+        setFormError(result.error ?? "Операция не выполнена.")
+        toast.error(result.error ?? "Операция не выполнена.")
         return
       }
 
-      toast.success(mode === "create" ? "Category created." : "Category updated.")
+      toast.success(mode === "create" ? "Категория создана." : "Категория обновлена.")
       router.push("/admin/categories")
       router.refresh()
     })
@@ -91,7 +91,7 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
   return (
     <Card className="w-full max-w-2xl rounded-xl border-border shadow-sm">
       <CardHeader>
-        <CardTitle>{mode === "create" ? "Create Category" : "Edit Category"}</CardTitle>
+        <CardTitle>{mode === "create" ? "Новая категория" : "Редактирование категории"}</CardTitle>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -101,7 +101,7 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name *</FormLabel>
+                  <FormLabel>Название *</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -128,7 +128,7 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
                         setSlugManuallyChanged(true)
                         field.onChange(slugify(event.target.value))
                       }}
-                      placeholder="example-category"
+                      placeholder="primery-kategorii"
                     />
                   </FormControl>
                   <FormMessage />
@@ -140,10 +140,10 @@ export function CategoryForm({ mode, category }: CategoryFormProps) {
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => router.push("/admin/categories")} disabled={isPending}>
-              Cancel
+              Отмена
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : mode === "create" ? "Create category" : "Save changes"}
+              {isPending ? "Сохранение..." : mode === "create" ? "Создать категорию" : "Сохранить"}
             </Button>
           </CardFooter>
         </form>

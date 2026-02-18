@@ -141,8 +141,8 @@ export function HowWeWorkTimeline() {
 
               {/* Текст */}
               <div className="pt-0.5 md:pt-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--color-text-accent)] md:mb-0.5 md:text-[10px]">
-                  {String(index + 1).padStart(2, "0")}
+                <p className="text-sm font-bold uppercase tracking-wider text-[color:var(--color-text-accent)] md:mb-0.5 md:text-xs">
+                  {index + 1}
                 </p>
                 <p className="mt-0.5 text-sm leading-snug text-[color:var(--color-text-primary)] md:mt-1 md:text-sm md:max-w-[120px]">
                   {step.text}

@@ -37,7 +37,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
   const { data, error } = await query
 
   if (error) {
-    return <p className="text-red-600">Failed to load products: {error.message}</p>
+    return <p className="text-red-600">Не удалось загрузить товары: {error.message}</p>
   }
 
   const products = (data ?? []) as ProductRow[]
@@ -46,18 +46,18 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-foreground">Products</h2>
-          <p className="text-sm text-muted-foreground">Create, edit and delete products.</p>
-          {queryText ? <p className="mt-1 text-xs text-muted-foreground">Filter: {queryText}</p> : null}
+          <h2 className="text-xl font-semibold text-foreground">Товары</h2>
+          <p className="text-sm text-muted-foreground">Создание, редактирование и удаление товаров.</p>
+          {queryText ? <p className="mt-1 text-xs text-muted-foreground">Фильтр: {queryText}</p> : null}
         </div>
         <Button asChild>
-          <Link href="/admin/products/new">Add product</Link>
+          <Link href="/admin/products/new">Добавить товар</Link>
         </Button>
       </div>
 
       {products.length === 0 ? (
         <Card className="rounded-xl border-border shadow-sm">
-          <CardContent className="p-8 text-center text-muted-foreground">No products found.</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Товары не найдены.</CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -69,19 +69,19 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                     {product.images?.[0] ? (
                       <Image src={product.images[0]} alt={product.name} fill sizes="64px" className="object-cover" />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-xs text-muted-foreground">No image</div>
+                      <div className="flex h-full items-center justify-center text-xs text-muted-foreground">Нет фото</div>
                     )}
                   </div>
                   <div>
                     <p className="font-medium">{product.name}</p>
-                    <p className="text-sm text-muted-foreground">{product.categories?.[0]?.name ?? "No category"}</p>
+                    <p className="text-sm text-muted-foreground">{product.categories?.[0]?.name ?? "Без категории"}</p>
                     <p className="font-price tabular-nums text-sm font-semibold text-black">{Math.round(Number(product.price))} ₽</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Button asChild variant="outline" size="sm">
-                    <Link href={`/admin/products/${product.id}/edit`}>Edit</Link>
+                    <Link href={`/admin/products/${product.id}/edit`}>Изменить</Link>
                   </Button>
                   <ProductDeleteButton productId={product.id} productName={product.name} />
                 </div>

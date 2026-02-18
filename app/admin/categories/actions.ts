@@ -1,4 +1,4 @@
-﻿"use server"
+"use server"
 
 import { revalidatePath } from "next/cache"
 import { requireAdminUser } from "@/src/shared/lib/auth/require-admin"
@@ -31,13 +31,13 @@ function parsePayload(formData: FormData): CategoryPayload {
   const slug = slugify(slugRaw || name)
 
   if (!name) {
-    throw new Error("Category name is required.")
+    throw new Error("Укажите название категории.")
   }
   if (!slug) {
-    throw new Error("Slug is required.")
+    throw new Error("Укажите slug.")
   }
   if (!/^[a-z0-9-]+$/.test(slug)) {
-    throw new Error("Slug may contain only lowercase letters, numbers and hyphens.")
+    throw new Error("Slug может содержать только строчные латинские буквы, цифры и дефис.")
   }
 
   return { name, slug }
@@ -48,11 +48,11 @@ async function ensureSlugUnique(supabase: Awaited<ReturnType<typeof requireAdmin
   const { data, error } = excludeId ? await query.neq("id", excludeId).limit(1) : await query.limit(1)
 
   if (error) {
-    throw new Error(`Failed to validate slug: ${error.message}`)
+    throw new Error(`Ошибка проверки slug: ${error.message}`)
   }
 
   if ((data?.length ?? 0) > 0) {
-    throw new Error("Category with this slug already exists.")
+    throw new Error("Категория с таким slug уже существует.")
   }
 }
 
@@ -76,7 +76,7 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
     })
 
     if (error) {
-      throw new Error(`Failed to create category: ${error.message}`)
+      throw new Error(`Не удалось создать категорию: ${error.message}`)
     }
 
     revalidateCategoryPaths()
@@ -93,7 +93,7 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
 export async function updateCategory(id: number, formData: FormData): Promise<ActionResult> {
   try {
     if (!Number.isInteger(id) || id <= 0) {
-      throw new Error("Invalid category ID.")
+      throw new Error("Некорректный ID категории.")
     }
 
     const payload = parsePayload(formData)
@@ -109,7 +109,7 @@ export async function updateCategory(id: number, formData: FormData): Promise<Ac
       .eq("id", id)
 
     if (error) {
-      throw new Error(`Failed to update category: ${error.message}`)
+      throw new Error(`Не удалось обновить категорию: ${error.message}`)
     }
 
     revalidateCategoryPaths()
@@ -126,7 +126,7 @@ export async function updateCategory(id: number, formData: FormData): Promise<Ac
 export async function deleteCategory(id: number): Promise<ActionResult> {
   try {
     if (!Number.isInteger(id) || id <= 0) {
-      throw new Error("Invalid category ID.")
+      throw new Error("Некорректный ID категории.")
     }
 
     const { supabase } = await requireAdminUser()
@@ -137,16 +137,16 @@ export async function deleteCategory(id: number): Promise<ActionResult> {
       .eq("category_id", id)
 
     if (countError) {
-      throw new Error(`Failed to check category usage: ${countError.message}`)
+      throw new Error(`Не удалось проверить использование категории: ${countError.message}`)
     }
 
     if ((count ?? 0) > 0) {
-      throw new Error("Cannot delete category because it is used by products.")
+      throw new Error("Нельзя удалить категорию: она используется товарами.")
     }
 
     const { error } = await supabase.from("categories").delete().eq("id", id)
     if (error) {
-      throw new Error(`Failed to delete category: ${error.message}`)
+      throw new Error(`Не удалось удалить категорию: ${error.message}`)
     }
 
     revalidateCategoryPaths()

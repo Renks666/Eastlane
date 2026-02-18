@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { type Dispatch, type FormEvent, type SetStateAction, useEffect, useMemo, useState, useTransition } from "react"
 import Image from "next/image"
@@ -19,10 +19,10 @@ const SHOE_SIZE_OPTIONS = ["40", "41", "42", "43", "44", "45", "46", "47", "48",
 const COLOR_OPTIONS = ["белый", "черный", "синий", "красный", "зеленый", "серый", "золотой"] as const
 
 const formSchema = z.object({
-  name: z.string().trim().min(1, "Name is required."),
+  name: z.string().trim().min(1, "Укажите название."),
   description: z.string().optional(),
-  price: z.coerce.number().positive("Price must be greater than 0."),
-  categoryId: z.coerce.number().int().positive("Category is required."),
+  price: z.coerce.number().positive("Цена должна быть больше 0."),
+  categoryId: z.coerce.number().int().positive("Выберите категорию."),
   sizes: z.array(z.string()),
   colors: z.array(z.string()),
 })
@@ -144,7 +144,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
     })
 
     if (!parsed.success) {
-      setFormError(parsed.error.issues[0]?.message ?? "Validation failed.")
+      setFormError(parsed.error.issues[0]?.message ?? "Ошибка проверки данных.")
       return
     }
 
@@ -167,12 +167,12 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
       const result = mode === "create" ? await createProduct(formData) : await updateProduct(product!.id, formData)
 
       if (!result.ok) {
-        setFormError(result.error ?? "Operation failed.")
-        toast.error(result.error ?? "Operation failed.")
+        setFormError(result.error ?? "Операция не выполнена.")
+        toast.error(result.error ?? "Операция не выполнена.")
         return
       }
 
-      toast.success(mode === "create" ? "Product created." : "Product updated.")
+      toast.success(mode === "create" ? "Товар создан." : "Товар обновлён.")
       router.push("/admin/products")
       router.refresh()
     })
@@ -181,23 +181,23 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
   return (
     <Card className="w-full rounded-xl border-border shadow-sm">
       <CardHeader>
-        <CardTitle>{mode === "create" ? "New Product" : "Edit Product"}</CardTitle>
+        <CardTitle>{mode === "create" ? "Новый товар" : "Редактирование товара"}</CardTitle>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">Название *</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Описание</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Optional product description"
+                placeholder="Необязательное описание товара"
               />
             </div>
 
@@ -215,10 +215,10 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label>Category *</Label>
+              <Label>Категория *</Label>
               <Select value={categoryId} onValueChange={setCategoryId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
+                  <SelectValue placeholder="Выберите категорию" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
@@ -232,7 +232,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>Sizes</Label>
+            <Label>Размеры</Label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
               {sizeOptions.map((size) => (
                 <label key={size} className="flex items-center gap-2 rounded border p-2 text-sm">
@@ -244,7 +244,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>Colors</Label>
+            <Label>Цвета</Label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
               {COLOR_OPTIONS.map((color) => (
                 <label key={color} className="flex items-center gap-2 rounded border p-2 text-sm">
@@ -256,7 +256,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="images">Images</Label>
+            <Label htmlFor="images">Изображения</Label>
             <Input
               id="images"
               type="file"
@@ -278,14 +278,14 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
 
             {existingImages.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Existing images</p>
+                <p className="text-sm font-medium">Текущие изображения</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {existingImages.map((url) => (
                     <div key={url} className="rounded border p-2">
                       <div className="relative h-28 w-full overflow-hidden rounded">
                         <Image
                           src={url}
-                          alt="Existing product image"
+                          alt="Изображение товара"
                           fill
                           sizes="(max-width: 640px) 50vw, 25vw"
                           className="object-cover"
@@ -298,7 +298,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
                         className="mt-2 w-full"
                         onClick={() => setMainImageKey(`existing:${url}`)}
                       >
-                        {mainImageKey === `existing:${url}` ? "Main image" : "Set as main"}
+                        {mainImageKey === `existing:${url}` ? "Главное" : "Сделать главным"}
                       </Button>
                       <Button
                         type="button"
@@ -307,7 +307,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
                         className="mt-2 w-full"
                         onClick={() => removeExistingImage(url)}
                       >
-                        Remove
+                        Удалить
                       </Button>
                     </div>
                   ))}
@@ -317,7 +317,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
 
             {previewUrls.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium">New images</p>
+                <p className="text-sm font-medium">Новые изображения</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {previewUrls.map((preview) => (
                     <div key={preview.key} className="rounded border p-2">
@@ -338,7 +338,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
                         className="mt-2 w-full"
                         onClick={() => setMainImageKey(preview.key)}
                       >
-                        {mainImageKey === preview.key ? "Main image" : "Set as main"}
+                        {mainImageKey === preview.key ? "Главное" : "Сделать главным"}
                       </Button>
                       <Button
                         type="button"
@@ -347,7 +347,7 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
                         className="mt-2 w-full"
                         onClick={() => removeNewImage(preview.key)}
                       >
-                        Remove
+                        Удалить
                       </Button>
                     </div>
                   ))}
@@ -360,10 +360,10 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => router.push("/admin/products")} disabled={isPending}>
-            Cancel
+            Отмена
           </Button>
           <Button type="submit" disabled={isPending}>
-            {isPending ? "Saving..." : mode === "create" ? "Create product" : "Save changes"}
+            {isPending ? "Сохранение..." : mode === "create" ? "Создать товар" : "Сохранить"}
           </Button>
         </CardFooter>
       </form>

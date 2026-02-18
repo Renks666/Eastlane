@@ -1,4 +1,4 @@
-﻿import { notFound } from "next/navigation"
+import { notFound } from "next/navigation"
 import { ProductForm } from "@/components/ProductForm"
 import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
 import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
@@ -33,7 +33,7 @@ export default async function EditProductPage({ params }: EditPageProps) {
   ])
 
   if (categoriesError) {
-    return <p className="text-red-600">Failed to load categories: {categoriesError.message}</p>
+    return <p className="text-red-600">Не удалось загрузить категории: {categoriesError.message}</p>
   }
 
   if (productError || !product) {

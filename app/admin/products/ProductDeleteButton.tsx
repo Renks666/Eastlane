@@ -29,11 +29,11 @@ export function ProductDeleteButton({ productId, productName }: ProductDeleteBut
     startTransition(async () => {
       const result = await deleteProduct(productId)
       if (!result.ok) {
-        toast.error(result.error ?? "Failed to delete product.")
+        toast.error(result.error ?? "Не удалось удалить товар.")
         return
       }
 
-      toast.success("Product deleted.")
+      toast.success("Товар удалён.")
       setOpen(false)
       router.refresh()
     })
@@ -43,22 +43,22 @@ export function ProductDeleteButton({ productId, productName }: ProductDeleteBut
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="destructive" size="sm">
-          Delete
+          Удалить
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete product?</DialogTitle>
+          <DialogTitle>Удалить товар?</DialogTitle>
           <DialogDescription>
-            You are deleting <strong>{productName}</strong>. Images in storage will be removed too.
+            Будет удалён товар <strong>{productName}</strong>. Изображения в хранилище также будут удалены.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
-            Cancel
+            Отмена
           </Button>
           <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
-            {isPending ? "Deleting..." : "Delete"}
+            {isPending ? "Удаление..." : "Удалить"}
           </Button>
         </DialogFooter>
       </DialogContent>

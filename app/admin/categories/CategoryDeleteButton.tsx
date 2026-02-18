@@ -29,11 +29,11 @@ export function CategoryDeleteButton({ categoryId, categoryName }: CategoryDelet
     startTransition(async () => {
       const result = await deleteCategory(categoryId)
       if (!result.ok) {
-        toast.error(result.error ?? "Failed to delete category.")
+        toast.error(result.error ?? "Не удалось удалить категорию.")
         return
       }
 
-      toast.success("Category deleted.")
+      toast.success("Категория удалена.")
       setOpen(false)
       router.refresh()
     })
@@ -43,22 +43,22 @@ export function CategoryDeleteButton({ categoryId, categoryName }: CategoryDelet
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="destructive" size="sm">
-          Delete
+          Удалить
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete category?</DialogTitle>
+          <DialogTitle>Удалить категорию?</DialogTitle>
           <DialogDescription>
-            You are deleting <strong>{categoryName}</strong>. This action cannot be undone.
+            Будет удалена категория <strong>{categoryName}</strong>. Действие нельзя отменить.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
-            Cancel
+            Отмена
           </Button>
           <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
-            {isPending ? "Deleting..." : "Delete"}
+            {isPending ? "Удаление..." : "Удалить"}
           </Button>
         </DialogFooter>
       </DialogContent>

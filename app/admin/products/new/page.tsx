@@ -1,4 +1,4 @@
-﻿import { ProductForm } from "@/components/ProductForm"
+import { ProductForm } from "@/components/ProductForm"
 import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
 import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
 
@@ -17,7 +17,7 @@ export default async function NewProductPage() {
     .order("name", { ascending: true })
 
   if (error) {
-    return <p className="text-red-600">Failed to load categories: {error.message}</p>
+    return <p className="text-red-600">Не удалось загрузить категории: {error.message}</p>
   }
 
   return (

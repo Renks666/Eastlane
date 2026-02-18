@@ -1,4 +1,4 @@
-﻿# EASTLANE
+# EASTLANE
 
 Next.js storefront + admin panel for a fashion store. The project uses Supabase (PostgreSQL/Auth/Storage), server actions, and a domain-oriented structure.
 
@@ -30,8 +30,7 @@ Required:
 
 Optional:
 
-- `ADMIN_EMAILS` - comma-separated admin emails (`user1@example.com,user2@example.com`).
-  - If omitted, admin fallback allows authenticated users (for backward compatibility).
+- `ADMIN_EMAILS` - comma-separated admin emails (`user1@example.com,user2@example.com`). Alternatively, set `app_metadata.role` or `user_metadata.role` to `"admin"` in Supabase. If neither is configured, no one has admin access.
 
 ## SQL Setup
 

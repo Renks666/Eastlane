@@ -1,4 +1,4 @@
-﻿# Runbook
+# Runbook
 
 ## 1. First-time setup
 
@@ -6,7 +6,7 @@
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- optional `ADMIN_EMAILS`
+- optional `ADMIN_EMAILS` (required for admin access if you don't set `app_metadata.role`; if neither is set, no one can access `/admin`)
 
 2. Apply SQL:
 - `docs/sql/orders.sql`
@@ -24,9 +24,9 @@ npm run dev
 If `/admin` redirects to `/admin/login` after successful sign-in:
 
 1. Check Supabase session exists.
-2. Verify admin role rules:
-- set `ADMIN_EMAILS` to your account email, or
-- set user metadata/app metadata role to `admin`.
+2. Verify admin role rules (at least one required; otherwise no one has admin access):
+- set `ADMIN_EMAILS` to your account email (comma-separated), or
+- set user metadata or app metadata role to `admin`.
 
 ## 3. Checkout troubleshooting
 

@@ -1,4 +1,4 @@
-﻿# Architecture
+# Architecture
 
 ## Layers
 
@@ -43,10 +43,11 @@
 
 - `middleware.ts` protects `/admin/*` routes.
 - `requireAdminUser()` used in server actions.
-- Admin can be defined by:
+- Admin is defined only by:
   - `user.app_metadata.role === "admin"`, or
   - `user.user_metadata.role === "admin"`, or
   - email in `ADMIN_EMAILS`.
+- If none of these is configured, no user is considered admin (safe default).
 
 ## Error Handling and Logging
 

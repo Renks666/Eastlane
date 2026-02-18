@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -36,28 +36,26 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md rounded-xl border-border shadow-sm">
       <CardHeader>
-        <CardTitle>Admin Sign In</CardTitle>
-        <CardDescription>Use your account credentials to continue</CardDescription>
+        <CardTitle>Вход в админ-панель</CardTitle>
+        <CardDescription>Введите данные учётной записи</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pb-2">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Пароль</Label>
             <Input
               id="password"
               type="password"
-              placeholder="••••••••"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
@@ -65,9 +63,13 @@ export function LoginForm() {
           </div>
           {error ? <p className="text-sm text-red-500">{error}</p> : null}
         </CardContent>
-        <CardFooter>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
+        <CardFooter className="justify-center pt-5">
+          <Button
+            type="submit"
+            className="h-9 w-auto min-w-[8rem] rounded-md bg-[var(--color-brand-forest)] px-6 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[var(--color-brand-forest-dark)] disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? "Вход..." : "Войти"}
           </Button>
         </CardFooter>
       </form>

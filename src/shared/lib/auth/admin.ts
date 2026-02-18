@@ -1,4 +1,4 @@
-﻿import type { User } from "@supabase/supabase-js"
+import type { User } from "@supabase/supabase-js"
 
 function parseAdminEmails(raw: string | undefined) {
   if (!raw) return []
@@ -21,8 +21,8 @@ export function isAdminUser(user: User) {
     return Boolean(email && adminEmails.includes(email))
   }
 
-  // Backward-compatible fallback: if explicit admin rules are not configured,
-  // authenticated users can still access current admin area.
-  return true
+  // No explicit admin config: require either app_metadata.role === "admin"
+  // or ADMIN_EMAILS. Otherwise no access (safe default for production).
+  return false
 }
 

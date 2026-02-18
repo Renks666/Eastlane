@@ -1,4 +1,4 @@
-﻿"use server"
+"use server"
 
 import { revalidatePath } from "next/cache"
 import { requireAdminUser } from "@/src/shared/lib/auth/require-admin"
@@ -54,13 +54,13 @@ function parsePayload(formData: FormData): ProductPayload {
   const categoryId = Number(categoryIdRaw)
 
   if (!name) {
-    throw new Error("Product name is required.")
+    throw new Error("Укажите название товара.")
   }
   if (!Number.isFinite(price) || price <= 0) {
-    throw new Error("Price must be a positive number.")
+    throw new Error("Цена должна быть положительным числом.")
   }
   if (!Number.isInteger(categoryId) || categoryId <= 0) {
-    throw new Error("Category is required.")
+    throw new Error("Выберите категорию.")
   }
 
   return {
@@ -111,7 +111,7 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
       if (uploadedUrls.length > 0) {
         await removeProductImagesByUrls(uploadedUrls)
       }
-      throw new Error(`Failed to create product: ${error.message}`)
+      throw new Error(`Не удалось создать товар: ${error.message}`)
     }
 
     revalidateProductPaths()
@@ -128,7 +128,7 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
 export async function updateProduct(id: number, formData: FormData): Promise<ActionResult> {
   try {
     if (!Number.isInteger(id) || id <= 0) {
-      throw new Error("Invalid product ID.")
+      throw new Error("Некорректный ID товара.")
     }
 
     const payload = parsePayload(formData)
@@ -151,7 +151,7 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
       .single()
 
     if (currentError || !currentProduct) {
-      throw new Error("Product not found.")
+      throw new Error("Товар не найден.")
     }
 
     const currentImages = (currentProduct.images ?? []) as string[]
@@ -179,7 +179,7 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
       if (uploadedUrls.length > 0) {
         await removeProductImagesByUrls(uploadedUrls)
       }
-      throw new Error(`Failed to update product: ${updateError.message}`)
+      throw new Error(`Не удалось обновить товар: ${updateError.message}`)
     }
 
     if (removedImages.length > 0) {
@@ -200,7 +200,7 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
 export async function deleteProduct(id: number): Promise<ActionResult> {
   try {
     if (!Number.isInteger(id) || id <= 0) {
-      throw new Error("Invalid product ID.")
+      throw new Error("Некорректный ID товара.")
     }
 
     const { supabase } = await requireAdminUser()
@@ -211,7 +211,7 @@ export async function deleteProduct(id: number): Promise<ActionResult> {
       .single()
 
     if (productError || !product) {
-      throw new Error("Product not found.")
+      throw new Error("Товар не найден.")
     }
 
     const images = (product.images ?? []) as string[]
@@ -221,7 +221,7 @@ export async function deleteProduct(id: number): Promise<ActionResult> {
 
     const { error: deleteError } = await supabase.from("products").delete().eq("id", id)
     if (deleteError) {
-      throw new Error(`Failed to delete product: ${deleteError.message}`)
+      throw new Error(`Не удалось удалить товар: ${deleteError.message}`)
     }
 
     revalidateProductPaths()
