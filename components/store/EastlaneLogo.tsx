@@ -25,7 +25,7 @@ export function EastlaneLogo({
       <span
         aria-label="EASTLANE"
         className={cn(
-          "logo-animated font-semibold leading-none text-[#0f1720]",
+          "logo-animated font-semibold leading-none text-[color:var(--color-text-primary)]",
           compact
             ? "text-base tracking-[0.24em] sm:text-lg lg:text-xl"
             : "text-2xl tracking-[0.28em] sm:text-3xl lg:text-4xl"

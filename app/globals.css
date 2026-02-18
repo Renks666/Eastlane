@@ -1,7 +1,7 @@
 @config "../tailwind.config.ts";
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import "./design-tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -124,6 +124,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 @layer utilities {
@@ -170,6 +173,214 @@
 @media (prefers-reduced-motion: reduce) {
   .logo-link:hover .logo-char {
     animation: none !important;
+  }
+}
+
+/* Eastlane Toast Styles - Clean White Design */
+.eastlane-toast,
+[data-sonner-toast].eastlane-toast {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #0f1720 !important;
+  border: 1px solid rgba(15, 63, 51, 0.08) !important;
+  border-radius: 12px !important;
+  padding: 14px 16px !important;
+  font-family: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  box-shadow: 
+    0 2px 8px -2px rgba(15, 63, 51, 0.06),
+    0 8px 24px -4px rgba(15, 63, 51, 0.08),
+    0 16px 48px -8px rgba(15, 63, 51, 0.04) !important;
+  animation: toast-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  min-width: min(360px, calc(100vw - 48px));
+  max-width: min(480px, calc(100vw - 32px));
+  width: auto;
+}
+
+@media (max-width: 640px) {
+  .eastlane-toast {
+    min-width: calc(100vw - 48px);
+    max-width: calc(100vw - 32px);
+    padding: 12px 14px !important;
+    border-radius: 10px !important;
+  }
+}
+
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.eastlane-toast::before,
+[data-sonner-toast].eastlane-toast::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #0f5a49 !important;
+  opacity: 1;
+  z-index: 1;
+}
+
+.eastlane-toast-title,
+[data-sonner-toast] .eastlane-toast-title {
+  color: #0f3f33 !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+.eastlane-toast-description,
+[data-sonner-toast] .eastlane-toast-description {
+  color: #6b7c73 !important;
+  font-size: 0.75rem !important;
+  margin-top: 0.125rem;
+  line-height: 1.5;
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.eastlane-toast-action,
+[data-sonner-toast] button[data-button].eastlane-toast-action {
+  background: #0f5a49 !important;
+  background-color: #0f5a49 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(15, 90, 73, 0.15) !important;
+  transition: all 0.15s ease !important;
+}
+
+.eastlane-toast-action:hover,
+[data-sonner-toast] button[data-button].eastlane-toast-action:hover {
+  background: #0b4a3c !important;
+  background-color: #0b4a3c !important;
+  box-shadow: 0 2px 4px rgba(15, 90, 73, 0.2) !important;
+}
+
+.eastlane-toast-action:active,
+[data-sonner-toast] button[data-button].eastlane-toast-action:active {
+  background: #0a3d31 !important;
+  background-color: #0a3d31 !important;
+  box-shadow: 0 1px 2px rgba(15, 90, 73, 0.15) !important;
+  transform: scale(0.98);
+}
+
+.eastlane-toast-cancel {
+  @apply rounded-lg border border-[#e0ddd5] bg-white px-3 py-1.5 text-xs font-medium transition-all duration-150;
+  color: #6b7c73;
+  letter-spacing: -0.01em;
+}
+
+.eastlane-toast-cancel:hover {
+  @apply border-[#d8cfb7] bg-[#faf9f6];
+}
+
+.eastlane-toast-cancel:active {
+  @apply bg-[#f5f3ed];
+  transform: scale(0.98);
+}
+
+.eastlane-toast-success,
+[data-sonner-toast].eastlane-toast-success {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.eastlane-toast-success::before,
+[data-sonner-toast].eastlane-toast-success::before {
+  background: #0f5a49 !important;
+}
+
+.eastlane-toast-success [data-icon],
+[data-sonner-toast].eastlane-toast-success [data-icon] {
+  color: #0f5a49 !important;
+}
+
+.eastlane-toast-error {
+  background: #ffffff;
+}
+
+.eastlane-toast-error::before {
+  background: #c54545;
+}
+
+.eastlane-toast-error [data-icon] {
+  color: #c54545;
+}
+
+.eastlane-toast-warning {
+  background: #ffffff;
+}
+
+.eastlane-toast-warning::before {
+  background: #c6a15b;
+}
+
+.eastlane-toast-warning [data-icon] {
+  color: #c6a15b;
+}
+
+.eastlane-toast-info {
+  background: #ffffff;
+}
+
+.eastlane-toast-info::before {
+  background: #5f7a8e;
+}
+
+.eastlane-toast-info [data-icon] {
+  color: #5f7a8e;
+}
+
+/* Hover effect для всего toast */
+.eastlane-toast:hover {
+  box-shadow: 
+    0 4px 12px -2px rgba(15, 63, 51, 0.08),
+    0 12px 32px -6px rgba(15, 63, 51, 0.1),
+    0 20px 56px -10px rgba(15, 63, 51, 0.06) !important;
+}
+
+/* Subtle progress bar animation */
+.eastlane-toast[data-visible="true"]::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 1.5px;
+  background: rgba(15, 90, 73, 0.15);
+  animation: toast-progress 3s linear;
+  border-radius: 0 0 12px 12px;
+}
+
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
   }
 }
 

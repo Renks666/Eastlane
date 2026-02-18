@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
@@ -141,7 +141,7 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-[#d7ceb8] bg-white">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]">
         <button type="button" className="h-full w-full" onClick={openViewer} aria-label="Открыть фото">
           <Image
             src={gallery[index]}
@@ -180,7 +180,7 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
             <button
               key={`${image}-${i}`}
               onClick={() => setIndex(i)}
-              className={`relative aspect-square overflow-hidden rounded-xl border ${index === i ? "border-[#aa8b46]" : "border-[#d7ceb8]"}`}
+              className={`relative aspect-square overflow-hidden rounded-xl border ${index === i ? "border-[color:var(--color-brand-gold-600)]" : "border-[color:var(--color-border-primary)]"}`}
               type="button"
             >
               <Image src={image} alt={`${name} превью ${i + 1}`} fill sizes="120px" className="object-cover" />
@@ -204,7 +204,7 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
               <X className="h-5 w-5" />
             </button>
             <div
-              className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-white"
+              className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[color:var(--color-bg-primary)]"
               onWheel={handleWheelZoom}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}

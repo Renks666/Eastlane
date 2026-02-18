@@ -1,10 +1,12 @@
-﻿"use client"
+"use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Search, ZoomIn, ZoomOut, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, Search, ShoppingCart, ZoomIn, ZoomOut, X } from "lucide-react"
+import { toast } from "sonner"
 import { AddToCartButton } from "@/components/store/AddToCartButton"
+import { useCart } from "@/components/store/CartProvider"
 
 type StoreProductCardProps = {
   product: {
@@ -24,18 +26,30 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
   const sizes = useMemo(() => product.sizes ?? [], [product.sizes])
   const colors = useMemo(() => product.colors ?? [], [product.colors])
   const images = useMemo(() => (product.images && product.images.length > 0 ? product.images : [FALLBACK_IMAGE]), [product.images])
+  const { addItem } = useCart()
 
-  const [selectedSize, setSelectedSize] = useState<string>(sizes.length === 1 ? sizes[0] : "")
-  const [selectedColor, setSelectedColor] = useState<string>(colors.length === 1 ? colors[0] : "")
   const [imageIndex, setImageIndex] = useState(0)
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [zoom, setZoom] = useState(1)
+  // Состояние быстрого добавления в корзину: открыт ли dropdown выбора размера
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const quickAddRef = useRef<HTMLDivElement>(null)
 
-  const requiresSizeSelection = sizes.length > 1
-  const requiresColorSelection = colors.length > 1
-  const disableAdd = (requiresSizeSelection && !selectedSize) || (requiresColorSelection && !selectedColor)
-
+  // Определяем, есть ли варианты товара (несколько размеров или цветов)
+  const hasVariants = sizes.length > 1 || colors.length > 1
   const activeImage = images[imageIndex] || FALLBACK_IMAGE
+
+  // Закрытие dropdown при клике вне области карточки/меню
+  useEffect(() => {
+    if (!quickAddOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (quickAddRef.current && !quickAddRef.current.contains(e.target as Node)) {
+        setQuickAddOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [quickAddOpen])
 
   const nextImage = () => {
     setImageIndex((prev) => (prev + 1) % images.length)
@@ -58,10 +72,33 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
   const zoomIn = () => setZoom((prev) => Math.min(prev + 0.25, 3))
   const zoomOut = () => setZoom((prev) => Math.max(prev - 0.25, 1))
 
+  // Быстрое добавление в корзину с выбранным размером (без перехода на страницу товара)
+  const handleQuickAdd = (selectedSize: string) => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images?.[0],
+      sizes: sizes,
+      colors: colors,
+      selectedSize,
+      selectedColor: colors.length === 1 ? colors[0] : undefined,
+    })
+    toast.success("Товар добавлен в корзину", {
+      description: product.name,
+      action: {
+        label: "Открыть корзину",
+        onClick: () => window.dispatchEvent(new CustomEvent("cart:open")),
+      },
+      duration: 3000,
+    })
+    setQuickAddOpen(false)
+  }
+
   return (
     <>
-      <article className="group rounded-2xl border border-[#d8cfb7] bg-white/90 p-3 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-28px_rgba(15,63,51,0.8)]">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-[#efe7d4] bg-[#f8f5ee]">
+      <article className="group rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-3 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-28px_rgba(15,63,51,0.8)]">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-[color:var(--color-border-secondary)] bg-[color:var(--color-bg-image)]">
           <Link href={`/products/${product.id}`} className="block h-full w-full" aria-label={`Открыть товар ${product.name}`}>
             <Image
               src={activeImage}
@@ -75,7 +112,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
           <button
             type="button"
             onClick={openViewer}
-            className="absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d8cfb7] bg-white/90 text-[#0f3f33] transition hover:bg-white"
+            className="absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
             aria-label="Открыть фото"
           >
             <Search className="h-4 w-4" />
@@ -86,7 +123,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
               <button
                 type="button"
                 onClick={prevImage}
-                className="absolute left-2 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[#d8cfb7] bg-white/90 text-[#0f3f33] transition hover:bg-white"
+                className="absolute left-2 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                 aria-label="Предыдущее фото"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -94,7 +131,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
               <button
                 type="button"
                 onClick={nextImage}
-                className="absolute right-2 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[#d8cfb7] bg-white/90 text-[#0f3f33] transition hover:bg-white"
+                className="absolute right-2 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                 aria-label="Следующее фото"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -110,7 +147,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
                 key={`${product.id}-${idx}`}
                 type="button"
                 onClick={() => setImageIndex(idx)}
-                className={`h-1.5 rounded-full transition ${idx === imageIndex ? "w-5 bg-[#0f5a49]" : "w-1.5 bg-[#d8cfb7] hover:bg-[#b29152]"}`}
+                className={`h-1.5 rounded-full transition ${idx === imageIndex ? "w-5 bg-[color:var(--color-brand-forest)]" : "w-1.5 bg-[color:var(--color-border-primary)] hover:bg-[color:var(--color-brand-beige-dark)]"}`}
                 aria-label={`Открыть фото ${idx + 1}`}
               />
             ))}
@@ -118,66 +155,88 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
         )}
 
         <div className="mt-3">
-          <p className="text-xs uppercase tracking-[0.15em] text-[#8b7a55]">{product.categoryName ?? "Каталог"}</p>
-          <Link href={`/products/${product.id}`} className="mt-1 block line-clamp-1 text-base font-medium text-[#0f1720]">
+          <p className="text-xs uppercase tracking-[0.15em] text-[color:var(--color-text-accent)]">{product.categoryName ?? "Каталог"}</p>
+          <Link href={`/products/${product.id}`} className="mt-1 block line-clamp-2 text-base font-medium leading-snug text-[color:var(--color-text-primary)] hover:text-[color:var(--color-brand-forest-light)]">
             {product.name}
           </Link>
-
-          {(sizes.length > 1 || colors.length > 1) && (
-            <div className="mt-3 grid gap-2">
-              {sizes.length > 1 && (
-                <select
-                  value={selectedSize}
-                  onChange={(event) => setSelectedSize(event.target.value)}
-                  className="h-9 rounded-lg border border-[#d8cfb7] bg-white px-2 text-xs text-[#0f1720] outline-none focus:border-[#b29152]"
+          {/* Размеры под названием — в квадратиках (чипы) */}
+          {sizes.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {sizes.map((size) => (
+                <span
+                  key={size}
+                  className="inline-flex h-6 min-w-[28px] items-center justify-center rounded border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2 text-xs font-medium text-[color:var(--color-text-secondary)]"
                 >
-                  <option value="">Выберите размер</option>
-                  {sizes.map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              {colors.length > 1 && (
-                <select
-                  value={selectedColor}
-                  onChange={(event) => setSelectedColor(event.target.value)}
-                  className="h-9 rounded-lg border border-[#d8cfb7] bg-white px-2 text-xs text-[#0f1720] outline-none focus:border-[#b29152]"
-                >
-                  <option value="">Выберите цвет</option>
-                  {colors.map((color) => (
-                    <option key={color} value={color}>
-                      {color}
-                    </option>
-                  ))}
-                </select>
-              )}
+                  {size}
+                </span>
+              ))}
             </div>
           )}
 
-          <div className="mt-2 flex items-center justify-between gap-2">
-            <p className="text-lg font-semibold text-[#0f3f33]">{Number(product.price).toFixed(2)} ₽</p>
-            <AddToCartButton
-              product={{
-                id: product.id,
-                name: product.name,
-                price: product.price,
-                image: product.images?.[0],
-                sizes,
-                colors,
-                selectedSize: selectedSize || undefined,
-                selectedColor: selectedColor || undefined,
-              }}
-              disabled={disableAdd}
-              className="rounded-lg bg-brand-gold-500 px-3 py-1.5 text-xs font-semibold text-brand-dark transition hover:bg-brand-gold-400"
-            />
+          <div className="mt-3 flex items-center justify-between gap-2 sm:gap-3">
+            <p className="text-lg font-semibold text-[color:var(--color-brand-forest-light)]">{Number(product.price).toFixed(2)} ₽</p>
+            
+            {hasVariants ? (
+              <div className="flex items-center gap-1.5 sm:gap-2" ref={quickAddRef}>
+                {/* Иконка корзины слева от кнопки; по клику — выбор размера и добавление в корзину */}
+                {sizes.length > 0 && (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setQuickAddOpen((v) => !v)}
+                    className="inline-flex h-10 w-10 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+                    aria-label="Быстро добавить в корзину"
+                    aria-expanded={quickAddOpen}
+                  >
+                    <ShoppingCart className="h-4 w-4 sm:h-4 sm:w-4" />
+                  </button>
+                  {quickAddOpen && (
+                    <div
+                      className="absolute left-0 top-full z-20 mt-1.5 min-w-[120px] rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-2 shadow-lg"
+                      role="listbox"
+                      aria-label="Выберите размер"
+                    >
+                      <p className="mb-2 text-center text-sm font-medium text-[color:var(--color-text-primary)]">Размер:</p>
+                      <div className="flex flex-col">
+                        {sizes.map((size) => (
+                          <button
+                            key={size}
+                            type="button"
+                            role="option"
+                            onClick={() => handleQuickAdd(size)}
+                            className="w-full border-t border-b border-[color:var(--color-border-secondary)] py-2 text-center text-xs font-medium text-[color:var(--color-text-secondary)] transition first:border-t-[color:var(--color-border-secondary)] hover:bg-[color:var(--color-bg-accent)] hover:text-[color:var(--color-brand-forest-light)] hover:border-2 hover:border-[color:var(--color-brand-beige-dark)] focus:outline-none focus:bg-[color:var(--color-bg-accent)] focus:text-[color:var(--color-brand-forest-light)] focus:border-2 focus:border-[color:var(--color-brand-beige-dark)]"
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                )}
+                <Link
+                  href={`/products/${product.id}`}
+                  className="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg bg-[color:var(--color-brand-forest)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)] sm:flex-initial sm:px-4"
+                >
+                  К товару
+                </Link>
+              </div>
+            ) : (
+              <AddToCartButton
+                product={{
+                  id: product.id,
+                  name: product.name,
+                  price: product.price,
+                  image: product.images?.[0],
+                  sizes: sizes.length === 1 ? sizes : [],
+                  colors: colors.length === 1 ? colors : [],
+                  selectedSize: sizes.length === 1 ? sizes[0] : undefined,
+                  selectedColor: colors.length === 1 ? colors[0] : undefined,
+                }}
+                className="rounded-lg bg-[color:var(--color-brand-forest)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)]"
+              />
+            )}
           </div>
-
-          {disableAdd && (
-            <p className="mt-2 text-[11px] text-[#7a6d52]">Выберите размер и цвет перед добавлением.</p>
-          )}
         </div>
       </article>
 
@@ -187,24 +246,24 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
           onClick={closeViewer}
         >
           <div
-            className="relative w-full max-w-4xl rounded-2xl border border-[#d8cfb7] bg-white p-3 shadow-2xl md:p-4"
+            className="relative w-full max-w-4xl rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-3 shadow-2xl md:p-4"
             onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
               onClick={closeViewer}
-              className="absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#d8cfb7] bg-white/95 text-[#0f3f33] transition hover:bg-[#f7f4ea]"
+              className="absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/95 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
               aria-label="Закрыть фото"
             >
               <X className="h-4 w-4" />
             </button>
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-medium text-[#0f3f33]">{product.name}</p>
+              <p className="text-sm font-medium text-[color:var(--color-brand-forest-light)]">{product.name}</p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={zoomOut}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#d8cfb7] text-[#0f3f33] transition hover:bg-[#f7f4ea]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
                   aria-label="Отдалить"
                 >
                   <ZoomOut className="h-4 w-4" />
@@ -212,7 +271,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
                 <button
                   type="button"
                   onClick={zoomIn}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#d8cfb7] text-[#0f3f33] transition hover:bg-[#f7f4ea]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
                   aria-label="Приблизить"
                 >
                   <ZoomIn className="h-4 w-4" />
@@ -220,7 +279,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
                 <button
                   type="button"
                   onClick={closeViewer}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#d8cfb7] text-[#0f3f33] transition hover:bg-[#f7f4ea]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
                   aria-label="Закрыть"
                 >
                   <X className="h-4 w-4" />
@@ -228,7 +287,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
               </div>
             </div>
 
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-[#f8f5ee]">
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-[color:var(--color-bg-image)]">
               <Image
                 src={activeImage}
                 alt={product.name}
@@ -243,7 +302,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
                   <button
                     type="button"
                     onClick={prevImage}
-                    className="absolute left-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#d8cfb7] bg-white/90 text-[#0f3f33] transition hover:bg-white"
+                    className="absolute left-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                     aria-label="Предыдущее фото"
                   >
                     <ChevronLeft className="h-5 w-5" />
@@ -251,7 +310,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
                   <button
                     type="button"
                     onClick={nextImage}
-                    className="absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#d8cfb7] bg-white/90 text-[#0f3f33] transition hover:bg-white"
+                    className="absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                     aria-label="Следующее фото"
                   >
                     <ChevronRight className="h-5 w-5" />

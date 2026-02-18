@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState } from "react"
 import { AddToCartButton } from "@/components/store/AddToCartButton"
@@ -23,7 +23,7 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
     <div className="mt-5 space-y-3">
       {hasSizes && (
         <div>
-          <p className="mb-2 text-sm font-medium text-[#0f3f33]">Выберите размер</p>
+          <p className="mb-2 text-sm font-medium text-[color:var(--color-brand-forest-light)]">Выберите размер</p>
           <div className="flex flex-wrap gap-2">
             {product.sizes.map((size) => (
               <button
@@ -32,15 +32,15 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
                 onClick={() => setActiveSize(size)}
                 className={`rounded-full border px-3 py-1 text-sm font-medium transition ${
                   activeSize === size
-                    ? "border-[#b29152] bg-[#b29152] text-white"
-                    : "border-[#d8cfb7] bg-white text-[#0f3f33] hover:border-[#b29152]"
+                    ? "border-[color:var(--color-brand-beige-dark)] bg-[color:var(--color-brand-beige-dark)] text-white"
+                    : "border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] hover:border-[color:var(--color-brand-beige-dark)]"
                 }`}
               >
                 {size}
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs text-[#5f6e65]">
+          <p className="mt-2 text-xs text-[color:var(--color-text-tertiary)]">
             Сначала выберите размер, затем нажмите кнопку <strong>В корзину</strong>.
           </p>
         </div>
@@ -57,7 +57,7 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
           selectedSize: activeSize ?? undefined,
         }}
         disabled={addDisabled}
-        className="w-full rounded-xl bg-[#0f5a49] px-4 py-3 text-sm font-semibold text-[#f2ece0] transition hover:bg-[#0b4a3c]"
+        className="w-full rounded-xl bg-[color:var(--color-brand-forest)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)]"
       />
     </div>
   )

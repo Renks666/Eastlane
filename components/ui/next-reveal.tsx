@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import type { CSSProperties } from "react"
 import { cn } from "@/lib/utils"
@@ -27,16 +27,16 @@ export default function FlipTextReveal({ word = "EASTLANE", className }: FlipTex
 
       <style jsx>{`
         .flip-container {
-          --bg-color: #f8f4ea;
-          --text-color: #0f3f33;
-          --btn-border: #d8cfb7;
+          --bg-color: var(--color-bg-accent);
+          --text-color: var(--color-brand-forest-light);
+          --btn-border: var(--color-border-primary);
 
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           padding: 1.4rem 1.4rem;
-          background: linear-gradient(135deg, var(--bg-color), #ffffff);
+          background: linear-gradient(135deg, var(--bg-color), var(--color-bg-primary));
           border-radius: 14px;
           overflow: hidden;
           width: 100%;

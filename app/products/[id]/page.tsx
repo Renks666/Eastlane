@@ -1,7 +1,8 @@
-﻿import { notFound } from "next/navigation"
+import { notFound } from "next/navigation"
 import { StoreShell } from "@/components/store/StoreShell"
 import { ProductGallery } from "@/components/store/ProductGallery"
 import { ProductPurchasePanel } from "@/components/store/ProductPurchasePanel"
+import { Breadcrumbs } from "@/components/store/Breadcrumbs"
 import { createClient } from "@/lib/supabase/server"
 
 type ProductPageProps = {
@@ -44,15 +45,22 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <StoreShell>
-      <section className="mx-auto max-w-7xl px-4 pb-12 pt-8 md:px-8">
+      <section className="mx-auto max-w-7xl px-6 pb-16 pt-12 md:px-12">
+        <Breadcrumbs
+          items={[
+            { label: "Главная", href: "/" },
+            { label: "Каталог", href: "/catalog" },
+            { label: product.name },
+          ]}
+        />
         <div className="grid gap-6 lg:grid-cols-[1.05fr_1fr]">
           <ProductGallery images={product.images ?? []} name={product.name} />
-          <article className="rounded-2xl border border-[#d8cfb7] bg-white/90 p-5 md:p-6">
-            <p className="inline-flex rounded-full border border-[#d8cfb7] bg-[#f7f4ea] px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-[#6f634a]">
+          <article className="rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-5 md:p-6">
+            <p className="inline-flex rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-accent)] px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-[color:var(--color-text-tertiary)]">
               Коллекция: {product.categories?.[0]?.name ?? "EASTLANE"}
             </p>
-            <h1 className="mt-3 text-3xl font-semibold text-[#0f3f33]">{product.name}</h1>
-            <p className="mt-4 text-3xl font-semibold text-[#0f3f33]">{Number(product.price).toFixed(2)} ₽</p>
+            <h1 className="mt-3 text-3xl font-semibold text-[color:var(--color-brand-forest-light)]">{product.name}</h1>
+            <p className="mt-4 text-3xl font-semibold text-[color:var(--color-brand-forest-light)]">{Number(product.price).toFixed(2)} ₽</p>
 
             <ProductPurchasePanel
               product={{
@@ -67,37 +75,37 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             <div className="mt-6 space-y-5">
               <div>
-                <p className="mb-2 text-sm font-medium text-[#0f3f33]">Цвет</p>
+                <p className="mb-2 text-sm font-medium text-[color:var(--color-brand-forest-light)]">Цвет</p>
                 <div className="flex flex-wrap gap-2">
                   {colors.length > 0 ? (
                     colors.map((color) => (
-                      <span key={color} className="rounded-full border border-[#d8cfb7] bg-white px-3 py-1 text-sm text-[#5f6e65]">
+                      <span key={color} className="rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 py-1 text-sm text-[color:var(--color-text-secondary)]">
                         {color}
                       </span>
                     ))
                   ) : (
-                    <span className="text-sm text-[#5f6e65]">Уточните у менеджера</span>
+                    <span className="text-sm text-[color:var(--color-text-secondary)]">Уточните у менеджера</span>
                   )}
                 </div>
               </div>
 
               <div>
-                <p className="mb-2 text-sm font-medium text-[#0f3f33]">Наличие</p>
-                <span className={`inline-flex rounded-full border px-3 py-1 text-sm ${inStock ? "border-[#c8dacd] bg-[#eef4f1] text-[#0f5a49]" : "border-[#e5d6b3] bg-[#faf8f2] text-[#b29152]"}`}>
+                <p className="mb-2 text-sm font-medium text-[color:var(--color-brand-forest-light)]">Наличие</p>
+                <span className={`inline-flex rounded-full border px-3 py-1 text-sm ${inStock ? "border-[color:var(--color-border-secondary)] bg-[color:var(--color-bg-image)] text-[color:var(--color-brand-forest)]" : "border-[color:var(--color-border-secondary)] bg-[color:var(--color-bg-tertiary)] text-[color:var(--color-brand-beige-dark)]"}`}>
                   {inStock ? "В наличии" : "Под заказ"}
                 </span>
               </div>
 
               <div>
-                <p className="mb-2 text-sm font-medium text-[#0f3f33]">Описание товара</p>
-                <p className="text-sm leading-relaxed text-[#5f6e65]">
+                <p className="mb-2 text-sm font-medium text-[color:var(--color-brand-forest-light)]">Описание товара</p>
+                <p className="text-sm leading-relaxed text-[color:var(--color-text-secondary)]">
                   {product.description || "Минималистичный силуэт и комфортная посадка для повседневного гардероба."}
                 </p>
               </div>
             </div>
 
-            <div className="mt-7 rounded-2xl border border-[#d8cfb7] bg-[#faf8f2] p-4">
-              <p className="text-sm text-[#5f6e65]">
+            <div className="mt-7 rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-tertiary)] p-4">
+              <p className="text-sm text-[color:var(--color-text-secondary)]">
                 Оформление заказа через менеджера в Instagram / Telegram / WhatsApp.
                 Онлайн-оплата на сайте не используется.
               </p>
