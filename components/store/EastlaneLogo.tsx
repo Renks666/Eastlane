@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import type { CSSProperties } from "react"
 import { cn } from "@/lib/utils"
 
@@ -11,13 +14,22 @@ export function EastlaneLogo({
   compact = false,
   className,
 }: EastlaneLogoProps) {
+  const pathname = usePathname()
   const letters = "EASTLANE".split("")
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (pathname === "/") {
+      e.preventDefault()
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }
 
   return (
     <Link
       href="/"
+      onClick={handleClick}
       className={cn(
-        "logo-link inline-flex items-center",
+        "logo-link inline-flex items-center cursor-pointer",
         compact ? "gap-2 sm:gap-3" : "gap-3 sm:gap-4",
         className
       )}
