@@ -45,6 +45,13 @@ const navItems: NavItem[] = [
   { title: "Заказы", href: "/admin/orders", icon: ShoppingCart },
 ]
 
+function isNavItemActive(pathname: string, href: string) {
+  if (href === "/admin") {
+    return pathname === "/admin"
+  }
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
+
 function resolveTitle(pathname: string) {
   if (pathname.startsWith("/admin/orders")) return "Заказы"
   if (pathname.startsWith("/admin/products")) return "Товары"
@@ -194,7 +201,7 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
           <nav className="space-y-1 p-2">
             {navItems.map((item) => {
               const Icon = item.icon
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+              const isActive = isNavItemActive(pathname, item.href)
 
               return (
                 <Link
@@ -272,7 +279,7 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
         <nav className="flex-1 space-y-1 px-2 py-4">
           {navItems.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+            const isActive = isNavItemActive(pathname, item.href)
 
             return (
               <Link
