@@ -215,15 +215,15 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-card px-6">
-          <h1 className="text-lg font-semibold text-foreground">{title}</h1>
+        <header className="sticky top-0 z-10 flex min-h-14 flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-4 py-2 sm:px-6">
+          <h1 className="truncate text-lg font-semibold text-foreground">{title}</h1>
 
-          <div className="flex items-center gap-3">
-            <div className="relative hidden md:flex md:items-center md:gap-2">
+          <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
+            <div className="relative hidden md:flex md:min-w-[180px] md:max-w-[320px] md:flex-1 md:items-center md:gap-2">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={searchPlaceholder}
-                className="h-9 w-[320px] bg-secondary pl-8 text-sm"
+                className="h-9 w-full bg-secondary pl-8 text-sm"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 onKeyDown={(event) => {

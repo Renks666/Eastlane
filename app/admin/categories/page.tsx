@@ -47,7 +47,10 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
           <p className="text-sm text-muted-foreground">Управление категориями товаров.</p>
           {queryText ? <p className="mt-1 text-xs text-muted-foreground">Фильтр: {queryText}</p> : null}
         </div>
-        <Button asChild>
+        <Button
+          asChild
+          className="!bg-[color:var(--color-brand-forest)] !text-white hover:!bg-[color:var(--color-brand-forest-dark)]"
+        >
           <Link href="/admin/categories/new">Создать категорию</Link>
         </Button>
       </div>

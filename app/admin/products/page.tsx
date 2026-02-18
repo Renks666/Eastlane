@@ -50,8 +50,11 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
           <p className="text-sm text-muted-foreground">Создание, редактирование и удаление товаров.</p>
           {queryText ? <p className="mt-1 text-xs text-muted-foreground">Фильтр: {queryText}</p> : null}
         </div>
-        <Button asChild>
-          <Link href="/admin/products/new">Добавить товар</Link>
+        <Button
+          asChild
+          className="!bg-[color:var(--color-brand-forest)] !text-white hover:!bg-[color:var(--color-brand-forest-dark)]"
+        >
+          <Link href="/admin/products/new">Создать товар</Link>
         </Button>
       </div>
 
