@@ -107,8 +107,13 @@ export function HowWeWorkTimeline() {
         </p>
       </div>
 
-      {/* Шаги таймлайна */}
-      <ol className="relative flex flex-col gap-0 md:flex-row md:items-start md:justify-between">
+      {/* Шаги таймлайна: на мобильном линия по центру экрана (50vw), на десктопе — как раньше */}
+      <ol className="relative flex flex-col gap-0 md:flex-row md:items-start md:justify-between md:static w-screen max-w-none ml-[calc(-50vw+50%)] mr-[calc(-50vw+50%)] md:ml-0 md:mr-0 md:w-auto">
+        {/* Мобильная: одна вертикальная линия по центру вьюпорта */}
+        <span
+          aria-hidden="true"
+          className="absolute left-1/2 top-8 bottom-0 w-px -translate-x-px bg-[color:var(--color-border-primary)] md:hidden"
+        />
         {STEPS.map((step, index) => {
           const Icon = step.icon
           const isLast = index === STEPS.length - 1
@@ -118,29 +123,23 @@ export function HowWeWorkTimeline() {
               key={step.label}
               className="relative flex flex-row items-start gap-3 pb-5 md:flex-1 md:flex-col md:items-center md:gap-0 md:pb-0 md:text-center"
             >
-              {/* Соединительная линия — вертикальная (mob) / горизонтальная (desktop) */}
+              {/* Десктоп: горизонтальная линия между шагами */}
               {!isLast && (
-                <>
-                  {/* Мобильная: вертикальная линия */}
-                  <span
-                    aria-hidden="true"
-                    className="absolute left-[15px] top-8 h-full w-px bg-[color:var(--color-border-primary)] md:hidden"
-                  />
-                  {/* Десктоп: горизонтальная линия */}
-                  <span
-                    aria-hidden="true"
-                    className="absolute left-1/2 top-[19px] hidden h-px w-full bg-[color:var(--color-border-primary)] md:block"
-                  />
-                </>
+                <span
+                  aria-hidden="true"
+                  className="absolute left-1/2 top-[19px] hidden h-px w-full bg-[color:var(--color-border-primary)] md:block"
+                />
               )}
 
+              {/* На мобильном — отступ слева, чтобы иконка оказалась по центру экрана (на линии) */}
+              <div className="w-[calc(50%-1rem)] shrink-0 md:w-0 md:min-w-0 md:overflow-hidden" aria-hidden="true" />
               {/* Иконка */}
               <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-tertiary)] text-[color:var(--color-brand-forest)] md:h-10 md:w-10">
                 <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </div>
 
               {/* Текст */}
-              <div className="pt-0.5 md:pt-3">
+              <div className="min-w-0 flex-1 pt-0.5 md:flex-none md:pt-3">
                 <p className="text-sm font-bold uppercase tracking-wider text-[color:var(--color-text-accent)] md:mb-0.5 md:text-xs">
                   {index + 1}
                 </p>
