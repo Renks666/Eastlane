@@ -114,9 +114,9 @@ export default async function HomePage() {
       </section>
 
       {/* Как мы работаем */}
-      <section id="how-we-work" className="mx-auto max-w-7xl px-6 pb-16 md:px-12">
+      <section id="how-we-work" className="mx-auto max-w-7xl px-4 pb-10 md:px-12 md:pb-16">
         <div className="mx-auto max-w-[900px]">
-          <div className="relative rounded-2xl md:rounded-3xl">
+          <div className="relative rounded-xl md:rounded-3xl">
             <ShineBorder
               borderWidth={1}
               duration={16}

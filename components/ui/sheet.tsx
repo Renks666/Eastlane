@@ -75,9 +75,11 @@ function SheetContent({
       >
         {children}
         {showCloseButton && (
-          <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs border-0 opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
-            <XIcon className="size-4" />
-            <span className="sr-only">Close</span>
+          <SheetPrimitive.Close
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-brand-beige-dark)] focus:ring-offset-2 disabled:pointer-events-none"
+            aria-label="Закрыть меню"
+          >
+            <XIcon className="h-5 w-5" />
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Content>

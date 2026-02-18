@@ -4,7 +4,12 @@ import { useEffect, type ReactNode } from "react"
 
 function scrollToHowWeWork() {
   const el = document.getElementById("how-we-work")
-  el?.scrollIntoView({ block: "center", behavior: "smooth" })
+  if (!el) return
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768
+  el.scrollIntoView({
+    block: isMobile ? "start" : "center",
+    behavior: "smooth",
+  })
 }
 
 export function ScrollToHowWeWorkLink({
