@@ -1,4 +1,4 @@
-﻿import Link from "next/link"
+import Link from "next/link"
 import Image from "next/image"
 import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
 import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
@@ -75,7 +75,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                   <div>
                     <p className="font-medium">{product.name}</p>
                     <p className="text-sm text-muted-foreground">{product.categories?.[0]?.name ?? "No category"}</p>
-                    <p className="text-sm font-semibold">{Number(product.price).toFixed(2)} ₽</p>
+                    <p className="font-price tabular-nums text-sm font-semibold text-black">{Math.round(Number(product.price))} ₽</p>
                   </div>
                 </div>
 

@@ -148,7 +148,7 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
             alt={`${name} ${index + 1}`}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover"
+            className="object-contain"
           />
         </button>
         {gallery.length > 1 && (
@@ -183,7 +183,7 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
               className={`relative aspect-square overflow-hidden rounded-xl border ${index === i ? "border-[color:var(--color-brand-gold-600)]" : "border-[color:var(--color-border-primary)]"}`}
               type="button"
             >
-              <Image src={image} alt={`${name} превью ${i + 1}`} fill sizes="120px" className="object-cover" />
+              <Image src={image} alt={`${name} превью ${i + 1}`} fill sizes="120px" className="object-contain" />
             </button>
           ))}
         </div>

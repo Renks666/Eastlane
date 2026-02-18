@@ -105,7 +105,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
               alt={product.name}
               fill
               sizes="(max-width: 768px) 100vw, 33vw"
-              className="object-cover transition duration-300 group-hover:scale-105"
+              className="object-contain transition duration-300 group-hover:scale-105"
             />
           </Link>
 
@@ -174,7 +174,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
           )}
 
           <div className="mt-3 flex items-center justify-between gap-2 sm:gap-3">
-            <p className="text-lg font-semibold text-[color:var(--color-brand-forest-light)]">{Number(product.price).toFixed(2)} ₽</p>
+            <p className="font-price tabular-nums text-lg font-semibold text-black">{Math.round(Number(product.price))} ₽</p>
             
             {hasVariants ? (
               <div className="flex items-center gap-1.5 sm:gap-2" ref={quickAddRef}>

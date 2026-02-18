@@ -8,6 +8,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        price: ["var(--font-source-sans-3)", "sans-serif"],
+      },
       colors: {
         brand: {
           bg: "#0E2A21",

@@ -60,7 +60,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               Коллекция: {product.categories?.[0]?.name ?? "EASTLANE"}
             </p>
             <h1 className="mt-3 text-3xl font-semibold text-[color:var(--color-brand-forest-light)]">{product.name}</h1>
-            <p className="mt-4 text-3xl font-semibold text-[color:var(--color-brand-forest-light)]">{Number(product.price).toFixed(2)} ₽</p>
+            <p className="font-price tabular-nums mt-4 text-3xl font-semibold text-black">{Math.round(Number(product.price))} ₽</p>
 
             <ProductPurchasePanel
               product={{

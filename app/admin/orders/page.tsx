@@ -1,4 +1,4 @@
-﻿import Link from "next/link"
+import Link from "next/link"
 import { Fragment } from "react"
 import { listAdminOrders } from "@/src/domains/order/services/order-service"
 import type { OrderStatus } from "@/src/domains/order/types"
@@ -57,7 +57,7 @@ const sortOptions = [
 type SortValue = (typeof sortOptions)[number]["value"]
 
 function formatRub(price: number) {
-  return new Intl.NumberFormat("ru-RU").format(price) + " ₽"
+  return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(price)) + " ₽"
 }
 
 function statusMeta(status: OrderStatus) {
@@ -218,7 +218,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
             <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold">{formatRub(totalRevenue)}</p>
+            <p className="font-price tabular-nums text-2xl font-semibold text-black">{formatRub(totalRevenue)}</p>
             <p className="text-xs text-muted-foreground">Done: {doneCount}</p>
           </CardContent>
         </Card>
@@ -317,7 +317,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                         <td className="px-4 py-3 text-muted-foreground">
                           {new Date(order.created_at).toLocaleString("ru-RU")}
                         </td>
-                        <td className="px-4 py-3 text-right font-semibold text-foreground">{formatRub(order.total_amount)}</td>
+                        <td className="font-price tabular-nums px-4 py-3 text-right font-semibold text-black">{formatRub(order.total_amount)}</td>
                         <td className="px-4 py-3 text-right">
                           <OrderStatusSelect orderId={order.id} status={order.status} />
                         </td>

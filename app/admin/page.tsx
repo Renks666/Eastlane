@@ -1,4 +1,4 @@
-﻿import Link from "next/link"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
@@ -59,7 +59,7 @@ export default async function AdminPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold">{new Intl.NumberFormat("ru-RU").format(totalRevenue)} ₽</p>
+            <p className="font-price tabular-nums text-2xl font-semibold text-black">{new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(totalRevenue))} ₽</p>
           </CardContent>
         </Card>
       </div>
@@ -101,8 +101,8 @@ export default async function AdminPage() {
                   <td className="px-4 py-3 font-medium">#{order.id}</td>
                   <td className="px-4 py-3 capitalize">{order.status}</td>
                   <td className="px-4 py-3 text-muted-foreground">{order.contact_value || order.contact_channel}</td>
-                  <td className="px-4 py-3 text-right font-medium">
-                    {new Intl.NumberFormat("ru-RU").format(Number(order.total_amount))} ₽
+                  <td className="font-price tabular-nums px-4 py-3 text-right font-medium text-black">
+                    {new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(Number(order.total_amount)))} ₽
                   </td>
                 </tr>
               ))}

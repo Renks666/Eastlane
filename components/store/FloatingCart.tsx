@@ -8,7 +8,7 @@ import { useCart } from "@/components/store/CartProvider"
 import { createOrder } from "@/app/orders/actions"
 
 function formatRub(price: number) {
-  return new Intl.NumberFormat("ru-RU").format(price) + " ₽"
+  return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(price)) + " ₽"
 }
 
 export function FloatingCart() {
@@ -80,7 +80,7 @@ export function FloatingCart() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-base font-semibold text-[color:var(--color-brand-forest-light)]" suppressHydrationWarning>{formatRub(total)}</span>
+              <span className="font-price tabular-nums text-base font-semibold text-black" suppressHydrationWarning>{formatRub(total)}</span>
               <ChevronUp className="h-4 w-4 text-[color:var(--color-text-tertiary)]" />
             </div>
           </button>
@@ -130,7 +130,7 @@ export function FloatingCart() {
                         ) : item.colors && item.colors.length > 0 ? (
                           <p className="text-xs text-[color:var(--color-text-secondary)]">Цвета: {item.colors.join(", ")}</p>
                         ) : null}
-                        <p className="mt-1 text-sm font-semibold text-[color:var(--color-brand-beige-dark)]">
+                        <p className="font-price tabular-nums mt-1 text-sm font-semibold text-black">
                           {formatRub(item.price * item.quantity)}
                         </p>
                       </div>
@@ -183,7 +183,7 @@ export function FloatingCart() {
 
             <div className="mb-4 flex items-center justify-between text-sm">
               <span className="text-[color:var(--color-text-secondary)]">Заказ на сумму</span>
-              <span className="text-lg font-bold text-[color:var(--color-brand-forest-light)]" suppressHydrationWarning>{formatRub(total)}</span>
+              <span className="font-price tabular-nums text-lg font-bold text-black" suppressHydrationWarning>{formatRub(total)}</span>
             </div>
 
             <button
