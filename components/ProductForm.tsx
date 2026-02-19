@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea"
 
 const SIZE_OPTIONS = ["S", "M", "L", "XL", "XXL"] as const
 const SHOE_SIZE_OPTIONS = ["40", "41", "42", "43", "44", "45", "46", "47", "48", "49"] as const
+const MAX_SINGLE_IMAGE_BYTES = 3 * 1024 * 1024
+const MAX_TOTAL_UPLOAD_BYTES = 4 * 1024 * 1024
 const COLOR_OPTIONS = ["белый", "черный", "синий", "красный", "зеленый", "серый", "золотой"] as const
 
 const formSchema = z.object({
@@ -61,6 +63,10 @@ function resolveFallbackMainImageKey(existing: string[], files: File[]) {
     return buildNewImageKey(files[0])
   }
   return null
+}
+
+function formatMb(bytes: number) {
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 export function ProductForm({ mode, categories, product }: ProductFormProps) {
@@ -265,6 +271,34 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
               onChange={(e) => {
                 const files = Array.from(e.target.files ?? [])
                 if (files.length === 0) return
+                const invalidType = files.find((file) => !file.type.startsWith("image/"))
+                if (invalidType) {
+                  const message = "Можно загружать только изображения."
+                  setFormError(message)
+                  toast.error(message)
+                  e.currentTarget.value = ""
+                  return
+                }
+
+                const tooLarge = files.find((file) => file.size > MAX_SINGLE_IMAGE_BYTES)
+                if (tooLarge) {
+                  const message = `Файл "${tooLarge.name}" больше ${formatMb(MAX_SINGLE_IMAGE_BYTES)}.`
+                  setFormError(message)
+                  toast.error(message)
+                  e.currentTarget.value = ""
+                  return
+                }
+
+                const currentTotal = newImages.reduce((sum, file) => sum + file.size, 0)
+                const pickedTotal = files.reduce((sum, file) => sum + file.size, 0)
+                if (currentTotal + pickedTotal > MAX_TOTAL_UPLOAD_BYTES) {
+                  const message = `Суммарный размер новых изображений не должен превышать ${formatMb(MAX_TOTAL_UPLOAD_BYTES)}.`
+                  setFormError(message)
+                  toast.error(message)
+                  e.currentTarget.value = ""
+                  return
+                }
+
                 setNewImages((prev) => {
                   const next = [...prev, ...files]
                   if (!mainImageKey) {
@@ -272,9 +306,13 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
                   }
                   return next
                 })
+                setFormError(null)
                 e.currentTarget.value = ""
               }}
             />
+            <p className="text-xs text-muted-foreground">
+              До {formatMb(MAX_SINGLE_IMAGE_BYTES)} на файл и до {formatMb(MAX_TOTAL_UPLOAD_BYTES)} суммарно за одно сохранение.
+            </p>
 
             {existingImages.length > 0 && (
               <div className="space-y-2">
@@ -322,13 +360,12 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
                   {previewUrls.map((preview) => (
                     <div key={preview.key} className="rounded border p-2">
                       <div className="relative h-28 w-full overflow-hidden rounded">
-                        <Image
+                        {/* next/image does not reliably support blob: preview URLs on mobile Safari */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
                           src={preview.url}
                           alt={`New image preview: ${preview.fileName}`}
-                          fill
-                          unoptimized
-                          sizes="(max-width: 640px) 50vw, 25vw"
-                          className="object-cover"
+                          className="h-full w-full object-cover"
                         />
                       </div>
                       <Button

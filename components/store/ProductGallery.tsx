@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,14 @@ type ProductGalleryProps = {
 }
 
 export function ProductGallery({ images, name }: ProductGalleryProps) {
-  const gallery = images.length > 0 ? images : ["https://placehold.co/1000x1200/efefe8/1f3d32?text=EASTLANE"]
+  const gallery = useMemo(() => {
+    const normalizedImages = Array.isArray(images)
+      ? images.filter((image): image is string => typeof image === "string" && image.trim().length > 0)
+      : []
+    return normalizedImages.length > 0
+      ? normalizedImages
+      : ["https://placehold.co/1000x1200/efefe8/1f3d32?text=EASTLANE"]
+  }, [images])
   const [index, setIndex] = useState(0)
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [zoom, setZoom] = useState(1)

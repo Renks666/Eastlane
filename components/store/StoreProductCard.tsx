@@ -25,7 +25,12 @@ const FALLBACK_IMAGE = "https://placehold.co/600x800/f1efe7/18362e?text=EASTLANE
 export function StoreProductCard({ product }: StoreProductCardProps) {
   const sizes = useMemo(() => product.sizes ?? [], [product.sizes])
   const colors = useMemo(() => product.colors ?? [], [product.colors])
-  const images = useMemo(() => (product.images && product.images.length > 0 ? product.images : [FALLBACK_IMAGE]), [product.images])
+  const images = useMemo(() => {
+    const normalizedImages = Array.isArray(product.images)
+      ? product.images.filter((image): image is string => typeof image === "string" && image.trim().length > 0)
+      : []
+    return normalizedImages.length > 0 ? normalizedImages : [FALLBACK_IMAGE]
+  }, [product.images])
   const { addItem } = useCart()
 
   const [imageIndex, setImageIndex] = useState(0)
