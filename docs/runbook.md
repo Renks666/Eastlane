@@ -11,6 +11,9 @@
 2. Apply SQL:
 - `docs/sql/orders.sql`
 - `docs/sql/site_sections.sql`
+- `docs/sql/products_rls.sql`
+- `docs/sql/categories_rls.sql`
+- `docs/sql/admin_users.sql` (edit emails in file first)
 
 3. Install and run:
 
@@ -27,6 +30,16 @@ If `/admin` redirects to `/admin/login` after successful sign-in:
 2. Verify admin role rules (at least one required; otherwise no one has admin access):
 - set `ADMIN_EMAILS` to your account email (comma-separated), or
 - set user metadata or app metadata role to `admin`.
+
+3. If create/update/delete for products fails with `row-level security policy`:
+- ensure `docs/sql/products_rls.sql` was applied;
+- ensure current user has `raw_app_meta_data.role = 'admin'` (see `docs/sql/admin_users.sql`);
+- sign out/in to refresh JWT claims.
+
+4. If create/update/delete for categories fails with `row-level security policy`:
+- ensure `docs/sql/categories_rls.sql` was applied;
+- ensure current user has `raw_app_meta_data.role = 'admin'` (see `docs/sql/admin_users.sql`);
+- sign out/in to refresh JWT claims.
 
 ## 3. Checkout troubleshooting
 

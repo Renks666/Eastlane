@@ -38,6 +38,9 @@ Run in Supabase SQL editor:
 
 1. `docs/sql/orders.sql`
 2. `docs/sql/site_sections.sql`
+3. `docs/sql/products_rls.sql`
+4. `docs/sql/categories_rls.sql`
+5. `docs/sql/admin_users.sql` (set your admin emails in SQL before run)
 
 ## Local Development
 
