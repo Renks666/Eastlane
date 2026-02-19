@@ -358,17 +358,21 @@ export function ProductForm({ mode, categories, product }: ProductFormProps) {
 
           {formError && <p className="text-sm text-red-600">{formError}</p>}
         </CardContent>
-        <CardFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <CardFooter className="flex flex-col-reverse gap-3 pt-6 sm:flex-row sm:justify-end sm:gap-4">
           <Button
             type="button"
             variant="outline"
             onClick={() => router.push("/admin/products")}
             disabled={isPending}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto sm:mr-4"
           >
             Отмена
           </Button>
-          <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="w-full sm:w-auto min-w-0 bg-[var(--color-brand-forest)] text-white hover:bg-[var(--color-brand-forest-dark)] focus-visible:ring-[var(--color-brand-forest)]"
+          >
             {isPending ? "Сохранение..." : mode === "create" ? "Создать товар" : "Сохранить"}
           </Button>
         </CardFooter>
