@@ -20,6 +20,7 @@ export function StoreShell({ children }: StoreShellProps) {
             <nav className="hidden items-center gap-6 text-sm text-[color:var(--color-text-primary)]/80 md:flex">
               <Link href="/" className="hover:text-[color:var(--color-brand-forest-light)]">Главная</Link>
               <Link href="/catalog" className="hover:text-[color:var(--color-brand-forest-light)]">Каталог</Link>
+              <Link href="/delivery" className="hover:text-[color:var(--color-brand-forest-light)]">Тарифы и доставка</Link>
               <Link href="/about" className="hover:text-[color:var(--color-brand-forest-light)]">О нас</Link>
               <Link href="/contacts" className="hover:text-[color:var(--color-brand-forest-light)]">Контакты</Link>
             </nav>

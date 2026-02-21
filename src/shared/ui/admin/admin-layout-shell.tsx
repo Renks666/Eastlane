@@ -14,6 +14,8 @@ import {
   Search,
   ShoppingCart,
   Shapes,
+  Truck,
+  WalletCards,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
@@ -43,6 +45,8 @@ const navItems: NavItem[] = [
   { title: "Товары", href: "/admin/products", icon: Package },
   { title: "Категории", href: "/admin/categories", icon: Shapes },
   { title: "Заказы", href: "/admin/orders", icon: ShoppingCart },
+  { title: "Тарифы и доставка", href: "/admin/content/delivery", icon: Truck },
+  { title: "Тарифы EASTLANE", href: "/admin/content/eastlane-tariffs", icon: WalletCards },
 ]
 
 function isNavItemActive(pathname: string, href: string) {
@@ -53,6 +57,8 @@ function isNavItemActive(pathname: string, href: string) {
 }
 
 function resolveTitle(pathname: string) {
+  if (pathname.startsWith("/admin/content/eastlane-tariffs")) return "Тарифы EASTLANE"
+  if (pathname.startsWith("/admin/content/delivery")) return "Тарифы и доставка"
   if (pathname.startsWith("/admin/orders")) return "Заказы"
   if (pathname.startsWith("/admin/products")) return "Товары"
   if (pathname.startsWith("/admin/categories")) return "Категории"
@@ -60,6 +66,8 @@ function resolveTitle(pathname: string) {
 }
 
 function resolveSearchRoute(pathname: string) {
+  if (pathname.startsWith("/admin/content/eastlane-tariffs")) return null
+  if (pathname.startsWith("/admin/content/delivery")) return null
   if (pathname.startsWith("/admin/products")) return "/admin/products"
   if (pathname.startsWith("/admin/categories")) return "/admin/categories"
   if (pathname.startsWith("/admin/orders")) return "/admin/orders"
@@ -88,12 +96,14 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
 
   const title = resolveTitle(pathname)
   const searchRoute = resolveSearchRoute(pathname)
+  const hasSearch = Boolean(searchRoute)
 
   const searchPlaceholder = useMemo(() => {
+    if (!searchRoute) return "Поиск недоступен для этой страницы."
     if (pathname.startsWith("/admin/orders")) return "Поиск по ID, контакту, статусу..."
     if (pathname.startsWith("/admin/categories")) return "Поиск по названию или slug..."
     return "Поиск по названию товара или категории..."
-  }, [pathname])
+  }, [pathname, searchRoute])
 
   useEffect(() => {
     const closeOnRouteChange = window.setTimeout(() => {
@@ -151,6 +161,8 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   }
 
   const runSearch = (closeMobileSearch = false) => {
+    if (!searchRoute) return
+
     const value = query.trim()
     if (!value) {
       router.push(searchRoute)
@@ -224,36 +236,38 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
-        <SheetContent side="top" className="gap-2 border-b border-border p-0">
-          <SheetHeader className="px-4 pb-2 pt-5 sm:px-6">
-            <SheetTitle className="text-left text-base">Поиск</SheetTitle>
-          </SheetHeader>
-          <div className="px-4 pb-5 sm:px-6">
-            <div className="flex items-center gap-2">
-              <div className="relative min-w-0 flex-1">
-                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder={searchPlaceholder}
-                  className="h-9 w-full bg-secondary pl-8 text-sm"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") runSearch(true)
-                  }}
-                />
+      {hasSearch ? (
+        <Sheet open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
+          <SheetContent side="top" className="gap-2 border-b border-border p-0">
+            <SheetHeader className="px-4 pb-2 pt-5 sm:px-6">
+              <SheetTitle className="text-left text-base">Поиск</SheetTitle>
+            </SheetHeader>
+            <div className="px-4 pb-5 sm:px-6">
+              <div className="flex items-center gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder={searchPlaceholder}
+                    className="h-9 w-full bg-secondary pl-8 text-sm"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") runSearch(true)
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="h-9 rounded-md border border-border px-3 text-xs text-muted-foreground transition-colors hover:bg-accent"
+                  onClick={() => runSearch(true)}
+                >
+                  Найти
+                </button>
               </div>
-              <button
-                type="button"
-                className="h-9 rounded-md border border-border px-3 text-xs text-muted-foreground transition-colors hover:bg-accent"
-                onClick={() => runSearch(true)}
-              >
-                Найти
-              </button>
             </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+          </SheetContent>
+        </Sheet>
+      ) : null}
 
       <aside
         className={cn(
@@ -316,34 +330,38 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
           </div>
 
           <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
-            <div className="relative hidden md:flex md:min-w-[180px] md:max-w-[320px] md:flex-1 md:items-center md:gap-2">
-              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={searchPlaceholder}
-                className="h-9 w-full bg-secondary pl-8 text-sm"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") runSearch()
-                }}
-              />
+            {hasSearch ? (
+              <div className="relative hidden md:flex md:min-w-[180px] md:max-w-[320px] md:flex-1 md:items-center md:gap-2">
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder={searchPlaceholder}
+                  className="h-9 w-full bg-secondary pl-8 text-sm"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") runSearch()
+                  }}
+                />
+                <button
+                  type="button"
+                  className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+                  onClick={() => runSearch()}
+                >
+                  Найти
+                </button>
+              </div>
+            ) : null}
+
+            {hasSearch ? (
               <button
                 type="button"
-                className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
-                onClick={() => runSearch()}
+                onClick={() => setMobileSearchOpen(true)}
+                className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent md:hidden"
+                aria-label="Search"
               >
-                Найти
+                <Search className="h-4 w-4" />
               </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setMobileSearchOpen(true)}
-              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent md:hidden"
-              aria-label="Search"
-            >
-              <Search className="h-4 w-4" />
-            </button>
+            ) : null}
 
             <button
               type="button"

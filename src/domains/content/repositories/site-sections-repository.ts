@@ -38,3 +38,28 @@ export async function loadSiteSectionsByKeys(
   }, {} as Partial<Record<ContentSectionKey, ContentSection>>)
 }
 
+type UpsertSiteSectionInput = {
+  key: ContentSectionKey
+  title: string
+  payload: unknown
+  isPublished: boolean
+}
+
+export async function upsertSiteSection(
+  supabase: SupabaseClient,
+  input: UpsertSiteSectionInput
+): Promise<void> {
+  const { error } = await supabase.from("site_sections").upsert(
+    {
+      section_key: input.key,
+      title: input.title,
+      payload: input.payload,
+      is_published: input.isPublished,
+    },
+    { onConflict: "section_key" }
+  )
+
+  if (error) {
+    throw new Error(`Failed to save site content: ${error.message}`)
+  }
+}

@@ -11,6 +11,8 @@
 2. Apply SQL:
 - `docs/sql/orders.sql`
 - `docs/sql/site_sections.sql`
+- `docs/sql/site_sections_delivery_rates_seed.sql` (optional seed for delivery rates block)
+- `docs/sql/site_sections_eastlane_tariffs_seed.sql` (optional seed for EASTLANE tariffs block)
 - `docs/sql/products_rls.sql`
 - `docs/sql/categories_rls.sql`
 - `docs/sql/admin_users.sql` (edit emails in file first)
@@ -69,5 +71,7 @@ To override defaults, insert/update rows in `site_sections`:
 - `faq`
 - `contacts`
 - `about`
+- `delivery_rates`
+- `eastlane_tariffs`
 
 Set `is_published = true` to apply payload.

@@ -36,6 +36,8 @@
 
 - `types.ts`: typed content section interfaces.
 - `default-content.ts`: fallback storefront content.
+- `delivery-rates-schema.ts`: zod schema/normalization for delivery rates payload.
+- `eastlane-tariffs-schema.ts`: zod schema/normalization for EASTLANE tariffs payload.
 - `repositories/site-sections-repository.ts`: pull overrides from `site_sections`.
 - `services/storefront-content-service.ts`: merge defaults + DB content.
 

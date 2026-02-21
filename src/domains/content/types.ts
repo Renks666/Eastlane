@@ -41,7 +41,77 @@ export type AboutSectionContent = {
   paragraphs: string[]
 }
 
-export type ContentSectionKey = "hero" | "benefits" | "lookbook" | "faq" | "contacts" | "about"
+export type DeliveryRateValue = {
+  kg1: number
+  kg2: number
+  kg3: number
+  kg5: number
+  kg10: number
+  kg20Plus: number
+}
+
+export type DeliveryRateRow = {
+  country: string
+  flag: string
+  rates: DeliveryRateValue
+}
+
+export type DeliveryRateNoteIcon = "clock" | "dollar-sign" | "truck" | "package" | "info"
+
+export type DeliveryRateNote = {
+  icon: DeliveryRateNoteIcon
+  text: string
+}
+
+export type DeliveryRateGroup = {
+  title: string
+  destination: string
+  rows: DeliveryRateRow[]
+  notes: DeliveryRateNote[]
+  transportNote: string
+}
+
+export type DeliveryRatesSectionContent = {
+  title: string
+  backgroundWatermark: string
+  groups: [DeliveryRateGroup, DeliveryRateGroup]
+}
+
+export type EastlaneTariffsExample = {
+  lines: string[]
+  resultLine: string
+}
+
+export type EastlaneTariffsTier = {
+  id: "retail" | "wholesale"
+  title: string
+  minItems: number
+  serviceFeeCny: number
+  serviceFeeRubApprox: number
+  example: EastlaneTariffsExample
+  warning: string
+}
+
+export type EastlaneTariffsSectionContent = {
+  title: string
+  subtitle: string
+  tiers: [EastlaneTariffsTier, EastlaneTariffsTier]
+  formulaTitle: string
+  formulaText: string
+  importantTitle: string
+  importantItems: string[]
+  returnPolicy: string
+}
+
+export type ContentSectionKey =
+  | "hero"
+  | "benefits"
+  | "lookbook"
+  | "faq"
+  | "contacts"
+  | "about"
+  | "delivery_rates"
+  | "eastlane_tariffs"
 
 export type ContentSection<T = unknown> = {
   key: ContentSectionKey
