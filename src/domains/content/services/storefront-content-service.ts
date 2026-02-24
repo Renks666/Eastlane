@@ -15,7 +15,13 @@ export async function getStorefrontContent() {
     "about",
     "delivery_rates",
     "eastlane_tariffs",
+    "exchange_rate",
   ])
 
   return resolveStorefrontContentSections(sections)
+}
+
+export async function getExchangeRateCnyPerRub() {
+  const { exchangeRate } = await getStorefrontContent()
+  return exchangeRate.cnyPerRub
 }

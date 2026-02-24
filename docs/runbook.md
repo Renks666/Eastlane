@@ -1,4 +1,4 @@
-# Runbook
+﻿# Runbook
 
 ## 1. First-time setup
 
@@ -10,12 +10,26 @@
 
 2. Apply SQL:
 - `docs/sql/orders.sql`
+- `docs/sql/orders_currency_snapshots.sql`
 - `docs/sql/site_sections.sql`
 - `docs/sql/site_sections_delivery_rates_seed.sql` (optional seed for delivery rates block)
 - `docs/sql/site_sections_eastlane_tariffs_seed.sql` (optional seed for EASTLANE tariffs block)
+- `docs/sql/site_sections_exchange_rate_seed.sql` (optional seed for CNY/RUB exchange rate)
+- `docs/sql/brands.sql`
+- `docs/sql/brands_seed.sql`
+- `docs/sql/products_currency.sql`
 - `docs/sql/products_rls.sql`
 - `docs/sql/categories_rls.sql`
+- `docs/sql/brands_rls.sql`
+- `docs/sql/product_sizes.sql`
+- `docs/sql/product_colors.sql`
+- `docs/sql/product_attributes_seed_from_products.sql`
+- `docs/sql/product_sizes_rls.sql`
+- `docs/sql/product_colors_rls.sql`
 - `docs/sql/admin_users.sql` (edit emails in file first)
+
+Phase 2 (after all existing products are assigned a brand):
+- `docs/sql/products_brand_not_null.sql`
 
 3. Install and run:
 
@@ -40,6 +54,16 @@ If `/admin` redirects to `/admin/login` after successful sign-in:
 
 4. If create/update/delete for categories fails with `row-level security policy`:
 - ensure `docs/sql/categories_rls.sql` was applied;
+- ensure current user has `raw_app_meta_data.role = 'admin'` (see `docs/sql/admin_users.sql`);
+- sign out/in to refresh JWT claims.
+
+5. If create/update/delete for brands fails with `row-level security policy`:
+- ensure `docs/sql/brands_rls.sql` was applied;
+- ensure current user has `raw_app_meta_data.role = 'admin'` (see `docs/sql/admin_users.sql`);
+- sign out/in to refresh JWT claims.
+
+6. If create/update/delete for sizes/colors fails with `row-level security policy`:
+- ensure `docs/sql/product_sizes_rls.sql` and `docs/sql/product_colors_rls.sql` were applied;
 - ensure current user has `raw_app_meta_data.role = 'admin'` (see `docs/sql/admin_users.sql`);
 - sign out/in to refresh JWT claims.
 
@@ -73,5 +97,7 @@ To override defaults, insert/update rows in `site_sections`:
 - `about`
 - `delivery_rates`
 - `eastlane_tariffs`
+- `exchange_rate`
 
 Set `is_published = true` to apply payload.
+

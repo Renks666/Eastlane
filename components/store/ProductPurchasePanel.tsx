@@ -1,13 +1,15 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { AddToCartButton } from "@/components/store/AddToCartButton"
+import type { PriceCurrency } from "@/src/shared/lib/format-price"
 
 type ProductPurchasePanelProps = {
   product: {
     id: number
     name: string
     price: number
+    priceCurrency: PriceCurrency
     image?: string
     sizes: string[]
     colors: string[]
@@ -51,6 +53,7 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
           id: product.id,
           name: product.name,
           price: product.price,
+          priceCurrency: product.priceCurrency,
           image: product.image,
           sizes: product.sizes,
           colors: product.colors,

@@ -10,6 +10,10 @@ import {
   resolveMainImageUrl,
   uploadProductImages,
 } from "@/src/domains/product/services/product-image-service"
+import { upsertAttributeOptions } from "@/src/domains/product-attributes/services/attribute-options-service"
+import { sanitizeAttributeValues } from "@/src/domains/product-attributes/types"
+import { isSeasonKey, normalizeSeason, type SeasonKey } from "@/src/domains/product-attributes/seasons"
+import { normalizePriceCurrency, type PriceCurrency } from "@/src/shared/lib/format-price"
 
 type ActionResult = {
   ok: boolean
@@ -20,9 +24,12 @@ type ProductPayload = {
   name: string
   description: string | null
   price: number
+  priceCurrency: PriceCurrency
   categoryId: number
+  brandId: number
   sizes: string[]
   colors: string[]
+  seasons: SeasonKey[]
 }
 
 function parseJsonStringArray(value: FormDataEntryValue | null, field: string): string[] {
@@ -46,12 +53,19 @@ function parsePayload(formData: FormData): ProductPayload {
   const name = String(formData.get("name") ?? "").trim()
   const descriptionRaw = String(formData.get("description") ?? "").trim()
   const priceRaw = String(formData.get("price") ?? "").trim()
+  const priceCurrencyRaw = String(formData.get("priceCurrency") ?? "CNY").trim()
   const categoryIdRaw = String(formData.get("categoryId") ?? "").trim()
+  const brandIdRaw = String(formData.get("brandId") ?? "").trim()
   const sizes = parseJsonStringArray(formData.get("sizes"), "sizes")
   const colors = parseJsonStringArray(formData.get("colors"), "colors")
+  const seasons = parseJsonStringArray(formData.get("seasons"), "seasons")
+    .map((value) => normalizeSeason(value))
+    .filter((value): value is SeasonKey => isSeasonKey(value))
 
   const price = Number(priceRaw)
+  const priceCurrency = normalizePriceCurrency(priceCurrencyRaw, "CNY")
   const categoryId = Number(categoryIdRaw)
+  const brandId = Number(brandIdRaw)
 
   if (!name) {
     throw new Error("Укажите название товара.")
@@ -62,19 +76,26 @@ function parsePayload(formData: FormData): ProductPayload {
   if (!Number.isInteger(categoryId) || categoryId <= 0) {
     throw new Error("Выберите категорию.")
   }
+  if (!Number.isInteger(brandId) || brandId <= 0) {
+    throw new Error("Выберите бренд.")
+  }
 
   return {
     name,
     description: descriptionRaw ? descriptionRaw : null,
     price,
+    priceCurrency,
     categoryId,
-    sizes,
-    colors,
+    brandId,
+    sizes: sanitizeAttributeValues(sizes),
+    colors: sanitizeAttributeValues(colors),
+    seasons: Array.from(new Set(seasons)),
   }
 }
 
 function revalidateProductPaths() {
   revalidatePath("/admin/products")
+  revalidatePath("/admin/brands")
   revalidatePath("/")
   revalidatePath("/catalog")
 }
@@ -96,14 +117,21 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
     const { uploadedUrls, uploadedByKey } = await uploadProductImages(newImages, userId)
     const mainImageUrl = resolveMainImageUrl(mainImageKey, [], uploadedByKey)
     const finalImages = reorderImagesWithMain(uploadedUrls, mainImageUrl)
+    await Promise.all([
+      upsertAttributeOptions(supabase, "sizes", payload.sizes),
+      upsertAttributeOptions(supabase, "colors", payload.colors),
+    ])
 
     const { error } = await supabase.from("products").insert({
       name: payload.name,
       description: payload.description,
       price: payload.price,
+      price_currency: payload.priceCurrency,
       category_id: payload.categoryId,
+      brand_id: payload.brandId,
       sizes: payload.sizes,
       colors: payload.colors,
+      seasons: payload.seasons,
       images: finalImages,
     })
 
@@ -161,6 +189,10 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
     const { uploadedUrls, uploadedByKey } = await uploadProductImages(newImages, userId)
     const mainImageUrl = resolveMainImageUrl(mainImageKey, keptImages, uploadedByKey)
     const finalImages = reorderImagesWithMain([...keptImages, ...uploadedUrls], mainImageUrl)
+    await Promise.all([
+      upsertAttributeOptions(supabase, "sizes", payload.sizes),
+      upsertAttributeOptions(supabase, "colors", payload.colors),
+    ])
 
     const { error: updateError } = await supabase
       .from("products")
@@ -168,9 +200,12 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
         name: payload.name,
         description: payload.description,
         price: payload.price,
+        price_currency: payload.priceCurrency,
         category_id: payload.categoryId,
+        brand_id: payload.brandId,
         sizes: payload.sizes,
         colors: payload.colors,
+        seasons: payload.seasons,
         images: finalImages,
       })
       .eq("id", id)

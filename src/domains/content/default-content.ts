@@ -4,6 +4,7 @@ import type {
   ContactsSectionContent,
   DeliveryRatesSectionContent,
   EastlaneTariffsSectionContent,
+  ExchangeRateSectionContent,
   FaqSectionContent,
   HeroSectionContent,
   LookbookSectionContent,
@@ -11,10 +12,10 @@ import type {
 
 export const defaultHeroSection: HeroSectionContent = {
   badge: "EASTLANE",
-  title: "Заказы товаров",
-  accent: "из Китая под ключ",
+  title: "Товары из Китая",
+  accent: "напрямую",
   description:
-    "Помогаем находить и привозить качественную одежду от проверенных поставщиков. Индивидуальный подход, контроль на всех этапах. Заказ через менеджера, без онлайн-оплаты.",
+    "Прямой выкуп из официальных магазинов и фабрик. Работаем под задачу клиента. Индивидуальный подход, контроль на всех этапах.",
   primaryCtaLabel: "Перейти в каталог",
   primaryCtaHref: "/catalog",
   secondaryCtaLabel: "Как мы работаем",
@@ -193,8 +194,8 @@ export const defaultEastlaneTariffsSection: EastlaneTariffsSectionContent = {
       warning: "Оптовые расчеты итогово подтверждаются после проверки поставщика и логистики.",
     },
   ],
-  formulaTitle: "Итоговая формула расчета",
-  formulaText: "Итоговая стоимость = цена товара × количество + сервис × количество + доставка",
+  formulaTitle: "Формула / Как формируется цена",
+  formulaText: "Итоговая сумма = Стоимость товара + Сервис + Доставка по Китаю + Международная доставка",
   importantTitle: "Важные моменты",
   importantItems: [
     "Нет собственного склада — заказы идут напрямую от поставщика.",
@@ -205,5 +206,10 @@ export const defaultEastlaneTariffsSection: EastlaneTariffsSectionContent = {
   ],
   returnPolicy:
     "В случае брака или ошибки поставщика возврат товара возможен, если причина уважительная (брак, неправильный цвет/размер).",
+}
+
+
+export const defaultExchangeRateSection: ExchangeRateSectionContent = {
+  cnyPerRub: 0.09,
 }
 

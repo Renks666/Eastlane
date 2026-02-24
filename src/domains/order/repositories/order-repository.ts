@@ -4,7 +4,7 @@ import type { AdminOrderListItem, ContactChannel, OrderItemRecord, OrderStatus }
 export async function fetchProductsForCheckout(supabase: SupabaseClient, productIds: number[]) {
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, price")
+    .select("id, name, price, price_currency")
     .in("id", productIds)
 
   if (error) {
@@ -22,6 +22,9 @@ export async function insertOrder(
     comment?: string
     customerName: string
     totalAmount: number
+    totalCurrency: "RUB" | "CNY"
+    exchangeRateSnapshot: number
+    totalAmountRubApprox: number
   }
 ) {
   const { data, error } = await supabase
@@ -32,6 +35,9 @@ export async function insertOrder(
       customer_name: payload.customerName.trim(),
       comment: payload.comment?.trim() || null,
       total_amount: payload.totalAmount,
+      total_currency: payload.totalCurrency,
+      exchange_rate_snapshot: payload.exchangeRateSnapshot,
+      total_amount_rub_approx: payload.totalAmountRubApprox,
       status: "new",
     })
     .select("id")
@@ -65,7 +71,7 @@ export async function fetchAdminOrders(supabase: SupabaseClient): Promise<AdminO
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id,created_at,status,total_amount,contact_channel,contact_value,comment,customer_name,order_items(id,product_name_snapshot,size_snapshot,price_snapshot,quantity,line_total)"
+      "id,created_at,status,total_amount,total_currency,exchange_rate_snapshot,total_amount_rub_approx,contact_channel,contact_value,comment,customer_name,order_items(id,product_name_snapshot,size_snapshot,price_snapshot,price_currency_snapshot,quantity,line_total,line_total_rub_approx)"
     )
     .not("customer_name", "is", null)
     .order("created_at", { ascending: false })

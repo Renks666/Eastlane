@@ -7,17 +7,20 @@ type Product = {
   id: number
   name: string
   price: number
+  priceCurrency: "RUB" | "CNY"
   images?: string[] | null
   sizes?: string[] | null
   colors?: string[] | null
   categoryName?: string | null
+  brandName?: string | null
 }
 
 type AnimatedProductGridProps = {
   products: Product[]
+  cnyPerRub: number
 }
 
-export function AnimatedProductGrid({ products }: AnimatedProductGridProps) {
+export function AnimatedProductGrid({ products, cnyPerRub }: AnimatedProductGridProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((product, index) => (
@@ -31,7 +34,7 @@ export function AnimatedProductGrid({ products }: AnimatedProductGridProps) {
             ease: [0.16, 1, 0.3, 1],
           }}
         >
-          <StoreProductCard product={product} />
+          <StoreProductCard product={product} cnyPerRub={cnyPerRub} />
         </motion.div>
       ))}
     </div>

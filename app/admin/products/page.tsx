@@ -1,7 +1,9 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 import Image from "next/image"
 import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
 import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
+import { getStorefrontContent } from "@/src/domains/content/services/storefront-content-service"
+import { formatDualPrice, normalizePriceCurrency } from "@/src/shared/lib/format-price"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ProductDeleteButton } from "@/app/admin/products/ProductDeleteButton"
@@ -10,12 +12,19 @@ type ProductRow = {
   id: number
   name: string
   price: number
+  price_currency: "RUB" | "CNY"
+  created_at: string
   images: string[] | null
   categories: { name: string }[] | null
+  brands: { name: string }[] | null
 }
 
 type AdminProductsPageProps = {
   searchParams: Promise<{ q?: string }>
+}
+
+function mapProducts(rows: ProductRow[]) {
+  return [...rows].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 }
 
 export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
@@ -24,23 +33,65 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
   const queryText = q?.trim() ?? ""
 
   const supabase = await createServerSupabaseClient()
+  const content = await getStorefrontContent()
+  const selectColumns = "id, name, price, price_currency, created_at, images, categories(name), brands(name), brand_id"
 
-  let query = supabase
-    .from("products")
-    .select("id, name, price, images, categories(name)")
-    .order("created_at", { ascending: false })
+  let products: ProductRow[] = []
+  let pageError: string | null = null
 
-  if (queryText) {
-    query = query.ilike("name", `%${queryText}%`)
+  if (!queryText) {
+    const { data, error } = await supabase.from("products").select(selectColumns).order("created_at", { ascending: false })
+    if (error) {
+      pageError = error.message
+    } else {
+      products = (data ?? []) as ProductRow[]
+    }
+  } else {
+    const [{ data: nameData, error: nameError }, { data: brandMatches, error: brandMatchError }] = await Promise.all([
+      supabase
+        .from("products")
+        .select(selectColumns)
+        .ilike("name", `%${queryText}%`)
+        .order("created_at", { ascending: false }),
+      supabase.from("brands").select("id").ilike("name", `%${queryText}%`),
+    ])
+
+    if (nameError) {
+      pageError = nameError.message
+    } else if (brandMatchError) {
+      pageError = brandMatchError.message
+    } else {
+      const byId = new Map<number, ProductRow>()
+      for (const product of (nameData ?? []) as ProductRow[]) {
+        byId.set(product.id, product)
+      }
+
+      const brandIds = (brandMatches ?? []).map((item) => Number(item.id)).filter((id) => Number.isInteger(id))
+      if (brandIds.length > 0) {
+        const { data: byBrandData, error: byBrandError } = await supabase
+          .from("products")
+          .select(selectColumns)
+          .in("brand_id", brandIds)
+          .order("created_at", { ascending: false })
+
+        if (byBrandError) {
+          pageError = byBrandError.message
+        } else {
+          for (const product of (byBrandData ?? []) as ProductRow[]) {
+            byId.set(product.id, product)
+          }
+        }
+      }
+
+      if (!pageError) {
+        products = mapProducts(Array.from(byId.values()))
+      }
+    }
   }
 
-  const { data, error } = await query
-
-  if (error) {
-    return <p className="text-red-600">Не удалось загрузить товары: {error.message}</p>
+  if (pageError) {
+    return <p className="text-red-600">Не удалось загрузить товары: {pageError}</p>
   }
-
-  const products = (data ?? []) as ProductRow[]
 
   return (
     <div className="space-y-5">
@@ -78,7 +129,14 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                   <div>
                     <p className="font-medium">{product.name}</p>
                     <p className="text-sm text-muted-foreground">{product.categories?.[0]?.name ?? "Без категории"}</p>
-                    <p className="font-price tabular-nums text-sm font-semibold text-black">{Math.round(Number(product.price))} ₽</p>
+                    <p className="text-xs text-muted-foreground">{product.brands?.[0]?.name ?? "Без бренда"}</p>
+                    <p className="font-price tabular-nums text-sm font-semibold text-black">
+                      {formatDualPrice({
+                        amount: Number(product.price),
+                        currency: normalizePriceCurrency(product.price_currency),
+                        cnyPerRub: content.exchangeRate.cnyPerRub,
+                      })}
+                    </p>
                   </div>
                 </div>
 
@@ -96,3 +154,4 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
     </div>
   )
 }
+

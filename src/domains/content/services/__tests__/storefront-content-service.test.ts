@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest"
-import { defaultDeliveryRatesSection, defaultEastlaneTariffsSection } from "../../default-content"
+﻿import { describe, expect, it } from "vitest"
+import {
+  defaultDeliveryRatesSection,
+  defaultEastlaneTariffsSection,
+  defaultExchangeRateSection,
+} from "../../default-content"
 import { resolveStorefrontContentSections } from "../storefront-content-resolver"
 import type { ContentSection, ContentSectionKey } from "../../types"
 
@@ -88,4 +92,22 @@ describe("resolveStorefrontContentSections", () => {
 
     expect(result.eastlaneTariffs.title).toBe("Тарифы EASTLANE NEW")
   })
+
+  it("uses default exchange rate when section is missing", () => {
+    const result = resolveStorefrontContentSections({})
+    expect(result.exchangeRate).toEqual(defaultExchangeRateSection)
+  })
+
+  it("uses exchange rate from payload when section is published", () => {
+    const result = resolveStorefrontContentSections({
+      exchange_rate: section({
+        key: "exchange_rate",
+        payload: { cnyPerRub: 0.12 },
+        isPublished: true,
+      }),
+    })
+
+    expect(result.exchangeRate.cnyPerRub).toBe(0.12)
+  })
 })
+

@@ -1,21 +1,34 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ExchangeRateCard } from "@/components/admin/ExchangeRateCard"
 import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
+import { getStorefrontContent } from "@/src/domains/content/services/storefront-content-service"
 import { listAdminOrders } from "@/src/domains/order/services/order-service"
 import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
+import { formatDualPrice, formatRub } from "@/src/shared/lib/format-price"
 
 export default async function AdminPage() {
   const user = await requireAdminUserOrRedirect()
   const supabase = await createServerSupabaseClient()
 
-  const [{ count: productsCount }, { count: categoriesCount }, orders] = await Promise.all([
+  const [{ count: productsCount }, { count: categoriesCount }, orders, content] = await Promise.all([
     supabase.from("products").select("id", { count: "exact", head: true }),
     supabase.from("categories").select("id", { count: "exact", head: true }),
     listAdminOrders().catch(() => []),
+    getStorefrontContent(),
   ])
 
-  const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total_amount), 0)
+  const totalRevenueRubApprox = orders.reduce((sum, order) => {
+    const rubApprox = Number(order.total_amount_rub_approx ?? 0)
+    if (Number.isFinite(rubApprox) && rubApprox > 0) return sum + rubApprox
+
+    if (order.total_currency === "RUB") {
+      return sum + Number(order.total_amount)
+    }
+
+    return sum + Number(order.total_amount) / content.exchangeRate.cnyPerRub
+  }, 0)
   const newOrders = orders.filter((order) => order.status === "new").length
 
   const statusLabels: Record<string, string> = {
@@ -33,7 +46,7 @@ export default async function AdminPage() {
         <p className="mt-1 text-sm text-muted-foreground">Вход выполнен: {user.email}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card className="rounded-xl border-border shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Товары</CardTitle>
@@ -67,11 +80,11 @@ export default async function AdminPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Выручка</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-price tabular-nums text-2xl font-semibold text-black">
-              {new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(totalRevenue))} ₽
-            </p>
+            <p className="font-price tabular-nums text-2xl font-semibold text-black">{formatRub(totalRevenueRubApprox, 0)}</p>
           </CardContent>
         </Card>
+
+        <ExchangeRateCard initialCnyPerRub={content.exchangeRate.cnyPerRub} />
       </div>
 
       <Card className="rounded-xl border-border shadow-sm">
@@ -106,7 +119,11 @@ export default async function AdminPage() {
                 </div>
                 <p className="text-sm text-muted-foreground">{order.contact_value || order.contact_channel}</p>
                 <p className="font-price tabular-nums text-right text-sm font-semibold text-black">
-                  {new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(Number(order.total_amount)))} ₽
+                  {formatDualPrice({
+                    amount: Number(order.total_amount),
+                    currency: order.total_currency,
+                    cnyPerRub: Number(order.exchange_rate_snapshot ?? content.exchangeRate.cnyPerRub),
+                  })}
                 </p>
               </CardContent>
             </Card>
@@ -130,7 +147,11 @@ export default async function AdminPage() {
                   <td className="px-4 py-3">{statusLabels[order.status] ?? order.status}</td>
                   <td className="px-4 py-3 text-muted-foreground">{order.contact_value || order.contact_channel}</td>
                   <td className="font-price tabular-nums px-4 py-3 text-right font-medium text-black">
-                    {new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(Number(order.total_amount)))} ₽
+                    {formatDualPrice({
+                      amount: Number(order.total_amount),
+                      currency: order.total_currency,
+                      cnyPerRub: Number(order.exchange_rate_snapshot ?? content.exchangeRate.cnyPerRub),
+                    })}
                   </td>
                 </tr>
               ))}
@@ -141,3 +162,4 @@ export default async function AdminPage() {
     </div>
   )
 }
+

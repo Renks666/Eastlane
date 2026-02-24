@@ -10,10 +10,12 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Palette,
   Package,
   Search,
   ShoppingCart,
   Shapes,
+  Tags,
   Truck,
   WalletCards,
 } from "lucide-react"
@@ -43,7 +45,9 @@ const LAST_SEEN_ORDER_KEY = "eastlane.admin.notifications.lastSeenOrderCreatedAt
 const navItems: NavItem[] = [
   { title: "Обзор", href: "/admin", icon: LayoutDashboard },
   { title: "Товары", href: "/admin/products", icon: Package },
+  { title: "Attributes", href: "/admin/attributes", icon: Palette },
   { title: "Категории", href: "/admin/categories", icon: Shapes },
+  { title: "Бренды", href: "/admin/brands", icon: Tags },
   { title: "Заказы", href: "/admin/orders", icon: ShoppingCart },
   { title: "Тарифы и доставка", href: "/admin/content/delivery", icon: Truck },
   { title: "Тарифы EASTLANE", href: "/admin/content/eastlane-tariffs", icon: WalletCards },
@@ -60,16 +64,20 @@ function resolveTitle(pathname: string) {
   if (pathname.startsWith("/admin/content/eastlane-tariffs")) return "Тарифы EASTLANE"
   if (pathname.startsWith("/admin/content/delivery")) return "Тарифы и доставка"
   if (pathname.startsWith("/admin/orders")) return "Заказы"
+  if (pathname.startsWith("/admin/attributes")) return "Attributes"
   if (pathname.startsWith("/admin/products")) return "Товары"
   if (pathname.startsWith("/admin/categories")) return "Категории"
+  if (pathname.startsWith("/admin/brands")) return "Бренды"
   return "Обзор"
 }
 
 function resolveSearchRoute(pathname: string) {
   if (pathname.startsWith("/admin/content/eastlane-tariffs")) return null
   if (pathname.startsWith("/admin/content/delivery")) return null
+  if (pathname.startsWith("/admin/attributes")) return "/admin/attributes"
   if (pathname.startsWith("/admin/products")) return "/admin/products"
   if (pathname.startsWith("/admin/categories")) return "/admin/categories"
+  if (pathname.startsWith("/admin/brands")) return "/admin/brands"
   if (pathname.startsWith("/admin/orders")) return "/admin/orders"
   return "/admin/products"
 }
@@ -101,8 +109,10 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   const searchPlaceholder = useMemo(() => {
     if (!searchRoute) return "Поиск недоступен для этой страницы."
     if (pathname.startsWith("/admin/orders")) return "Поиск по ID, контакту, статусу..."
+    if (pathname.startsWith("/admin/attributes")) return "Search attributes..."
     if (pathname.startsWith("/admin/categories")) return "Поиск по названию или slug..."
-    return "Поиск по названию товара или категории..."
+    if (pathname.startsWith("/admin/brands")) return "Поиск по бренду, slug или группе..."
+    return "Поиск по названию товара, категории или бренда..."
   }, [pathname, searchRoute])
 
   useEffect(() => {
@@ -393,4 +403,5 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
     </div>
   )
 }
+
 

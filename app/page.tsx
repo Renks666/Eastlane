@@ -1,10 +1,13 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight } from "lucide-react"
 import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
 import { getStorefrontContent } from "@/src/domains/content/services/storefront-content-service"
 import { StoreShell } from "@/components/store/StoreShell"
+import { BrandsMarquee } from "@/components/store/BrandsMarquee"
 import { AnimatedProductGrid } from "@/components/store/AnimatedProductGrid"
+import { FaqSection } from "@/components/store/FaqSection"
+import { ScrollToFaqOnMount } from "@/components/store/ScrollToFaq"
 import HeroShutterText from "@/components/ui/hero-shutter-text"
 import { ShineBorder, HowWeWorkTimeline } from "@/components/ui/shine-border"
 import { ScrollToHowWeWorkLink, ScrollToHowWeWorkOnMount } from "@/components/store/ScrollToHowWeWork"
@@ -13,32 +16,41 @@ type ProductPreview = {
   id: number
   name: string
   price: number
+  price_currency: "RUB" | "CNY"
   images: string[] | null
   sizes: string[] | null
   colors: string[] | null
-  categories: { name: string }[] | null
+  seasons: string[] | null
+  categories: { name: string }[] | { name: string } | null
+  brands: { name: string }[] | { name: string } | null
+}
+
+function resolveRelationName(
+  relation: { name: string }[] | { name: string } | null
+) {
+  if (!relation) return null
+  if (Array.isArray(relation)) return relation[0]?.name ?? null
+  return relation.name ?? null
 }
 
 export default async function HomePage() {
   const supabase = await createServerSupabaseClient()
   const content = await getStorefrontContent()
 
-  const [{ data: products }, { data: categories }] = await Promise.all([
-    supabase
-      .from("products")
-      .select("id, name, price, images, sizes, colors, categories(name)")
-      .order("created_at", { ascending: false })
-      .limit(6),
-    supabase.from("categories").select("id, name, slug").order("name").limit(6),
-  ])
+  const { data: products } = await supabase
+    .from("products")
+    .select("id, name, price, price_currency, images, sizes, colors, seasons, categories(name), brands(name)")
+    .order("created_at", { ascending: false })
+    .limit(6)
 
   const productItems = (products ?? []) as ProductPreview[]
 
   return (
     <StoreShell>
       <ScrollToHowWeWorkOnMount />
+      <ScrollToFaqOnMount />
       <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-16 pt-12 md:grid-cols-[1.15fr_1fr] md:px-12 md:pt-20">
-        <div className="rounded-3xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-6 shadow-[0_18px_48px_-34px_rgba(18,39,33,0.25)] md:p-7">
+        <div className="min-w-0 rounded-3xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-6 shadow-[0_18px_48px_-34px_rgba(18,39,33,0.25)] md:p-7">
           <div className="max-w-xl">
             <HeroShutterText text={content.hero.badge} />
           </div>
@@ -55,6 +67,7 @@ export default async function HomePage() {
               {content.hero.secondaryCtaLabel}
             </ScrollToHowWeWorkLink>
           </div>
+          <BrandsMarquee className="mt-7 md:mt-8" />
         </div>
         <div className="relative hidden overflow-hidden rounded-3xl border border-[color:var(--color-brand-forest-light)] bg-[color:var(--color-brand-forest-light)] p-6 md:block">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(198,161,91,0.34),transparent_45%)]" />
@@ -77,24 +90,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-16 md:px-12">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-[color:var(--color-brand-forest-light)] md:text-3xl">Категории</h2>
-          <Link href="/catalog" className="text-sm font-medium text-[color:var(--color-brand-beige-dark)] hover:text-[color:var(--color-brand-gold-700)]">Смотреть все</Link>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {(categories ?? []).map((category) => (
-            <Link
-              key={category.id}
-              href={`/catalog?category=${category.slug}`}
-              className="rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 px-4 py-2 text-sm text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-brand-beige-dark)] hover:text-[color:var(--color-brand-forest-light)]"
-            >
-              {category.name}
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <section className="mx-auto max-w-7xl px-6 pb-16 md:px-12">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-semibold text-[color:var(--color-brand-forest-light)] md:text-3xl">Товары</h2>
@@ -105,11 +100,14 @@ export default async function HomePage() {
             id: product.id,
             name: product.name,
             price: product.price,
+            priceCurrency: product.price_currency ?? "RUB",
             images: product.images,
             sizes: product.sizes,
             colors: product.colors,
-            categoryName: product.categories?.[0]?.name ?? "Каталог",
+            categoryName: resolveRelationName(product.categories) ?? "Каталог",
+            brandName: resolveRelationName(product.brands),
           }))}
+          cnyPerRub={content.exchangeRate.cnyPerRub}
         />
       </section>
 
@@ -126,6 +124,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <FaqSection />
 
       <section className="mx-auto max-w-7xl px-6 pb-20 md:px-12">
         <div className="rounded-3xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-6 md:p-8">

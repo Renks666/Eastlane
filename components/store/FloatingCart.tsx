@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useMemo, useState, useTransition } from "react"
 import Image from "next/image"
@@ -6,24 +6,48 @@ import { ChevronDown, ChevronUp, Loader2, Minus, Plus, Send, ShoppingCart, Trash
 import { toast } from "sonner"
 import { useCart } from "@/components/store/CartProvider"
 import { createOrder } from "@/app/orders/actions"
+import {
+  convertCnyToRubApprox,
+  convertRubToCnyApprox,
+  formatDualPrice,
+  type PriceCurrency,
+} from "@/src/shared/lib/format-price"
 
-function formatRub(price: number) {
-  return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(price)) + " ₽"
+type FloatingCartProps = {
+  cnyPerRub: number
 }
 
-export function FloatingCart() {
+export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [contactChannel, setContactChannel] = useState<"telegram" | "phone">("telegram")
   const [contactValue, setContactValue] = useState("")
   const [customerName, setCustomerName] = useState("")
   const [isPending, startTransition] = useTransition()
-  const { items, total, increment, decrement, removeItem, clear } = useCart()
+  const { items, increment, decrement, removeItem, clear } = useCart()
 
-  const itemsCount = useMemo(
-    () => items.reduce((sum, item) => sum + item.quantity, 0),
+  const itemsCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])
+
+  const totalCurrency: PriceCurrency = useMemo(
+    () => (items.some((item) => item.priceCurrency === "CNY") ? "CNY" : "RUB"),
     [items]
   )
+
+  const totalAmount = useMemo(() => {
+    if (totalCurrency === "CNY") {
+      return items.reduce((sum, item) => {
+        const lineTotal = item.price * item.quantity
+        if (item.priceCurrency === "CNY") return sum + lineTotal
+        return sum + (convertRubToCnyApprox(lineTotal, cnyPerRub) ?? 0)
+      }, 0)
+    }
+
+    return items.reduce((sum, item) => {
+      const lineTotal = item.price * item.quantity
+      if (item.priceCurrency === "RUB") return sum + lineTotal
+      return sum + (convertCnyToRubApprox(lineTotal, cnyPerRub) ?? 0)
+    }, 0)
+  }, [cnyPerRub, items, totalCurrency])
 
   useEffect(() => {
     const handleCartOpen = () => setIsOpen(true)
@@ -54,9 +78,8 @@ export function FloatingCart() {
       setContactValue("")
       setContactChannel("telegram")
 
-      const telegramUrl = "https://t.me/fearr666"
       if (contactChannel === "telegram") {
-        window.open(telegramUrl, "_blank", "noopener,noreferrer")
+        window.open("https://t.me/fearr666", "_blank", "noopener,noreferrer")
       }
     })
   }
@@ -80,7 +103,9 @@ export function FloatingCart() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-price tabular-nums text-base font-semibold text-black" suppressHydrationWarning>{formatRub(total)}</span>
+              <span className="font-price tabular-nums text-base font-semibold text-black" suppressHydrationWarning>
+                {formatDualPrice({ amount: totalAmount, currency: totalCurrency, cnyPerRub })}
+              </span>
               <ChevronUp className="h-4 w-4 text-[color:var(--color-text-tertiary)]" />
             </div>
           </button>
@@ -131,7 +156,11 @@ export function FloatingCart() {
                           <p className="text-xs text-[color:var(--color-text-secondary)]">Цвета: {item.colors.join(", ")}</p>
                         ) : null}
                         <p className="font-price tabular-nums mt-1 text-sm font-semibold text-black">
-                          {formatRub(item.price * item.quantity)}
+                          {formatDualPrice({
+                            amount: item.price * item.quantity,
+                            currency: item.priceCurrency,
+                            cnyPerRub,
+                          })}
                         </p>
                       </div>
                       <button
@@ -183,7 +212,9 @@ export function FloatingCart() {
 
             <div className="mb-4 flex items-center justify-between text-sm">
               <span className="text-[color:var(--color-text-secondary)]">Заказ на сумму</span>
-              <span className="font-price tabular-nums text-lg font-bold text-black" suppressHydrationWarning>{formatRub(total)}</span>
+              <span className="font-price tabular-nums text-lg font-bold text-black" suppressHydrationWarning>
+                {formatDualPrice({ amount: totalAmount, currency: totalCurrency, cnyPerRub })}
+              </span>
             </div>
 
             <button
@@ -269,3 +300,4 @@ export function FloatingCart() {
     </div>
   )
 }
+

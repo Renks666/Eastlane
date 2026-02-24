@@ -1,4 +1,5 @@
 ﻿import { createAdminClient } from "@/src/shared/lib/supabase/admin"
+import { getExchangeRateCnyPerRub } from "@/src/domains/content/services/storefront-content-service"
 import {
   deleteOrderById,
   fetchAdminOrders,
@@ -14,9 +15,10 @@ export async function createOrderFromCart(payload: CheckoutPayload) {
   validateCheckoutPayload(payload)
 
   const supabase = createAdminClient()
+  const cnyPerRub = await getExchangeRateCnyPerRub()
   const productIds = Array.from(new Set(payload.items.map((item) => item.id)))
   const products = await fetchProductsForCheckout(supabase, productIds)
-  const { normalizedItems, totalAmount } = buildOrderItems(payload, products)
+  const { normalizedItems, totalAmount, totalCurrency, totalAmountRubApprox } = buildOrderItems(payload, products, cnyPerRub)
 
   const orderId = await insertOrder(supabase, {
     contactChannel: payload.contactChannel,
@@ -24,6 +26,9 @@ export async function createOrderFromCart(payload: CheckoutPayload) {
     customerName: payload.customerName,
     comment: payload.comment,
     totalAmount,
+    totalCurrency,
+    exchangeRateSnapshot: cnyPerRub,
+    totalAmountRubApprox,
   })
 
   try {

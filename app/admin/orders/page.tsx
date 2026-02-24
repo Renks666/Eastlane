@@ -1,18 +1,22 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 import { Fragment } from "react"
 import { listAdminOrders } from "@/src/domains/order/services/order-service"
+import { getStorefrontContent } from "@/src/domains/content/services/storefront-content-service"
 import type { OrderStatus } from "@/src/domains/order/types"
 import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { OrderStatusSelect } from "@/app/admin/orders/OrderStatusSelect"
+import { formatDualPrice } from "@/src/shared/lib/format-price"
 
 type OrderItem = {
   id: number
   product_name_snapshot: string
   size_snapshot: string | null
   price_snapshot: number
+  price_currency_snapshot: "RUB" | "CNY"
   quantity: number
   line_total: number
+  line_total_rub_approx: number
 }
 
 type Order = {
@@ -20,6 +24,9 @@ type Order = {
   created_at: string
   status: OrderStatus
   total_amount: number
+  total_currency: "RUB" | "CNY"
+  exchange_rate_snapshot: number | null
+  total_amount_rub_approx: number | null
   contact_channel: string
   contact_value: string | null
   comment: string | null
@@ -55,10 +62,6 @@ const sortOptions = [
 ] as const
 
 type SortValue = (typeof sortOptions)[number]["value"]
-
-function formatRub(price: number) {
-  return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(price)) + " ₽"
-}
 
 function statusMeta(status: OrderStatus) {
   if (status === "done") {
@@ -112,6 +115,7 @@ function buildQueryString(input: {
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
   await requireAdminUserOrRedirect()
   const { q, status, sort, page } = await searchParams
+  const content = await getStorefrontContent()
 
   const queryText = q?.trim().toLowerCase() ?? ""
   const statusFilter: "all" | OrderStatus = status && isOrderStatus(status) ? status : "all"
@@ -156,10 +160,10 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     }
     if (sortValue === "total_desc") {
-      return Number(b.total_amount) - Number(a.total_amount)
+      return Number(b.total_amount_rub_approx ?? 0) - Number(a.total_amount_rub_approx ?? 0)
     }
     if (sortValue === "total_asc") {
-      return Number(a.total_amount) - Number(b.total_amount)
+      return Number(a.total_amount_rub_approx ?? 0) - Number(b.total_amount_rub_approx ?? 0)
     }
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
@@ -170,7 +174,13 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   const pageStart = (currentPage - 1) * PAGE_SIZE
   const pageOrders = filtered.slice(pageStart, pageStart + PAGE_SIZE)
 
-  const totalRevenue = filtered.reduce((sum, order) => sum + Number(order.total_amount), 0)
+  const totalRevenueRub = filtered.reduce((sum, order) => {
+    const rubApprox = Number(order.total_amount_rub_approx ?? 0)
+    if (Number.isFinite(rubApprox) && rubApprox > 0) return sum + rubApprox
+    if (order.total_currency === "RUB") return sum + Number(order.total_amount)
+    return sum + Number(order.total_amount) / Number(order.exchange_rate_snapshot ?? content.exchangeRate.cnyPerRub)
+  }, 0)
+
   const newCount = filtered.filter((order) => order.status === "new").length
   const processingCount = filtered.filter((order) => order.status === "processing").length
   const doneCount = filtered.filter((order) => order.status === "done").length
@@ -218,7 +228,9 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
             <CardTitle className="text-sm font-medium text-muted-foreground">Выручка</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-price tabular-nums text-2xl font-semibold text-black">{formatRub(totalRevenue)}</p>
+            <p className="font-price tabular-nums text-2xl font-semibold text-black">
+              {formatDualPrice({ amount: totalRevenueRub, currency: "RUB", cnyPerRub: content.exchangeRate.cnyPerRub })}
+            </p>
             <p className="text-xs text-muted-foreground">Выполнено: {doneCount}</p>
           </CardContent>
         </Card>
@@ -276,6 +288,8 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           <div className="space-y-3 md:hidden">
             {pageOrders.map((order) => {
               const meta = statusMeta(order.status)
+              const rate = Number(order.exchange_rate_snapshot ?? content.exchangeRate.cnyPerRub)
+
               return (
                 <Card key={order.id} className="rounded-xl border-border shadow-sm">
                   <CardContent className="space-y-3 p-4">
@@ -299,7 +313,9 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                       <span>{order.order_items.length} позиций</span>
                     </div>
 
-                    <p className="font-price tabular-nums text-right text-lg font-semibold text-black">{formatRub(order.total_amount)}</p>
+                    <p className="font-price tabular-nums text-right text-lg font-semibold text-black">
+                      {formatDualPrice({ amount: order.total_amount, currency: order.total_currency, cnyPerRub: rate })}
+                    </p>
 
                     <div className="space-y-1">
                       <p className="text-xs font-medium text-muted-foreground">Статус</p>
@@ -312,7 +328,11 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                         {order.order_items.map((item) => (
                           <span key={item.id} className="rounded-md border border-border bg-background px-2 py-1">
                             {item.product_name_snapshot}
-                            {item.size_snapshot ? ` (${item.size_snapshot})` : ""} x{item.quantity}
+                            {item.size_snapshot ? ` (${item.size_snapshot})` : ""} x{item.quantity} · {formatDualPrice({
+                              amount: item.line_total,
+                              currency: item.price_currency_snapshot,
+                              cnyPerRub: rate,
+                            })}
                           </span>
                         ))}
                         {order.comment ? (
@@ -349,6 +369,8 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                 <tbody>
                   {pageOrders.map((order) => {
                     const meta = statusMeta(order.status)
+                    const rate = Number(order.exchange_rate_snapshot ?? content.exchangeRate.cnyPerRub)
+
                     return (
                       <Fragment key={order.id}>
                         <tr className="border-t border-border align-top hover:bg-muted/20">
@@ -373,7 +395,9 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                           <td className="px-4 py-3 text-muted-foreground">
                             {new Date(order.created_at).toLocaleString("ru-RU")}
                           </td>
-                          <td className="font-price tabular-nums px-4 py-3 text-right font-semibold text-black">{formatRub(order.total_amount)}</td>
+                          <td className="font-price tabular-nums px-4 py-3 text-right font-semibold text-black">
+                            {formatDualPrice({ amount: order.total_amount, currency: order.total_currency, cnyPerRub: rate })}
+                          </td>
                           <td className="px-4 py-3 text-right">
                             <OrderStatusSelect orderId={order.id} status={order.status} />
                           </td>
@@ -386,6 +410,8 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                                 <span key={item.id} className="rounded-md border border-border bg-background px-2 py-1">
                                   {item.product_name_snapshot}
                                   {item.size_snapshot ? ` (${item.size_snapshot})` : ""} x{item.quantity}
+                                  {" · "}
+                                  {formatDualPrice({ amount: item.line_total, currency: item.price_currency_snapshot, cnyPerRub: rate })}
                                 </span>
                               ))}
                               {order.comment ? (
@@ -436,3 +462,4 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
     </div>
   )
 }
+

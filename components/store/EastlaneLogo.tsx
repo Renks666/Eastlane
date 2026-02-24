@@ -39,7 +39,7 @@ export function EastlaneLogo({
         className={cn(
           "logo-animated font-semibold leading-none text-[color:var(--color-text-primary)]",
           compact
-            ? "text-base tracking-[0.24em] sm:text-lg lg:text-xl"
+            ? "text-lg tracking-[0.24em] sm:text-xl lg:text-2xl"
             : "text-2xl tracking-[0.28em] sm:text-3xl lg:text-4xl"
         )}
       >

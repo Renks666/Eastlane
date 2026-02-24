@@ -1,16 +1,18 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { useCart } from "@/components/store/CartProvider"
 import { cn } from "@/lib/utils"
+import type { PriceCurrency } from "@/src/shared/lib/format-price"
 
 type AddToCartButtonProps = {
   product: {
     id: number
     name: string
     price: number
+    priceCurrency: PriceCurrency
     image?: string
     sizes?: string[] | null
     colors?: string[] | null
@@ -27,16 +29,16 @@ export function AddToCartButton({ product, className, disabled }: AddToCartButto
 
   const handleAddToCart = async () => {
     if (disabled || isAdding) return
-    
+
     setIsAdding(true)
-    
-    // Симуляция небольшой задержки для плавности
-    await new Promise(resolve => setTimeout(resolve, 200))
-    
+
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
     addItem({
       id: product.id,
       name: product.name,
       price: product.price,
+      priceCurrency: product.priceCurrency,
       image: product.image,
       sizes: product.sizes ?? [],
       colors: product.colors ?? [],
@@ -50,11 +52,11 @@ export function AddToCartButton({ product, className, disabled }: AddToCartButto
         label: "Открыть корзину",
         onClick: () => {
           window.dispatchEvent(new CustomEvent("cart:open"))
-        }
+        },
       },
       duration: 3000,
     })
-    
+
     setIsAdding(false)
   }
 

@@ -1,9 +1,12 @@
-import { notFound } from "next/navigation"
+﻿import { notFound } from "next/navigation"
 import { StoreShell } from "@/components/store/StoreShell"
 import { ProductGallery } from "@/components/store/ProductGallery"
 import { ProductPurchasePanel } from "@/components/store/ProductPurchasePanel"
 import { Breadcrumbs } from "@/components/store/Breadcrumbs"
 import { createClient } from "@/lib/supabase/server"
+import { getStorefrontContent } from "@/src/domains/content/services/storefront-content-service"
+import { isSeasonKey, normalizeSeason, SEASON_LABELS_RU, type SeasonKey } from "@/src/domains/product-attributes/seasons"
+import { formatDualPrice, normalizePriceCurrency } from "@/src/shared/lib/format-price"
 
 type ProductPageProps = {
   params: Promise<{ id: string }>
@@ -14,10 +17,13 @@ type ProductData = {
   name: string
   description: string | null
   price: number
+  price_currency: "RUB" | "CNY"
   sizes: string[] | null
   colors: string[] | null
+  seasons: string[] | null
   images: string[] | null
   categories: { name: string }[] | null
+  brands: { name: string }[] | null
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
@@ -28,9 +34,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   const supabase = await createClient()
+  const content = await getStorefrontContent()
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, description, price, sizes, colors, images, categories(name)")
+    .select("id, name, description, price, price_currency, sizes, colors, seasons, images, categories(name), brands(name)")
     .eq("id", productId)
     .single()
 
@@ -41,6 +48,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const product = data as ProductData
   const sizes = product.sizes ?? []
   const colors = product.colors ?? []
+  const seasons = Array.from(
+    new Set(
+      (product.seasons ?? [])
+        .map((value) => normalizeSeason(value))
+        .filter((value): value is SeasonKey => isSeasonKey(value))
+    )
+  )
   const inStock = sizes.length > 0
 
   return (
@@ -56,17 +70,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="grid gap-6 lg:grid-cols-[1.05fr_1fr]">
           <ProductGallery images={product.images ?? []} name={product.name} />
           <article className="rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-5 md:p-6">
-            <p className="inline-flex rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-accent)] px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-[color:var(--color-text-tertiary)]">
-              Коллекция: {product.categories?.[0]?.name ?? "EASTLANE"}
-            </p>
             <h1 className="mt-3 text-3xl font-semibold text-[color:var(--color-brand-forest-light)]">{product.name}</h1>
-            <p className="font-price tabular-nums mt-4 text-3xl font-semibold text-black">{Math.round(Number(product.price))} ₽</p>
+            <p className="font-price tabular-nums mt-4 text-3xl font-semibold text-black">
+              {formatDualPrice({
+                amount: product.price,
+                currency: normalizePriceCurrency(product.price_currency),
+                cnyPerRub: content.exchangeRate.cnyPerRub,
+              })}
+            </p>
 
             <ProductPurchasePanel
               product={{
                 id: product.id,
                 name: product.name,
                 price: product.price,
+                priceCurrency: normalizePriceCurrency(product.price_currency),
                 image: product.images?.[0],
                 sizes,
                 colors,
@@ -81,6 +99,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
                     colors.map((color) => (
                       <span key={color} className="rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 py-1 text-sm text-[color:var(--color-text-secondary)]">
                         {color}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-sm text-[color:var(--color-text-secondary)]">Уточните у менеджера</span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-medium text-[color:var(--color-brand-forest-light)]">Сезонность</p>
+                <div className="flex flex-wrap gap-2">
+                  {seasons.length > 0 ? (
+                    seasons.map((season) => (
+                      <span key={season} className="rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 py-1 text-sm text-[color:var(--color-text-secondary)]">
+                        {SEASON_LABELS_RU[season]}
                       </span>
                     ))
                   ) : (
@@ -116,3 +149,4 @@ export default async function ProductPage({ params }: ProductPageProps) {
     </StoreShell>
   )
 }
+

@@ -19,7 +19,11 @@
 
 - `types.ts`: `CatalogFilterParams` DTO.
 - `services/filter-params.ts`: parse/serialize URL filters.
-- `repositories/catalog-repository.ts`: category/products/filter metadata queries.
+- `repositories/catalog-repository.ts`: category/brand/products/filter metadata queries.
+
+### Brand
+
+- `types.ts`: `BrandGroupKey` union + labels/order helpers.
 
 ### Order
 
@@ -31,6 +35,11 @@
 ### Product
 
 - `services/product-image-service.ts`: upload/remove/reorder product images in Supabase Storage.
+
+### Product Attributes
+
+- `types.ts`: normalization + dedupe helpers for sizes/colors.
+- `services/attribute-options-service.ts`: upsert dictionary values and usage checks.
 
 ### Content
 

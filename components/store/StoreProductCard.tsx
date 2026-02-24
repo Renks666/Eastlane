@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useMemo, useRef, useState, useEffect } from "react"
 import Image from "next/image"
@@ -7,22 +7,26 @@ import { ChevronLeft, ChevronRight, Search, ShoppingCart, ZoomIn, ZoomOut, X } f
 import { toast } from "sonner"
 import { AddToCartButton } from "@/components/store/AddToCartButton"
 import { useCart } from "@/components/store/CartProvider"
+import { formatDualPrice, type PriceCurrency } from "@/src/shared/lib/format-price"
 
 type StoreProductCardProps = {
   product: {
     id: number
     name: string
     price: number
+    priceCurrency: PriceCurrency
     images?: string[] | null
     sizes?: string[] | null
     colors?: string[] | null
     categoryName?: string | null
+    brandName?: string | null
   }
+  cnyPerRub: number
 }
 
 const FALLBACK_IMAGE = "https://placehold.co/600x800/f1efe7/18362e?text=EASTLANE"
 
-export function StoreProductCard({ product }: StoreProductCardProps) {
+export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) {
   const sizes = useMemo(() => product.sizes ?? [], [product.sizes])
   const colors = useMemo(() => product.colors ?? [], [product.colors])
   const images = useMemo(() => {
@@ -36,15 +40,12 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
   const [imageIndex, setImageIndex] = useState(0)
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [zoom, setZoom] = useState(1)
-  // Состояние быстрого добавления в корзину: открыт ли dropdown выбора размера
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const quickAddRef = useRef<HTMLDivElement>(null)
 
-  // Определяем, есть ли варианты товара (несколько размеров или цветов)
   const hasVariants = sizes.length > 1 || colors.length > 1
   const activeImage = images[imageIndex] || FALLBACK_IMAGE
 
-  // Закрытие dropdown при клике вне области карточки/меню
   useEffect(() => {
     if (!quickAddOpen) return
     const handleClickOutside = (e: MouseEvent) => {
@@ -77,15 +78,15 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
   const zoomIn = () => setZoom((prev) => Math.min(prev + 0.25, 3))
   const zoomOut = () => setZoom((prev) => Math.max(prev - 0.25, 1))
 
-  // Быстрое добавление в корзину с выбранным размером (без перехода на страницу товара)
   const handleQuickAdd = (selectedSize: string) => {
     addItem({
       id: product.id,
       name: product.name,
       price: product.price,
+      priceCurrency: product.priceCurrency,
       image: product.images?.[0],
-      sizes: sizes,
-      colors: colors,
+      sizes,
+      colors,
       selectedSize,
       selectedColor: colors.length === 1 ? colors[0] : undefined,
     })
@@ -161,10 +162,13 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
 
         <div className="mt-3">
           <p className="text-xs uppercase tracking-[0.15em] text-[color:var(--color-text-accent)]">{product.categoryName ?? "Каталог"}</p>
+          {product.brandName ? (
+            <p className="mt-1 text-sm font-semibold text-[color:var(--color-brand-forest-light)]">{product.brandName}</p>
+          ) : null}
           <Link href={`/products/${product.id}`} className="mt-1 block line-clamp-2 text-base font-medium leading-snug text-[color:var(--color-text-primary)] hover:text-[color:var(--color-brand-forest-light)]">
             {product.name}
           </Link>
-          {/* Размеры под названием — в квадратиках (чипы) */}
+
           {sizes.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
               {sizes.map((size) => (
@@ -178,50 +182,64 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
             </div>
           )}
 
+          {colors.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {colors.map((color) => (
+                <span
+                  key={color}
+                  className="inline-flex items-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2 py-0.5 text-xs text-[color:var(--color-text-secondary)]"
+                >
+                  {color}
+                </span>
+              ))}
+            </div>
+          )}
+
           <div className="mt-3 flex items-center justify-between gap-2 sm:gap-3">
-            <p className="font-price tabular-nums text-lg font-semibold text-black">{Math.round(Number(product.price))} ₽</p>
-            
+            <p className="font-price tabular-nums text-lg font-semibold text-black">
+              {formatDualPrice({ amount: product.price, currency: product.priceCurrency, cnyPerRub })}
+            </p>
+
             {hasVariants ? (
               <div className="flex items-center gap-1.5 sm:gap-2" ref={quickAddRef}>
-                {/* Иконка корзины слева от кнопки; по клику — выбор размера и добавление в корзину */}
                 {sizes.length > 0 && (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setQuickAddOpen((v) => !v)}
-                    className="inline-flex h-10 w-10 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
-                    aria-label="Быстро добавить в корзину"
-                    aria-expanded={quickAddOpen}
-                  >
-                    <ShoppingCart className="h-4 w-4 sm:h-4 sm:w-4" />
-                  </button>
-                  {quickAddOpen && (
-                    <div
-                      className="absolute left-0 top-full z-20 mt-1.5 min-w-[120px] rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-2 shadow-lg"
-                      role="listbox"
-                      aria-label="Выберите размер"
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setQuickAddOpen((v) => !v)}
+                      className="inline-flex h-10 w-10 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+                      aria-label="Быстро добавить в корзину"
+                      aria-expanded={quickAddOpen}
                     >
-                      <p className="mb-2 text-center text-sm font-medium text-[color:var(--color-text-primary)]">Размер:</p>
-                      <div className="flex flex-col">
-                        {sizes.map((size) => (
-                          <button
-                            key={size}
-                            type="button"
-                            role="option"
-                            onClick={() => handleQuickAdd(size)}
-                            className="w-full border-t border-b border-[color:var(--color-border-secondary)] py-2 text-center text-xs font-medium text-[color:var(--color-text-secondary)] transition first:border-t-[color:var(--color-border-secondary)] hover:bg-[color:var(--color-bg-accent)] hover:text-[color:var(--color-brand-forest-light)] hover:border-2 hover:border-[color:var(--color-brand-beige-dark)] focus:outline-none focus:bg-[color:var(--color-bg-accent)] focus:text-[color:var(--color-brand-forest-light)] focus:border-2 focus:border-[color:var(--color-brand-beige-dark)]"
-                          >
-                            {size}
-                          </button>
-                        ))}
+                      <ShoppingCart className="h-4 w-4 sm:h-4 sm:w-4" />
+                    </button>
+                    {quickAddOpen && (
+                      <div
+                        className="absolute bottom-full left-0 z-[90] mb-1.5 min-w-[120px] rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-2 shadow-lg"
+                        role="listbox"
+                        aria-label="Выберите размер"
+                      >
+                        <p className="mb-2 text-center text-sm font-medium text-[color:var(--color-text-primary)]">Размер:</p>
+                        <div className="flex flex-col">
+                          {sizes.map((size) => (
+                            <button
+                              key={size}
+                              type="button"
+                              role="option"
+                              onClick={() => handleQuickAdd(size)}
+                              className="w-full border-t border-b border-[color:var(--color-border-secondary)] py-2 text-center text-xs font-medium text-[color:var(--color-text-secondary)] transition first:border-t-[color:var(--color-border-secondary)] hover:bg-[color:var(--color-bg-accent)] hover:text-[color:var(--color-brand-forest-light)] hover:border-2 hover:border-[color:var(--color-brand-beige-dark)] focus:outline-none focus:bg-[color:var(--color-bg-accent)] focus:text-[color:var(--color-brand-forest-light)] focus:border-2 focus:border-[color:var(--color-brand-beige-dark)]"
+                            >
+                              {size}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
                 )}
                 <Link
                   href={`/products/${product.id}`}
-                  className="inline-flex min-h-[44px] min-w-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg bg-[color:var(--color-brand-forest)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)] sm:flex-initial sm:px-4"
+                  className="inline-flex min-h-[44px] min-w-[84px] whitespace-nowrap items-center justify-center gap-1 rounded-lg bg-[color:var(--color-brand-forest)] px-2 py-2 text-xs font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)] sm:min-w-[92px] sm:px-3"
                 >
                   К товару
                 </Link>
@@ -232,6 +250,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
                   id: product.id,
                   name: product.name,
                   price: product.price,
+                  priceCurrency: product.priceCurrency,
                   image: product.images?.[0],
                   sizes: sizes.length === 1 ? sizes : [],
                   colors: colors.length === 1 ? colors : [],
@@ -246,10 +265,7 @@ export function StoreProductCard({ product }: StoreProductCardProps) {
       </article>
 
       {isViewerOpen && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4"
-          onClick={closeViewer}
-        >
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4" onClick={closeViewer}>
           <div
             className="relative w-full max-w-4xl rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-3 shadow-2xl md:p-4"
             onClick={(event) => event.stopPropagation()}

@@ -103,6 +103,10 @@ export type EastlaneTariffsSectionContent = {
   returnPolicy: string
 }
 
+export type ExchangeRateSectionContent = {
+  cnyPerRub: number
+}
+
 export type ContentSectionKey =
   | "hero"
   | "benefits"
@@ -112,6 +116,7 @@ export type ContentSectionKey =
   | "about"
   | "delivery_rates"
   | "eastlane_tariffs"
+  | "exchange_rate"
 
 export type ContentSection<T = unknown> = {
   key: ContentSectionKey

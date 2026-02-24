@@ -1,4 +1,5 @@
 ﻿import type { CheckoutPayload, OrderItemRecord } from "@/src/domains/order/types"
+import { convertCnyToRubApprox, convertRubToCnyApprox, normalizePriceCurrency } from "../../../shared/lib/format-price"
 
 export function validateCheckoutPayload(payload: CheckoutPayload) {
   if (!payload.items || payload.items.length === 0) {
@@ -34,9 +35,16 @@ export function validateCheckoutPayload(payload: CheckoutPayload) {
 
 export function buildOrderItems(
   payload: CheckoutPayload,
-  products: Array<{ id: number; name: string; price: number }>
-): { normalizedItems: OrderItemRecord[]; totalAmount: number } {
+  products: Array<{ id: number; name: string; price: number; price_currency?: "RUB" | "CNY" }>,
+  cnyPerRub: number
+): {
+  normalizedItems: OrderItemRecord[]
+  totalAmount: number
+  totalCurrency: "RUB" | "CNY"
+  totalAmountRubApprox: number
+} {
   const productMap = new Map(products.map((product) => [product.id, product]))
+  const totalCurrency: "RUB" | "CNY" = payload.items.some((item) => item.priceCurrency === "CNY") ? "CNY" : "RUB"
 
   const normalizedItems = payload.items.map((item) => {
     const product = productMap.get(item.id)
@@ -50,17 +58,40 @@ export function buildOrderItems(
     }
 
     const price = Number(product.price)
+    const priceCurrency = normalizePriceCurrency(item.priceCurrency ?? product.price_currency)
+    const lineTotal = price * item.quantity
+
+    const lineTotalRubApprox =
+      priceCurrency === "RUB" ? lineTotal : (convertCnyToRubApprox(lineTotal, cnyPerRub) ?? 0)
+
     return {
       product_id: product.id,
       product_name_snapshot: product.name,
       size_snapshot: item.selectedSize ?? null,
       price_snapshot: price,
+      price_currency_snapshot: priceCurrency,
       quantity: item.quantity,
-      line_total: price * item.quantity,
+      line_total: lineTotal,
+      line_total_rub_approx: lineTotalRubApprox,
     }
   })
 
-  const totalAmount = normalizedItems.reduce((sum, item) => sum + item.line_total, 0)
-  return { normalizedItems, totalAmount }
+  const totalAmount = normalizedItems.reduce((sum, item) => {
+    if (totalCurrency === item.price_currency_snapshot) {
+      return sum + item.line_total
+    }
+
+    if (totalCurrency === "CNY") {
+      return sum + (convertRubToCnyApprox(item.line_total, cnyPerRub) ?? 0)
+    }
+
+    return sum + (convertCnyToRubApprox(item.line_total, cnyPerRub) ?? 0)
+  }, 0)
+
+  const totalAmountRubApprox = normalizedItems.reduce((sum, item) => sum + item.line_total_rub_approx, 0)
+
+  return { normalizedItems, totalAmount, totalCurrency, totalAmountRubApprox }
 }
+
+
 

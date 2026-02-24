@@ -1,77 +1,40 @@
 ﻿import {
   AlertTriangle,
   Building2,
-  Calculator,
   CircleDot,
   Search,
   ShieldCheck,
   Sigma,
-  Wrench,
+  Truck,
 } from "lucide-react"
-import type { EastlaneTariffsSectionContent, EastlaneTariffsTier } from "@/src/domains/content/types"
+import type { EastlaneTariffsSectionContent } from "@/src/domains/content/types"
 
 type EastlaneTariffsSectionProps = {
   content: EastlaneTariffsSectionContent
 }
 
-const IMPORTANT_ITEM_ICONS = [Building2, CircleDot, CircleDot, Search, ShieldCheck]
+const IMPORTANT_ITEM_ICONS = [CircleDot, Building2, Search, ShieldCheck, Truck]
+const IMPORTANT_ITEMS = [
+  "Минимальный заказ не обязателен — можно брать единичные позиции.",
+  "Оптовые заказы рассчитываются индивидуально.",
+  "Возможен поиск любых товаров по вашей просьбе.",
+  "Рекомендуется страховка. Покрывает стоимость товара. Частично может покрывать стоимость доставки в зависимости от перевозчика.",
+  "Международная доставка включает транспортировку до страны получателя. Доставка до конкретного адреса или пункта выдачи оформляется через курьерскую службу дополнительно.",
+  "Возврат возможен только на территории Китая и только по уважительной причине (брак, неправильный цвет/размер). После отправки товара к вам возврат невозможен.",
+]
 
-function formatNumber(value: number) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(".", ",")
-}
-
-function TierCard({ tier }: { tier: EastlaneTariffsTier }) {
-  return (
-    <article className="rounded-2xl border border-[color:var(--color-brand-forest-light)]/35 bg-[linear-gradient(160deg,#091a16_0%,#0b201a_58%,#0d251f_100%)] p-3 text-white sm:p-4 md:p-5">
-
-      <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-300/90">Тариф</p>
-          <h3 className="mt-1 text-lg font-semibold text-cyan-100 sm:text-xl md:text-2xl">
-            {tier.title} <span className="text-cyan-300/90">(от {tier.minItems} позиции)</span>
-          </h3>
-        </div>
-        <span className="inline-flex self-start shrink-0 items-center rounded-full border border-cyan-300/35 bg-cyan-600/15 px-2.5 py-1 text-[11px] uppercase tracking-[0.12em] text-cyan-200">
-          EASTLANE
-        </span>
-      </header>
-
-      <div className="mt-3.5 rounded-xl border border-cyan-300/35 bg-[#071915]/70 p-3 md:mt-4 md:p-4">
-        <p className="flex items-start gap-2.5 text-cyan-50/95">
-          <Wrench className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" />
-          <span className="break-words leading-snug">
-            Сервис/обработка заказа:{" "}
-            <span className="font-price text-cyan-100 tabular-nums">{formatNumber(tier.serviceFeeCny)} ¥</span>{" "}
-            (~<span className="font-price text-cyan-100 tabular-nums">{formatNumber(tier.serviceFeeRubApprox)} ₽</span>) за позицию
-          </span>
-        </p>
-      </div>
-
-      <div className="mt-3.5 rounded-xl border border-cyan-300/25 bg-cyan-900/15 p-3 md:mt-4 md:p-4">
-        <p className="mb-2 flex items-center gap-2 text-sm uppercase tracking-[0.12em] text-cyan-300/95">
-          <Calculator className="h-4 w-4" />
-          Пример расчета
-        </p>
-        <ul className="space-y-1.5 text-sm text-cyan-50/95">
-          {tier.example.lines.map((line) => (
-            <li key={line} className="break-words leading-snug md:leading-relaxed">
-              {line}
-            </li>
-          ))}
-        </ul>
-        <p className="mt-2 break-words border-t border-cyan-300/25 pt-2 font-price text-base text-cyan-100 tabular-nums md:text-lg">{tier.example.resultLine}</p>
-      </div>
-
-      <p className="mt-3.5 flex items-start gap-2.5 rounded-lg border border-amber-300/35 bg-amber-400/14 p-3 text-sm text-amber-50 md:mt-4">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" />
-        <span className="break-words leading-snug">{tier.warning}</span>
-      </p>
-    </article>
-  )
-}
+const CALC_ROWS = [
+  { priceRange: "0 - 500", percent: "-", commission: "50" },
+  { priceRange: "501 - 1 000", percent: "10", commission: "-" },
+  { priceRange: "1 001 - 2 000", percent: "9", commission: "-" },
+  { priceRange: "2 001 - 3 000", percent: "8", commission: "-" },
+  { priceRange: "3 001 - 4 000", percent: "7", commission: "-" },
+  { priceRange: "4 001 - 5 000", percent: "6", commission: "-" },
+  { priceRange: "5 001+", percent: "5", commission: "-" },
+]
 
 export function EastlaneTariffsSection({ content }: EastlaneTariffsSectionProps) {
-  const importantItems = [...content.importantItems, content.returnPolicy]
+  const importantItems = IMPORTANT_ITEMS
 
   return (
     <section className="mx-auto max-w-7xl px-3 pb-12 sm:px-4 md:px-12 md:pb-20">
@@ -93,14 +56,35 @@ export function EastlaneTariffsSection({ content }: EastlaneTariffsSectionProps)
         </div>
 
         <div className="relative">
-          <h2 className="text-2xl font-semibold leading-tight text-[color:var(--color-brand-forest-light)] sm:text-3xl md:text-5xl">{content.title}</h2>
-          <p className="mt-2.5 max-w-3xl text-sm leading-relaxed text-[color:var(--color-text-secondary)] md:mt-3 md:text-base">{content.subtitle}</p>
+          <h2 className="text-2xl font-semibold leading-tight text-[color:var(--color-brand-forest-light)] sm:text-3xl md:text-5xl">
+            Модуль расчета
+            <span className="block">Eastlane</span>
+          </h2>
         </div>
 
-        <div className="relative mt-6 grid gap-3.5 sm:mt-7 sm:gap-4 md:mt-8 md:grid-cols-2 md:gap-5">
-          {content.tiers.map((tier) => (
-            <TierCard key={tier.id} tier={tier} />
-          ))}
+        <div className="relative mt-6 sm:mt-7 md:mt-8">
+          <article className="rounded-2xl border border-[color:var(--color-brand-forest-light)]/35 bg-[linear-gradient(160deg,#091a16_0%,#0b201a_58%,#0d251f_100%)] p-3 text-white sm:p-4 md:p-5">
+            <div className="overflow-x-auto overscroll-x-contain rounded-xl border border-cyan-300/35 bg-[#071915]/50">
+              <table className="min-w-[640px] w-full border-collapse text-sm">
+                <thead>
+                  <tr className="text-xs uppercase tracking-wide text-cyan-100/90">
+                    <th className="border border-cyan-300/25 bg-cyan-600/10 px-3 py-2 text-left">Цена товара (CNY)</th>
+                    <th className="border border-cyan-300/25 bg-cyan-600/10 px-3 py-2 text-center">Процент (%)</th>
+                    <th className="border border-cyan-300/25 bg-cyan-600/10 px-3 py-2 text-center">Комиссия (CNY)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CALC_ROWS.map((row) => (
+                    <tr key={row.priceRange} className="text-cyan-50">
+                      <th className="border border-cyan-300/20 px-3 py-2 text-left font-medium">{row.priceRange}</th>
+                      <td className="font-price border border-cyan-300/20 px-3 py-2 text-center tabular-nums">{row.percent}</td>
+                      <td className="font-price border border-cyan-300/20 px-3 py-2 text-center tabular-nums">{row.commission}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </article>
         </div>
 
         <div className="relative mt-4 overflow-hidden rounded-xl border border-cyan-300/30 bg-[linear-gradient(160deg,rgba(8,28,23,0.92)_0%,rgba(11,34,28,0.92)_100%)] p-3.5 text-cyan-50 sm:mt-5 sm:p-4 md:p-5">
