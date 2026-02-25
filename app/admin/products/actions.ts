@@ -1,4 +1,4 @@
-"use server"
+﻿"use server"
 
 import { revalidatePath } from "next/cache"
 import { requireAdminUser } from "@/src/shared/lib/auth/require-admin"
@@ -10,8 +10,9 @@ import {
   resolveMainImageUrl,
   uploadProductImages,
 } from "@/src/domains/product/services/product-image-service"
-import { upsertAttributeOptions } from "@/src/domains/product-attributes/services/attribute-options-service"
-import { sanitizeAttributeValues } from "@/src/domains/product-attributes/types"
+import { canonicalizeAttributeValues } from "@/src/domains/product-attributes/services/attribute-options-service"
+import { syncProductAttributeLinks } from "@/src/domains/product-attributes/services/product-attribute-links-service"
+import { looksLikeSizeValue, sanitizeAttributeValues } from "@/src/domains/product-attributes/types"
 import { isSeasonKey, normalizeSeason, type SeasonKey } from "@/src/domains/product-attributes/seasons"
 import { normalizePriceCurrency, type PriceCurrency } from "@/src/shared/lib/format-price"
 
@@ -80,6 +81,13 @@ function parsePayload(formData: FormData): ProductPayload {
     throw new Error("Выберите бренд.")
   }
 
+  const sanitizedSizes = sanitizeAttributeValues(sizes)
+  const sanitizedColors = sanitizeAttributeValues(colors)
+
+  if (sanitizedColors.some((color) => looksLikeSizeValue(color))) {
+    throw new Error("Цвет не может быть похож на размер.")
+  }
+
   return {
     name,
     description: descriptionRaw ? descriptionRaw : null,
@@ -87,8 +95,8 @@ function parsePayload(formData: FormData): ProductPayload {
     priceCurrency,
     categoryId,
     brandId,
-    sizes: sanitizeAttributeValues(sizes),
-    colors: sanitizeAttributeValues(colors),
+    sizes: sanitizedSizes,
+    colors: sanitizedColors,
     seasons: Array.from(new Set(seasons)),
   }
 }
@@ -114,33 +122,43 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
       user: { id: userId },
     } = await requireAdminUser()
 
+    const [canonicalSizes, canonicalColors] = await Promise.all([
+      canonicalizeAttributeValues(supabase, "sizes", payload.sizes, { createMissing: true }),
+      canonicalizeAttributeValues(supabase, "colors", payload.colors, { createMissing: true }),
+    ])
+
     const { uploadedUrls, uploadedByKey } = await uploadProductImages(newImages, userId)
     const mainImageUrl = resolveMainImageUrl(mainImageKey, [], uploadedByKey)
     const finalImages = reorderImagesWithMain(uploadedUrls, mainImageUrl)
-    await Promise.all([
-      upsertAttributeOptions(supabase, "sizes", payload.sizes),
-      upsertAttributeOptions(supabase, "colors", payload.colors),
-    ])
 
-    const { error } = await supabase.from("products").insert({
-      name: payload.name,
-      description: payload.description,
-      price: payload.price,
-      price_currency: payload.priceCurrency,
-      category_id: payload.categoryId,
-      brand_id: payload.brandId,
-      sizes: payload.sizes,
-      colors: payload.colors,
-      seasons: payload.seasons,
-      images: finalImages,
-    })
+    const { data: inserted, error } = await supabase
+      .from("products")
+      .insert({
+        name: payload.name,
+        description: payload.description,
+        price: payload.price,
+        price_currency: payload.priceCurrency,
+        category_id: payload.categoryId,
+        brand_id: payload.brandId,
+        sizes: canonicalSizes,
+        colors: canonicalColors,
+        seasons: payload.seasons,
+        images: finalImages,
+      })
+      .select("id")
+      .single()
 
-    if (error) {
+    if (error || !inserted) {
       if (uploadedUrls.length > 0) {
         await removeProductImagesByUrls(uploadedUrls)
       }
-      throw new Error(`Не удалось создать товар: ${error.message}`)
+      throw new Error(`Не удалось создать товар: ${error?.message ?? "insert failed"}`)
     }
+
+    await syncProductAttributeLinks(supabase, Number(inserted.id), {
+      sizes: canonicalSizes,
+      colors: canonicalColors,
+    })
 
     revalidateProductPaths()
     return { ok: true }
@@ -172,6 +190,11 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
       user: { id: userId },
     } = await requireAdminUser()
 
+    const [canonicalSizes, canonicalColors] = await Promise.all([
+      canonicalizeAttributeValues(supabase, "sizes", payload.sizes, { createMissing: true }),
+      canonicalizeAttributeValues(supabase, "colors", payload.colors, { createMissing: true }),
+    ])
+
     const { data: currentProduct, error: currentError } = await supabase
       .from("products")
       .select("images")
@@ -189,10 +212,6 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
     const { uploadedUrls, uploadedByKey } = await uploadProductImages(newImages, userId)
     const mainImageUrl = resolveMainImageUrl(mainImageKey, keptImages, uploadedByKey)
     const finalImages = reorderImagesWithMain([...keptImages, ...uploadedUrls], mainImageUrl)
-    await Promise.all([
-      upsertAttributeOptions(supabase, "sizes", payload.sizes),
-      upsertAttributeOptions(supabase, "colors", payload.colors),
-    ])
 
     const { error: updateError } = await supabase
       .from("products")
@@ -203,8 +222,8 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
         price_currency: payload.priceCurrency,
         category_id: payload.categoryId,
         brand_id: payload.brandId,
-        sizes: payload.sizes,
-        colors: payload.colors,
+        sizes: canonicalSizes,
+        colors: canonicalColors,
         seasons: payload.seasons,
         images: finalImages,
       })
@@ -216,6 +235,11 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
       }
       throw new Error(`Не удалось обновить товар: ${updateError.message}`)
     }
+
+    await syncProductAttributeLinks(supabase, id, {
+      sizes: canonicalSizes,
+      colors: canonicalColors,
+    })
 
     if (removedImages.length > 0) {
       await removeProductImagesByUrls(removedImages)
@@ -247,6 +271,16 @@ export async function deleteProduct(id: number): Promise<ActionResult> {
 
     if (productError || !product) {
       throw new Error("Товар не найден.")
+    }
+
+    const { error: deleteSizeLinksError } = await supabase.from("product_size_values").delete().eq("product_id", id)
+    if (deleteSizeLinksError) {
+      throw new Error(`Не удалось удалить связи размеров товара: ${deleteSizeLinksError.message}`)
+    }
+
+    const { error: deleteColorLinksError } = await supabase.from("product_color_values").delete().eq("product_id", id)
+    if (deleteColorLinksError) {
+      throw new Error(`Не удалось удалить связи цветов товара: ${deleteColorLinksError.message}`)
     }
 
     const images = (product.images ?? []) as string[]

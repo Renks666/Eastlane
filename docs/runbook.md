@@ -23,9 +23,11 @@
 - `docs/sql/brands_rls.sql`
 - `docs/sql/product_sizes.sql`
 - `docs/sql/product_colors.sql`
-- `docs/sql/product_attributes_seed_from_products.sql`
+- `docs/sql/product_attribute_values.sql`
+- `docs/sql/product_attributes_normalize_products.sql`
 - `docs/sql/product_sizes_rls.sql`
 - `docs/sql/product_colors_rls.sql`
+- `docs/sql/product_attribute_values_rls.sql`
 - `docs/sql/admin_users.sql` (edit emails in file first)
 
 Phase 2 (after all existing products are assigned a brand):
@@ -67,6 +69,10 @@ If `/admin` redirects to `/admin/login` after successful sign-in:
 - ensure current user has `raw_app_meta_data.role = 'admin'` (see `docs/sql/admin_users.sql`);
 - sign out/in to refresh JWT claims.
 
+7. If product create/update fails with errors about `product_size_values` or `product_color_values`:
+- ensure `docs/sql/product_attribute_values.sql` and `docs/sql/product_attribute_values_rls.sql` were applied;
+- run `docs/sql/product_attributes_normalize_products.sql` once to backfill links.
+
 ## 3. Checkout troubleshooting
 
 Symptom: order is not created.
@@ -100,4 +106,3 @@ To override defaults, insert/update rows in `site_sections`:
 - `exchange_rate`
 
 Set `is_published = true` to apply payload.
-

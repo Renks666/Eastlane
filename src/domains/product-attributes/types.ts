@@ -18,6 +18,12 @@ export function normalizeAttributeValue(value: string) {
   return value.trim().replace(/\s+/g, " ").toLowerCase()
 }
 
+const SIZE_LIKE_PATTERN = /^(?:\d+(?:[.,]\d+)?|xxxs|xxs|xs|s|m|l|xl|xxl|xxxl|xxxxl|xxxxxl|2xs|2xl|3xl|4xl|5xl|one[\s-]?size|onesize)$/i
+
+export function looksLikeSizeValue(value: string) {
+  return SIZE_LIKE_PATTERN.test(value.trim())
+}
+
 export function sanitizeAttributeValues(values: string[]) {
   const seen = new Set<string>()
   const result: string[] = []

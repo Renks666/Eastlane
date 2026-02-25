@@ -146,14 +146,14 @@
 .text-body-md { font-size: var(--text-sm); line-height: var(--leading-normal); }
 .text-body-sm { font-size: var(--text-xs); line-height: var(--leading-normal); }
 
-/* Color Utilities */
-.text-primary { color: var(--color-text-primary); }
-.text-secondary { color: var(--color-text-secondary); }
-.text-tertiary { color: var(--color-text-tertiary); }
+/* Color Utilities (prefixed to avoid collision with Tailwind semantic classes) */
+.el-text-primary { color: var(--color-text-primary); }
+.el-text-secondary { color: var(--color-text-secondary); }
+.el-text-tertiary { color: var(--color-text-tertiary); }
 
-.bg-primary { background-color: var(--color-bg-primary); }
-.bg-secondary { background-color: var(--color-bg-secondary); }
-.bg-tertiary { background-color: var(--color-bg-tertiary); }
+.el-bg-primary { background-color: var(--color-bg-primary); }
+.el-bg-secondary { background-color: var(--color-bg-secondary); }
+.el-bg-tertiary { background-color: var(--color-bg-tertiary); }
 
-.border-primary { border-color: var(--color-border-primary); }
-.border-secondary { border-color: var(--color-border-secondary); }
+.el-border-primary { border-color: var(--color-border-primary); }
+.el-border-secondary { border-color: var(--color-border-secondary); }

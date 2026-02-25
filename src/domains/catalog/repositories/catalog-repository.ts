@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { CatalogBrand, CatalogCategory, CatalogFilterParams, CatalogProduct } from "@/src/domains/catalog/types"
 import { SEASON_KEYS } from "@/src/domains/product-attributes/seasons"
+import { normalizeAttributeValue, sanitizeAttributeValues } from "@/src/domains/product-attributes/types"
 import { convertRubToCnyApprox } from "@/src/shared/lib/format-price"
 
 type CatalogProductRow = CatalogProduct & {
@@ -92,6 +93,48 @@ function applyAppLevelPriceFilter(rows: CatalogProductRow[], filters: CatalogFil
   })
 }
 
+async function fetchActiveAttributeValues(
+  supabase: SupabaseClient,
+  kind: "sizes" | "colors"
+) {
+  const table = kind === "sizes" ? "product_sizes" : "product_colors"
+  const { data, error } = await supabase
+    .from(table)
+    .select("value")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("value", { ascending: true })
+
+  if (error) {
+    throw new Error(`Failed to load ${kind} dictionary: ${error.message}`)
+  }
+
+  return (data ?? []).map((item) => item.value as string)
+}
+
+async function canonicalizeSelectedAttributeFilter(
+  supabase: SupabaseClient,
+  kind: "sizes" | "colors",
+  values: string[]
+) {
+  const sanitized = sanitizeAttributeValues(values)
+  if (sanitized.length === 0) return sanitized
+
+  const table = kind === "sizes" ? "product_sizes" : "product_colors"
+  const normalized = Array.from(new Set(sanitized.map((value) => normalizeAttributeValue(value))))
+  const { data, error } = await supabase
+    .from(table)
+    .select("value, value_normalized")
+    .in("value_normalized", normalized)
+
+  if (error) {
+    throw new Error(`Failed to canonicalize ${kind} filter values: ${error.message}`)
+  }
+
+  const map = new Map<string, string>(((data ?? []) as { value: string; value_normalized: string }[]).map((row) => [row.value_normalized, row.value]))
+  return sanitized.map((value) => map.get(normalizeAttributeValue(value)) ?? value)
+}
+
 export async function fetchCatalogCategories(supabase: SupabaseClient) {
   const { data, error } = await supabase.from("categories").select("id, name, slug").order("name")
   if (error) {
@@ -120,8 +163,14 @@ export async function fetchCatalogFilterMeta(
   cnyPerRub: number
 ) {
   const rows = await fetchCatalogProducts(supabase, { ...filters, minPrice: undefined, maxPrice: undefined }, cnyPerRub)
-  const allSizes = Array.from(new Set(rows.flatMap((item) => item.sizes || []))).sort(compareSizesAsc)
-  const allColors = Array.from(new Set(rows.flatMap((item) => item.colors || []))).sort()
+  const [allSizesRaw, allColorsRaw] = await Promise.all([
+    fetchActiveAttributeValues(supabase, "sizes"),
+    fetchActiveAttributeValues(supabase, "colors"),
+  ])
+  const allSizes = sanitizeAttributeValues(allSizesRaw).sort(compareSizesAsc)
+  const allColors = sanitizeAttributeValues(allColorsRaw).sort((left, right) =>
+    left.localeCompare(right, "ru-RU", { sensitivity: "base", numeric: true })
+  )
   const prices = rows.map((item) => toDisplayCnyAmount(item, cnyPerRub)).filter((value) => Number.isFinite(value))
 
   return {
@@ -138,6 +187,11 @@ export async function fetchCatalogProducts(
   filters: CatalogFilterParams,
   cnyPerRub: number
 ): Promise<CatalogProduct[]> {
+  const [canonicalSizesFilter, canonicalColorsFilter] = await Promise.all([
+    canonicalizeSelectedAttributeFilter(supabase, "sizes", filters.sizes),
+    canonicalizeSelectedAttributeFilter(supabase, "colors", filters.colors),
+  ])
+
   let categoryIds: number[] = []
   if (filters.category.length > 0) {
     const { data: categoryData, error: categoryError } = await supabase
@@ -186,12 +240,12 @@ export async function fetchCatalogProducts(
       query = query.in("brand_id", brandFilterIds)
     }
 
-    if (filters.sizes.length > 0) {
-      query = query.overlaps("sizes", filters.sizes)
+    if (canonicalSizesFilter.length > 0) {
+      query = query.overlaps("sizes", canonicalSizesFilter)
     }
 
-    if (filters.colors.length > 0) {
-      query = query.overlaps("colors", filters.colors)
+    if (canonicalColorsFilter.length > 0) {
+      query = query.overlaps("colors", canonicalColorsFilter)
     }
 
     if (filters.seasons.length > 0) {

@@ -1,7 +1,7 @@
 ﻿"use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react"
 import {
   Bell,
@@ -91,12 +91,13 @@ function isUnread(latestCreatedAt: string | null, lastSeen: string | null) {
 export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const [collapsed, setCollapsed] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
-  const [query, setQuery] = useState("")
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "")
   const [isSigningOut, startSignOut] = useTransition()
   const [latestCreatedAt, setLatestCreatedAt] = useState<string | null>(null)
   const [newOrdersCount, setNewOrdersCount] = useState(0)
@@ -173,13 +174,26 @@ export function AdminLayoutShell({ children }: AdminLayoutShellProps) {
   const runSearch = (closeMobileSearch = false) => {
     if (!searchRoute) return
 
+    const isAttributesRoute = pathname.startsWith("/admin/attributes")
+    const tabValue = searchParams.get("tab")
+    const normalizedTab = tabValue === "colors" ? "colors" : "sizes"
     const value = query.trim()
     if (!value) {
-      router.push(searchRoute)
+      if (isAttributesRoute) {
+        router.push(`/admin/attributes?tab=${normalizedTab}`)
+      } else {
+        router.push(searchRoute)
+      }
       if (closeMobileSearch) setMobileSearchOpen(false)
       return
     }
-    const next = new URLSearchParams({ q: value })
+
+    const next = new URLSearchParams()
+    next.set("q", value)
+    if (isAttributesRoute) {
+      next.set("tab", normalizedTab)
+    }
+
     router.push(`${searchRoute}?${next.toString()}`)
     if (closeMobileSearch) setMobileSearchOpen(false)
   }

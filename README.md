@@ -1,4 +1,4 @@
-# EASTLANE
+﻿# EASTLANE
 
 Next.js storefront + admin panel for a fashion store. The project uses Supabase (PostgreSQL/Auth/Storage), server actions, and a domain-oriented structure.
 
@@ -47,14 +47,16 @@ Run in Supabase SQL editor:
 8. `docs/sql/brands_rls.sql`
 9. `docs/sql/product_sizes.sql`
 10. `docs/sql/product_colors.sql`
-11. `docs/sql/product_attributes_seed_from_products.sql`
-12. `docs/sql/product_sizes_rls.sql`
-13. `docs/sql/product_colors_rls.sql`
-14. `docs/sql/admin_users.sql` (set your admin emails in SQL before run)
+11. `docs/sql/product_attribute_values.sql`
+12. `docs/sql/product_attributes_normalize_products.sql`
+13. `docs/sql/product_sizes_rls.sql`
+14. `docs/sql/product_colors_rls.sql`
+15. `docs/sql/product_attribute_values_rls.sql`
+16. `docs/sql/admin_users.sql` (set your admin emails in SQL before run)
 
 Phase 2 (after backfill all `products.brand_id`):
 
-15. `docs/sql/products_brand_not_null.sql`
+17. `docs/sql/products_brand_not_null.sql`
 
 ## Local Development
 
@@ -77,3 +79,4 @@ Open `http://localhost:3000`.
 - Contact channel supports `telegram | phone`
 - Storefront content can be overridden from `site_sections` table
 - Admin area is protected by auth + role check
+

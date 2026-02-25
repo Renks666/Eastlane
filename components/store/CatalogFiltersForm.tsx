@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import type { CatalogBrand, CatalogCategory, CatalogFilterParams } from "@/src/domains/catalog/types"
 import { resolveColorSwatch } from "@/src/domains/product-attributes/color-swatches"
 import { SEASON_LABELS_RU, type SeasonKey } from "@/src/domains/product-attributes/seasons"
+import { normalizeAttributeValue } from "@/src/domains/product-attributes/types"
 
 type CatalogFilterMeta = {
   allSizes: string[]
@@ -26,9 +27,11 @@ export function CatalogFiltersForm({
   brands,
   meta,
 }: CatalogFiltersFormProps) {
+  const selectedSizeNormalized = new Set(filters.sizes.map((value) => normalizeAttributeValue(value)))
+  const selectedColorNormalized = new Set(filters.colors.map((value) => normalizeAttributeValue(value)))
   const hasBrandSelection = filters.brands.length > 0
-  const hasSizeSelection = filters.sizes.length > 0
-  const hasColorSelection = filters.colors.length > 0
+  const hasSizeSelection = selectedSizeNormalized.size > 0
+  const hasColorSelection = selectedColorNormalized.size > 0
   const hasSeasonSelection = filters.seasons.length > 0
   const hasCategorySelection = filters.category.length > 0
 
@@ -108,7 +111,7 @@ export function CatalogFiltersForm({
             <div className="grid grid-cols-1 gap-1.5 p-3">
               {meta.allSizes.map((size) => (
                 <label key={size} className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2 py-1.5 text-xs text-[color:var(--color-text-secondary)]">
-                  <input type="checkbox" name="size" value={size} defaultChecked={filters.sizes.includes(size)} />
+                  <input type="checkbox" name="size" value={size} defaultChecked={selectedSizeNormalized.has(normalizeAttributeValue(size))} />
                   {size}
                 </label>
               ))}
@@ -132,7 +135,7 @@ export function CatalogFiltersForm({
                 const swatch = resolveColorSwatch(color)
                 return (
                   <label key={color} className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2 py-1.5 text-xs text-[color:var(--color-text-secondary)]">
-                    <input type="checkbox" name="color" value={color} defaultChecked={filters.colors.includes(color)} />
+                    <input type="checkbox" name="color" value={color} defaultChecked={selectedColorNormalized.has(normalizeAttributeValue(color))} />
                     <span
                       aria-hidden
                       className="inline-flex h-4 w-4 rounded-full border border-[color:var(--color-border-primary)]"

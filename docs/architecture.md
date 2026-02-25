@@ -1,4 +1,4 @@
-# Architecture
+﻿# Architecture
 
 ## Layers
 
@@ -38,8 +38,9 @@
 
 ### Product Attributes
 
-- `types.ts`: normalization + dedupe helpers for sizes/colors.
-- `services/attribute-options-service.ts`: upsert dictionary values and usage checks.
+- `types.ts`: normalization, dedupe helpers, and guard against size-like color values.
+- `services/attribute-options-service.ts`: canonicalization against dictionaries, dictionary upsert, usage checks.
+- `services/product-attribute-links-service.ts`: sync normalized many-to-many links (`products <-> product_sizes/product_colors`).
 
 ### Content
 
@@ -65,3 +66,4 @@
 - Server actions return `{ ok: boolean, error?: string }` style objects.
 - `src/shared/lib/logger.ts` used for centralized action logging.
 - `src/shared/lib/action-result.ts` normalizes unknown errors.
+
