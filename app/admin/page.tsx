@@ -7,6 +7,7 @@ import { getStorefrontContent } from "@/src/domains/content/services/storefront-
 import { listAdminOrders } from "@/src/domains/order/services/order-service"
 import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
 import { formatDualPrice, formatRub } from "@/src/shared/lib/format-price"
+import { formatCny } from "@/src/shared/lib/format-price"
 
 export default async function AdminPage() {
   const user = await requireAdminUserOrRedirect()
@@ -19,15 +20,28 @@ export default async function AdminPage() {
     getStorefrontContent(),
   ])
 
-  const totalRevenueRubApprox = orders.reduce((sum, order) => {
+  const completedOrders = orders.filter((order) => order.status === "done")
+  const totalRevenueCny = completedOrders.reduce((sum, order) => {
+    const amount = Number(order.total_amount)
+    if (!Number.isFinite(amount) || amount <= 0) return sum
+    if (order.total_currency === "CNY") return sum + amount
+
+    const rate = Number(order.exchange_rate_snapshot ?? content.exchangeRate.cnyPerRub)
+    if (!Number.isFinite(rate) || rate <= 0) return sum
+    return sum + amount * rate
+  }, 0)
+
+  const totalRevenueRubApprox = completedOrders.reduce((sum, order) => {
+    const amount = Number(order.total_amount)
+    if (!Number.isFinite(amount) || amount <= 0) return sum
+    if (order.total_currency === "RUB") return sum + amount
+
     const rubApprox = Number(order.total_amount_rub_approx ?? 0)
     if (Number.isFinite(rubApprox) && rubApprox > 0) return sum + rubApprox
 
-    if (order.total_currency === "RUB") {
-      return sum + Number(order.total_amount)
-    }
-
-    return sum + Number(order.total_amount) / content.exchangeRate.cnyPerRub
+    const rate = Number(order.exchange_rate_snapshot ?? content.exchangeRate.cnyPerRub)
+    if (!Number.isFinite(rate) || rate <= 0) return sum
+    return sum + amount / rate
   }, 0)
   const newOrders = orders.filter((order) => order.status === "new").length
 
@@ -80,7 +94,12 @@ export default async function AdminPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Выручка</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-price tabular-nums text-2xl font-semibold text-black">{formatRub(totalRevenueRubApprox, 0)}</p>
+            <p className="font-price tabular-nums text-2xl font-semibold text-black">
+              {formatCny(totalRevenueCny, 0)}
+              <span className="ml-1 text-sm font-medium text-muted-foreground">
+                (≈ {formatRub(totalRevenueRubApprox, 0)})
+              </span>
+            </p>
           </CardContent>
         </Card>
 
