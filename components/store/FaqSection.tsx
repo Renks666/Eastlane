@@ -63,8 +63,8 @@ export function FaqSection() {
               key={item.question}
               className="group overflow-hidden rounded-2xl border border-[color:var(--color-border-secondary)] bg-[color:var(--color-bg-tertiary)] open:border-[color:var(--color-border-accent)]"
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-left marker:content-none md:px-5">
-                <span className="text-sm font-medium text-[color:var(--color-brand-forest-light)] md:text-base">{item.question}</span>
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-left marker:content-none [&::-webkit-details-marker]:hidden [&::marker]:hidden md:px-5">
+                <span className="flex-1 text-left text-sm font-medium text-[color:var(--color-brand-forest-light)] md:text-base">{item.question}</span>
                 <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--color-brand-beige-dark)] transition-transform duration-200 group-open:rotate-180" />
               </summary>
               <div className="space-y-2 border-t border-[color:var(--color-border-secondary)] px-4 pb-4 pt-3 text-sm leading-relaxed text-[color:var(--color-text-secondary)] md:px-5">

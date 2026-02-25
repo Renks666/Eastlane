@@ -47,7 +47,7 @@ function BrandTrack({ brands, ariaHidden = false }: { brands: BrandLogo[]; ariaH
   const baseTrack = Array.from({ length: repeatsNeeded }, () => brands).flat()
 
   return (
-    <div className="flex w-max items-center gap-6 sm:gap-8" aria-hidden={ariaHidden}>
+    <div className="flex w-max shrink-0 items-center gap-6 pr-6 sm:gap-8 sm:pr-8" aria-hidden={ariaHidden}>
       {baseTrack.map((brand, index) => {
         return (
           <div key={`${brand.slug}-${index}`} className="group shrink-0">
