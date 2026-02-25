@@ -62,7 +62,7 @@ export default async function AdminPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[max-content_max-content] lg:items-start lg:justify-start lg:gap-8">
         <div className="grid grid-cols-2 gap-3">
-          <Card className="h-40 w-40 gap-1 rounded-xl border-border py-2 shadow-sm sm:h-44 sm:w-44">
+          <Card className="aspect-square w-full gap-1 rounded-xl border-border py-2 shadow-sm lg:h-40 lg:w-40">
             <CardHeader className="px-3 pb-0 pt-0">
               <CardTitle className="text-sm font-medium text-muted-foreground">Товары</CardTitle>
             </CardHeader>
@@ -71,7 +71,7 @@ export default async function AdminPage() {
             </CardContent>
           </Card>
 
-          <Card className="h-40 w-40 gap-1 rounded-xl border-border py-2 shadow-sm sm:h-44 sm:w-44">
+          <Card className="aspect-square w-full gap-1 rounded-xl border-border py-2 shadow-sm lg:h-40 lg:w-40">
             <CardHeader className="px-3 pb-0 pt-0">
               <CardTitle className="text-sm font-medium text-muted-foreground">Заказы</CardTitle>
             </CardHeader>
@@ -81,7 +81,7 @@ export default async function AdminPage() {
             </CardContent>
           </Card>
 
-          <Card className="h-40 w-40 gap-1 rounded-xl border-border py-2 shadow-sm sm:h-44 sm:w-44">
+          <Card className="aspect-square w-full gap-1 rounded-xl border-border py-2 shadow-sm lg:h-40 lg:w-40">
             <CardHeader className="px-3 pb-0 pt-0">
               <CardTitle className="text-sm font-medium text-muted-foreground">Категории</CardTitle>
             </CardHeader>
@@ -90,7 +90,7 @@ export default async function AdminPage() {
             </CardContent>
           </Card>
 
-          <Card className="h-40 w-40 gap-1 rounded-xl border-border py-2 shadow-sm sm:h-44 sm:w-44">
+          <Card className="aspect-square w-full gap-1 rounded-xl border-border py-2 shadow-sm lg:h-40 lg:w-40">
             <CardHeader className="px-3 pb-0 pt-0">
               <CardTitle className="text-sm font-medium text-muted-foreground">Выручка</CardTitle>
             </CardHeader>
@@ -105,8 +105,8 @@ export default async function AdminPage() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 lg:ml-2 lg:border-l lg:border-border lg:pl-6 xl:grid-cols-1">
-          <Card className="h-40 w-40 gap-2 self-start rounded-xl border-border py-2 shadow-sm sm:h-44 sm:w-44">
+        <div className="grid grid-cols-2 gap-3 lg:ml-2 lg:grid-cols-1 lg:border-l lg:border-border lg:pl-6">
+          <Card className="aspect-square w-full gap-2 self-start rounded-xl border-border py-2 shadow-sm lg:h-40 lg:w-40">
             <CardHeader className="px-3 pb-0 pt-0">
               <CardTitle className="text-sm font-semibold">Быстрые действия</CardTitle>
             </CardHeader>
@@ -122,7 +122,7 @@ export default async function AdminPage() {
           <ExchangeRateCard
             initialCnyPerRub={content.exchangeRate.cnyPerRub}
             compact
-            className="h-40 w-40 self-start sm:h-44 sm:w-44"
+            className="aspect-square w-full self-start lg:h-40 lg:w-40"
           />
         </div>
       </div>
