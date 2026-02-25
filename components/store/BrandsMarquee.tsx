@@ -47,13 +47,7 @@ function BrandTrack({ brands, ariaHidden = false }: { brands: BrandLogo[]; ariaH
   const baseTrack = Array.from({ length: repeatsNeeded }, () => brands).flat()
 
   return (
-    <div
-      className={cn(
-        "flex min-w-full w-max items-center gap-6 sm:gap-8 [will-change:transform] motion-reduce:animate-none",
-        "animate-marquee-track md:[animation-duration:40s]"
-      )}
-      aria-hidden={ariaHidden}
-    >
+    <div className="flex w-max items-center gap-6 sm:gap-8" aria-hidden={ariaHidden}>
       {baseTrack.map((brand, index) => {
         return (
           <div key={`${brand.slug}-${index}`} className="group shrink-0">
@@ -89,11 +83,14 @@ export async function BrandsMarquee({ className }: { className?: string }) {
     <div className={cn("relative max-w-full overflow-hidden", className)}>
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-[color:var(--color-bg-primary)] to-transparent md:w-20" />
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-[color:var(--color-bg-primary)] to-transparent md:w-20" />
-      <div className="relative">
+      <div
+        className={cn(
+          "flex w-max items-center [will-change:transform] motion-reduce:animate-none",
+          "animate-marquee-track md:[animation-duration:40s]"
+        )}
+      >
         <BrandTrack brands={brands} />
-        <div className="absolute left-full top-0">
-          <BrandTrack brands={brands} ariaHidden />
-        </div>
+        <BrandTrack brands={brands} ariaHidden />
       </div>
     </div>
   )
