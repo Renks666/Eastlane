@@ -3,17 +3,16 @@
 import { type Dispatch, type FormEvent, type SetStateAction, useEffect, useMemo, useState, useTransition } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { CheckIcon, ChevronDownIcon, PencilIcon, XIcon } from "lucide-react"
+import { ChevronDownIcon } from "lucide-react"
 import { z } from "zod"
 import { toast } from "sonner"
 import { createProduct, updateProduct } from "@/app/admin/products/actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { buildSizeOptionsForCategory } from "@/src/domains/product-attributes/size-presets"
 import { normalizeAttributeValue, sanitizeAttributeValues } from "@/src/domains/product-attributes/types"
@@ -135,7 +134,6 @@ export function ProductForm({
 }: ProductFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const isEditMode = mode === "edit"
 
   const [name, setName] = useState(product?.name ?? "")
   const [description, setDescription] = useState(product?.description ?? "")
@@ -156,10 +154,6 @@ export function ProductForm({
   )
   const [customSizeInput, setCustomSizeInput] = useState("")
   const [customColorInput, setCustomColorInput] = useState("")
-  const [editingSize, setEditingSize] = useState<string | null>(null)
-  const [editingSizeValue, setEditingSizeValue] = useState("")
-  const [editingColor, setEditingColor] = useState<string | null>(null)
-  const [editingColorValue, setEditingColorValue] = useState("")
   const [existingImages, setExistingImages] = useState<string[]>(product?.images ?? [])
   const [removedImages, setRemovedImages] = useState<string[]>([])
   const [newImages, setNewImages] = useState<File[]>([])
@@ -192,6 +186,10 @@ export function ProductForm({
     const other = brands.filter(isOther)
     return [regular, other]
   }, [brands])
+  const selectedBrand = useMemo(
+    () => brands.find((brand) => String(brand.id) === brandId) ?? null,
+    [brands, brandId]
+  )
 
   const previewUrls = useMemo(
     () =>
@@ -245,29 +243,6 @@ export function ProductForm({
     if (!value) return
     setValues((prev) => sanitizeAttributeValues([...prev, value]))
     setInputValue("")
-  }
-
-  const saveEditedValue = (
-    originalValue: string,
-    nextValue: string,
-    setValues: Dispatch<SetStateAction<string[]>>,
-    clearEditState: () => void,
-    transformValues?: (values: string[]) => string[]
-  ) => {
-    const sanitized = nextValue.trim().replace(/\s+/g, " ")
-    if (!sanitized) {
-      toast.error("Значение не может быть пустым.")
-      return
-    }
-
-    setValues((prev) => {
-      const originalNormalized = normalizeAttributeValue(originalValue)
-      const replaced = sanitizeAttributeValues(
-        prev.map((item) => (normalizeAttributeValue(item) === originalNormalized ? sanitized : item))
-      )
-      return transformValues ? transformValues(replaced) : replaced
-    })
-    clearEditState()
   }
 
   const onCategoryChange = (nextCategoryId: string) => {
@@ -403,54 +378,73 @@ export function ProductForm({
 
                     <div className="grid grid-rows-[20px_36px] gap-2">
                       <Label className="!block h-5 leading-5">Валюта цены *</Label>
-                      <Select value={priceCurrency} onValueChange={(value) => setPriceCurrency(value as PriceCurrency)}>
-                        <SelectTrigger className="h-9 w-full">
-                          <SelectValue placeholder="Выберите валюту" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="CNY">Юань (¥)</SelectItem>
-                          <SelectItem value="RUB">Рубль (₽)</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button type="button" variant="outline" className="h-9 w-full justify-between touch-pan-y rounded-md px-3 text-sm">
+                            {priceCurrency === "CNY" ? "Юань (¥)" : "Рубль (₽)"}
+                            <ChevronDownIcon className="size-4 opacity-60" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" side="bottom" align="start" avoidCollisions={false}>
+                          <DropdownMenuItem onSelect={() => {
+                            setPriceCurrency("CNY")
+                          }}>Юань (¥)</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => {
+                            setPriceCurrency("RUB")
+                          }}>Рубль (₽)</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label>Категория *</Label>
-                    <Select value={categoryId} onValueChange={onCategoryChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Выберите категорию" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button type="button" variant="outline" className="h-9 w-full justify-between touch-pan-y rounded-md px-3 text-sm font-normal">
+                          <span className="truncate">{selectedCategory?.name ?? "Выберите категорию"}</span>
+                          <ChevronDownIcon className="size-4 opacity-60" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" side="bottom" align="start" avoidCollisions={false}>
                         {categories.map((category) => (
-                          <SelectItem key={category.id} value={String(category.id)}>
+                          <DropdownMenuItem key={category.id} onSelect={() => {
+                            onCategoryChange(String(category.id))
+                          }}>
                             {category.name}
-                          </SelectItem>
+                          </DropdownMenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   <div className="space-y-2">
                     <Label>Бренд *</Label>
-                    <Select value={brandId} onValueChange={setBrandId}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Выберите бренд" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button type="button" variant="outline" className="h-9 w-full justify-between touch-pan-y rounded-md px-3 text-sm font-normal">
+                          <span className="truncate">{selectedBrand?.name ?? "Выберите бренд"}</span>
+                          <ChevronDownIcon className="size-4 opacity-60" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="max-h-72 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto overscroll-contain" side="bottom" align="start" avoidCollisions={false}>
                         {primaryBrands.map((brand) => (
-                          <SelectItem key={brand.id} value={String(brand.id)}>
+                          <DropdownMenuItem key={brand.id} onSelect={() => {
+                            setBrandId(String(brand.id))
+                          }}>
                             {brand.name}
-                          </SelectItem>
+                          </DropdownMenuItem>
                         ))}
-                        {fallbackBrands.length > 0 ? <SelectSeparator /> : null}
+                        {fallbackBrands.length > 0 ? <DropdownMenuSeparator /> : null}
                         {fallbackBrands.map((brand) => (
-                          <SelectItem key={brand.id} value={String(brand.id)}>
+                          <DropdownMenuItem key={brand.id} onSelect={() => {
+                            setBrandId(String(brand.id))
+                          }}>
                             {brand.name}
-                          </SelectItem>
+                          </DropdownMenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </>
@@ -472,53 +466,72 @@ export function ProductForm({
 
                 <div className="space-y-2">
                   <Label>Категория *</Label>
-                  <Select value={categoryId} onValueChange={onCategoryChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите категорию" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button type="button" variant="outline" className="h-9 w-full justify-between touch-pan-y rounded-md px-3 text-sm font-normal">
+                        <span className="truncate">{selectedCategory?.name ?? "Выберите категорию"}</span>
+                        <ChevronDownIcon className="size-4 opacity-60" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" side="bottom" align="start" avoidCollisions={false}>
                       {categories.map((category) => (
-                        <SelectItem key={category.id} value={String(category.id)}>
+                        <DropdownMenuItem key={category.id} onSelect={() => {
+                          onCategoryChange(String(category.id))
+                        }}>
                           {category.name}
-                        </SelectItem>
+                        </DropdownMenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
                 <div className="space-y-2">
                   <Label>Бренд *</Label>
-                  <Select value={brandId} onValueChange={setBrandId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите бренд" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button type="button" variant="outline" className="h-9 w-full justify-between touch-pan-y rounded-md px-3 text-sm font-normal">
+                        <span className="truncate">{selectedBrand?.name ?? "Выберите бренд"}</span>
+                        <ChevronDownIcon className="size-4 opacity-60" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="max-h-72 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto overscroll-contain" side="bottom" align="start" avoidCollisions={false}>
                       {primaryBrands.map((brand) => (
-                        <SelectItem key={brand.id} value={String(brand.id)}>
+                        <DropdownMenuItem key={brand.id} onSelect={() => {
+                          setBrandId(String(brand.id))
+                        }}>
                           {brand.name}
-                        </SelectItem>
+                        </DropdownMenuItem>
                       ))}
-                      {fallbackBrands.length > 0 ? <SelectSeparator /> : null}
+                      {fallbackBrands.length > 0 ? <DropdownMenuSeparator /> : null}
                       {fallbackBrands.map((brand) => (
-                        <SelectItem key={brand.id} value={String(brand.id)}>
+                        <DropdownMenuItem key={brand.id} onSelect={() => {
+                          setBrandId(String(brand.id))
+                        }}>
                           {brand.name}
-                        </SelectItem>
+                        </DropdownMenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
                 <div className="space-y-2">
                   <Label>Валюта цены *</Label>
-                  <Select value={priceCurrency} onValueChange={(value) => setPriceCurrency(value as PriceCurrency)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите валюту" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="CNY">Юань (¥)</SelectItem>
-                      <SelectItem value="RUB">Рубль (₽)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button type="button" variant="outline" className="h-9 w-full justify-between touch-pan-y rounded-md px-3 text-sm font-normal">
+                        {priceCurrency === "CNY" ? "Юань (¥)" : "Рубль (₽)"}
+                        <ChevronDownIcon className="size-4 opacity-60" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]" side="bottom" align="start" avoidCollisions={false}>
+                      <DropdownMenuItem onSelect={() => {
+                        setPriceCurrency("CNY")
+                      }}>Юань (¥)</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => {
+                        setPriceCurrency("RUB")
+                      }}>Рубль (₽)</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </>
             )}
@@ -526,14 +539,14 @@ export function ProductForm({
 
           <div className="space-y-3">
             <Label>Размеры</Label>
-            <DropdownMenu modal={false}>
+            <DropdownMenu>
               <DropdownMenuTrigger asChild disabled={!categoryId}>
-                <Button type="button" variant="outline" className="w-full justify-between sm:w-auto">
+                <Button type="button" variant="outline" className="w-full justify-between touch-pan-y sm:w-auto">
                   {categoryId ? "Выбрать размеры" : "Сначала выберите категорию"}
                   <ChevronDownIcon className="size-4 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64">
+              <DropdownMenuContent className="max-h-72 w-64 overflow-y-auto overscroll-contain" side="bottom" align="start" avoidCollisions={false}>
                 {sizeOptions.length === 0 ? (
                   <p className="px-2 py-1.5 text-sm text-muted-foreground">Нет доступных размеров</p>
                 ) : (
@@ -541,7 +554,6 @@ export function ProductForm({
                     <DropdownMenuCheckboxItem
                       key={size}
                       checked={sizes.some((item) => normalizeAttributeValue(item) === normalizeAttributeValue(size))}
-                      onSelect={(event) => event.preventDefault()}
                       onCheckedChange={() => toggleSizeValue(size)}
                     >
                       {size}
@@ -550,83 +562,9 @@ export function ProductForm({
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {sizes.length > 0 ? (
-              <div className="space-y-2">
-                {sizes.map((size) => {
-                  const isEditing = editingSize !== null && normalizeAttributeValue(editingSize) === normalizeAttributeValue(size)
-                  return (
-                    <div key={size} className="flex min-w-0 items-center gap-2 rounded-md border px-2 py-1.5">
-                      {isEditMode && isEditing ? (
-                        <>
-                          <Input value={editingSizeValue} onChange={(event) => setEditingSizeValue(event.target.value)} className="h-8" />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() =>
-                              saveEditedValue(
-                                size,
-                                editingSizeValue,
-                                setSizes,
-                                () => {
-                                  setEditingSize(null)
-                                  setEditingSizeValue("")
-                                },
-                                normalizeAndSortSizes
-                              )
-                            }
-                          >
-                            <CheckIcon />
-                          </Button>
-                          <Button type="button" variant="ghost" size="icon-xs" onClick={() => {
-                            setEditingSize(null)
-                            setEditingSizeValue("")
-                          }}>
-                            <XIcon />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <span className="min-w-0 flex-1 truncate text-sm">{size}</span>
-                          <div className="ml-auto flex shrink-0 items-center gap-1">
-                            {isEditMode ? (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-xs"
-                                onClick={() => {
-                                  setEditingSize(size)
-                                  setEditingSizeValue(size)
-                                }}
-                              >
-                                <PencilIcon />
-                              </Button>
-                            ) : null}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-xs"
-                              onClick={() =>
-                                setSizes((prev) => normalizeAndSortSizes(
-                                  prev.filter((item) => normalizeAttributeValue(item) !== normalizeAttributeValue(size))
-                                ))
-                              }
-                            >
-                              <XIcon />
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {categoryId ? "Размеры не выбраны." : "Сначала выберите категорию, чтобы увидеть доступные размеры."}
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              {categoryId ? `Выбрано размеров: ${sizes.length}` : "Сначала выберите категорию, чтобы увидеть доступные размеры."}
+            </p>
 
             <div className="flex gap-2">
               <Input
@@ -662,14 +600,14 @@ export function ProductForm({
 
           <div className="space-y-3">
             <Label>Цвета</Label>
-            <DropdownMenu modal={false}>
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" className="w-full justify-between sm:w-auto">
+                <Button type="button" variant="outline" className="w-full justify-between touch-pan-y sm:w-auto">
                   Выбрать цвета
                   <ChevronDownIcon className="size-4 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64">
+              <DropdownMenuContent className="max-h-72 w-64 overflow-y-auto overscroll-contain" side="bottom" align="start" avoidCollisions={false}>
                 {colorOptions.length === 0 ? (
                   <p className="px-2 py-1.5 text-sm text-muted-foreground">Нет доступных цветов</p>
                 ) : (
@@ -677,7 +615,6 @@ export function ProductForm({
                     <DropdownMenuCheckboxItem
                       key={color}
                       checked={colors.some((item) => normalizeAttributeValue(item) === normalizeAttributeValue(color))}
-                      onSelect={(event) => event.preventDefault()}
                       onCheckedChange={() => toggleArrayValue(color, setColors)}
                     >
                       {color}
@@ -686,75 +623,7 @@ export function ProductForm({
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {colors.length > 0 ? (
-              <div className="space-y-2">
-                {colors.map((color) => {
-                  const isEditing = editingColor !== null && normalizeAttributeValue(editingColor) === normalizeAttributeValue(color)
-                  return (
-                    <div key={color} className="flex min-w-0 items-center gap-2 rounded-md border px-2 py-1.5">
-                      {isEditMode && isEditing ? (
-                        <>
-                          <Input value={editingColorValue} onChange={(event) => setEditingColorValue(event.target.value)} className="h-8" />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            onClick={() =>
-                              saveEditedValue(color, editingColorValue, setColors, () => {
-                                setEditingColor(null)
-                                setEditingColorValue("")
-                              })
-                            }
-                          >
-                            <CheckIcon />
-                          </Button>
-                          <Button type="button" variant="ghost" size="icon-xs" onClick={() => {
-                            setEditingColor(null)
-                            setEditingColorValue("")
-                          }}>
-                            <XIcon />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <span className="min-w-0 flex-1 truncate text-sm">{color}</span>
-                          <div className="ml-auto flex shrink-0 items-center gap-1">
-                            {isEditMode ? (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-xs"
-                                onClick={() => {
-                                  setEditingColor(color)
-                                  setEditingColorValue(color)
-                                }}
-                              >
-                                <PencilIcon />
-                              </Button>
-                            ) : null}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-xs"
-                              onClick={() =>
-                                setColors((prev) =>
-                                  prev.filter((item) => normalizeAttributeValue(item) !== normalizeAttributeValue(color))
-                                )
-                              }
-                            >
-                              <XIcon />
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Цвета не выбраны.</p>
-            )}
+            <p className="text-sm text-muted-foreground">Выбрано цветов: {colors.length}</p>
 
             <div className="flex gap-2">
               <Input

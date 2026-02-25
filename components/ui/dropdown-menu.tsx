@@ -7,9 +7,10 @@ import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 function DropdownMenu({
+  modal = false,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" modal={modal} {...props} />
 }
 
 function DropdownMenuPortal({
@@ -23,9 +24,48 @@ function DropdownMenuPortal({
 function DropdownMenuTrigger({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+  const touchStartY = React.useRef(0)
+  const touchMoved = React.useRef(false)
+  const ignoreNextClick = React.useRef(false)
+
+  const handleTouchStart: React.TouchEventHandler<HTMLButtonElement> = (event) => {
+    touchStartY.current = event.touches[0]?.clientY ?? 0
+    touchMoved.current = false
+    props.onTouchStart?.(event)
+  }
+
+  const handleTouchMove: React.TouchEventHandler<HTMLButtonElement> = (event) => {
+    const currentY = event.touches[0]?.clientY ?? touchStartY.current
+    if (Math.abs(currentY - touchStartY.current) > 8) {
+      touchMoved.current = true
+    }
+    props.onTouchMove?.(event)
+  }
+
+  const handleTouchEnd: React.TouchEventHandler<HTMLButtonElement> = (event) => {
+    if (touchMoved.current) {
+      ignoreNextClick.current = true
+    }
+    props.onTouchEnd?.(event)
+  }
+
+  const handleClickCapture: React.MouseEventHandler<HTMLButtonElement> = (event) => {
+    if (ignoreNextClick.current) {
+      ignoreNextClick.current = false
+      event.preventDefault()
+      event.stopPropagation()
+      return
+    }
+    props.onClickCapture?.(event)
+  }
+
   return (
     <DropdownMenuPrimitive.Trigger
       data-slot="dropdown-menu-trigger"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onClickCapture={handleClickCapture}
       {...props}
     />
   )
@@ -86,8 +126,15 @@ function DropdownMenuCheckboxItem({
   className,
   children,
   checked,
+  onSelect,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>) {
+  const handleSelect: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>["onSelect"] = (event) => {
+    // Keep dropdown open for rapid multi-select.
+    event.preventDefault()
+    onSelect?.(event)
+  }
+
   return (
     <DropdownMenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
@@ -96,6 +143,7 @@ function DropdownMenuCheckboxItem({
         className
       )}
       checked={checked}
+      onSelect={handleSelect}
       {...props}
     >
       <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">

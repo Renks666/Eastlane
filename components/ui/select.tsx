@@ -7,9 +7,10 @@ import { Select as SelectPrimitive } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 function Select({
+  modal = false,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />
+  return <SelectPrimitive.Root data-slot="select" modal={modal} {...props} />
 }
 
 function SelectGroup({
@@ -28,10 +29,49 @@ function SelectTrigger({
   className,
   size = "default",
   children,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  onClickCapture,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default"
 }) {
+  const touchStartY = React.useRef(0)
+  const touchMoved = React.useRef(false)
+  const ignoreNextClick = React.useRef(false)
+
+  const handleTouchStart: React.TouchEventHandler<HTMLButtonElement> = (event) => {
+    touchStartY.current = event.touches[0]?.clientY ?? 0
+    touchMoved.current = false
+    onTouchStart?.(event)
+  }
+
+  const handleTouchMove: React.TouchEventHandler<HTMLButtonElement> = (event) => {
+    const currentY = event.touches[0]?.clientY ?? touchStartY.current
+    if (Math.abs(currentY - touchStartY.current) > 8) {
+      touchMoved.current = true
+    }
+    onTouchMove?.(event)
+  }
+
+  const handleTouchEnd: React.TouchEventHandler<HTMLButtonElement> = (event) => {
+    if (touchMoved.current) {
+      ignoreNextClick.current = true
+    }
+    onTouchEnd?.(event)
+  }
+
+  const handleClickCapture: React.MouseEventHandler<HTMLButtonElement> = (event) => {
+    if (ignoreNextClick.current) {
+      ignoreNextClick.current = false
+      event.preventDefault()
+      event.stopPropagation()
+      return
+    }
+    onClickCapture?.(event)
+  }
+
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
@@ -40,6 +80,10 @@ function SelectTrigger({
         "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onClickCapture={handleClickCapture}
       {...props}
     >
       {children}
