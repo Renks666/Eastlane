@@ -7,7 +7,15 @@ import { ChevronLeft, ChevronRight, Search, ShoppingCart, ZoomIn, ZoomOut, X } f
 import { toast } from "sonner"
 import { AddToCartButton } from "@/components/store/AddToCartButton"
 import { useCart } from "@/components/store/CartProvider"
-import { formatDualPrice, type PriceCurrency } from "@/src/shared/lib/format-price"
+import { ExchangeRateTooltip } from "@/components/store/ExchangeRateTooltip"
+import {
+  convertCnyToRubApprox,
+  convertRubToCnyApprox,
+  formatCny,
+  formatRub,
+  type PriceCurrency,
+} from "@/src/shared/lib/format-price"
+import { resolveColorSwatch } from "@/src/domains/product-attributes/color-swatches"
 
 type StoreProductCardProps = {
   product: {
@@ -41,10 +49,49 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [canHover, setCanHover] = useState(false)
+  const [isRateDetailsOpen, setIsRateDetailsOpen] = useState(false)
   const quickAddRef = useRef<HTMLDivElement>(null)
 
   const hasVariants = sizes.length > 1 || colors.length > 1
+  const visibleColors = colors.slice(0, 5)
+  const hiddenColorsCount = Math.max(colors.length - visibleColors.length, 0)
   const activeImage = images[imageIndex] || FALLBACK_IMAGE
+  const hasValidRate = Number.isFinite(cnyPerRub) && cnyPerRub > 0
+
+  const primaryPrice = useMemo(() => {
+    if (product.priceCurrency === "CNY") {
+      return formatCny(product.price, 0)
+    }
+    return formatRub(product.price, 0)
+  }, [product.price, product.priceCurrency])
+
+  const secondaryApprox = useMemo(() => {
+    if (!hasValidRate) return null
+
+    if (product.priceCurrency === "CNY") {
+      const rubApprox = convertCnyToRubApprox(product.price, cnyPerRub)
+      return rubApprox === null ? null : `≈ ${formatRub(rubApprox, 0)}`
+    }
+
+    const cnyApprox = convertRubToCnyApprox(product.price, cnyPerRub)
+    return cnyApprox === null ? null : `≈ ${formatCny(cnyApprox, 0)}`
+  }, [cnyPerRub, hasValidRate, product.price, product.priceCurrency])
+
+  const displayRateRubPerCny = useMemo(() => {
+    if (!hasValidRate) return null
+    return 1 / cnyPerRub
+  }, [cnyPerRub, hasValidRate])
+
+  const displayRateText = useMemo(() => {
+    if (displayRateRubPerCny === null || !Number.isFinite(displayRateRubPerCny)) return null
+    return new Intl.NumberFormat("ru-RU", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(displayRateRubPerCny)
+  }, [displayRateRubPerCny])
+
+  const hasRateDetails = secondaryApprox !== null && displayRateText !== null
 
   useEffect(() => {
     if (!quickAddOpen) return
@@ -56,6 +103,19 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [quickAddOpen])
+
+  useEffect(() => {
+    const media = window.matchMedia("(hover: hover) and (pointer: fine)")
+    const sync = () => {
+      const supportsHover = media.matches
+      setCanHover(supportsHover)
+      setIsRateDetailsOpen(false)
+    }
+
+    sync()
+    media.addEventListener("change", sync)
+    return () => media.removeEventListener("change", sync)
+  }, [])
 
   const nextImage = () => {
     setImageIndex((prev) => (prev + 1) % images.length)
@@ -99,6 +159,25 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
       duration: 3000,
     })
     setQuickAddOpen(false)
+  }
+
+  const handleRateLineClick = () => {
+    if (!hasRateDetails) return
+    if (canHover) {
+      setIsRateDetailsOpen(true)
+      return
+    }
+    setIsRateDetailsOpen((prev) => !prev)
+  }
+
+  const handleRateMouseEnter = () => {
+    if (!hasRateDetails || !canHover) return
+    setIsRateDetailsOpen(true)
+  }
+
+  const handleRateMouseLeave = () => {
+    if (!canHover) return
+    setIsRateDetailsOpen(false)
   }
 
   return (
@@ -183,22 +262,53 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
           )}
 
           {colors.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {colors.map((color) => (
-                <span
-                  key={color}
-                  className="inline-flex items-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2 py-0.5 text-xs text-[color:var(--color-text-secondary)]"
-                >
-                  {color}
+            <div className="mt-2 flex items-center gap-1.5">
+              {visibleColors.map((color) => {
+                const swatch = resolveColorSwatch(color)
+                return (
+                  <span
+                    key={color}
+                    role="img"
+                    title={swatch.label}
+                    aria-label={swatch.label}
+                    className="inline-flex h-4 w-4 rounded-full border border-[color:var(--color-border-primary)]"
+                    style={{ backgroundColor: swatch.hex }}
+                  />
+                )
+              })}
+              {hiddenColorsCount > 0 ? (
+                <span className="text-xs font-medium text-[color:var(--color-text-secondary)]">
+                  +{hiddenColorsCount}
                 </span>
-              ))}
+              ) : null}
             </div>
           )}
 
-          <div className="mt-3 flex items-center justify-between gap-2 sm:gap-3">
-            <p className="font-price tabular-nums text-lg font-semibold text-black">
-              {formatDualPrice({ amount: product.price, currency: product.priceCurrency, cnyPerRub })}
-            </p>
+          <div className="mt-3 flex items-start justify-between gap-2 sm:gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-price tabular-nums truncate text-lg font-semibold text-black">{primaryPrice}</p>
+
+              {hasRateDetails ? (
+                <ExchangeRateTooltip isOpen={isRateDetailsOpen} rateText={displayRateText} align="left">
+                  {({ describedBy }) => (
+                    <button
+                      type="button"
+                      onClick={handleRateLineClick}
+                      onMouseEnter={handleRateMouseEnter}
+                      onMouseLeave={handleRateMouseLeave}
+                      onFocus={() => setIsRateDetailsOpen(true)}
+                      onBlur={() => setIsRateDetailsOpen(false)}
+                      className={`w-full py-0 text-left text-xs leading-tight text-[color:var(--color-text-secondary)] transition-opacity ${canHover ? "cursor-pointer hover:opacity-85" : ""}`}
+                      aria-expanded={isRateDetailsOpen}
+                      aria-describedby={describedBy}
+                    >
+                      <span className="font-price tabular-nums block truncate leading-none">{secondaryApprox}</span>
+                    </button>
+                  )}
+                </ExchangeRateTooltip>
+              ) : null}
+
+            </div>
 
             {hasVariants ? (
               <div className="flex items-center gap-1.5 sm:gap-2" ref={quickAddRef}>
@@ -216,7 +326,6 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                     {quickAddOpen && (
                       <div
                         className="absolute bottom-full left-0 z-[90] mb-1.5 min-w-[120px] rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-2 shadow-lg"
-                        role="listbox"
                         aria-label="Выберите размер"
                       >
                         <p className="mb-2 text-center text-sm font-medium text-[color:var(--color-text-primary)]">Размер:</p>
@@ -225,7 +334,6 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                             <button
                               key={size}
                               type="button"
-                              role="option"
                               onClick={() => handleQuickAdd(size)}
                               className="w-full border-t border-b border-[color:var(--color-border-secondary)] py-2 text-center text-xs font-medium text-[color:var(--color-text-secondary)] transition first:border-t-[color:var(--color-border-secondary)] hover:bg-[color:var(--color-bg-accent)] hover:text-[color:var(--color-brand-forest-light)] hover:border-2 hover:border-[color:var(--color-brand-beige-dark)] focus:outline-none focus:bg-[color:var(--color-bg-accent)] focus:text-[color:var(--color-brand-forest-light)] focus:border-2 focus:border-[color:var(--color-brand-beige-dark)]"
                             >

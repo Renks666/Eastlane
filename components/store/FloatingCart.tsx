@@ -5,12 +5,13 @@ import Image from "next/image"
 import { ChevronDown, ChevronUp, Loader2, Minus, Plus, Send, ShoppingCart, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useCart } from "@/components/store/CartProvider"
+import { ExchangeRateTooltip } from "@/components/store/ExchangeRateTooltip"
 import { createOrder } from "@/app/orders/actions"
 import {
   convertCnyToRubApprox,
   convertRubToCnyApprox,
-  formatDualPrice,
-  type PriceCurrency,
+  formatCny,
+  formatRub,
 } from "@/src/shared/lib/format-price"
 
 type FloatingCartProps = {
@@ -20,6 +21,8 @@ type FloatingCartProps = {
 export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+  const [canHover, setCanHover] = useState(false)
+  const [isRateDetailsOpen, setIsRateDetailsOpen] = useState(false)
   const [contactChannel, setContactChannel] = useState<"telegram" | "phone">("telegram")
   const [contactValue, setContactValue] = useState("")
   const [customerName, setCustomerName] = useState("")
@@ -28,31 +31,63 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
 
   const itemsCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])
 
-  const totalCurrency: PriceCurrency = useMemo(
-    () => (items.some((item) => item.priceCurrency === "CNY") ? "CNY" : "RUB"),
-    [items]
-  )
+  const totalAmountCny = useMemo(() => {
+    return items.reduce((sum, item) => {
+      const lineTotal = item.price * item.quantity
+      if (item.priceCurrency === "CNY") return sum + lineTotal
+      return sum + (convertRubToCnyApprox(lineTotal, cnyPerRub) ?? 0)
+    }, 0)
+  }, [cnyPerRub, items])
 
-  const totalAmount = useMemo(() => {
-    if (totalCurrency === "CNY") {
-      return items.reduce((sum, item) => {
-        const lineTotal = item.price * item.quantity
-        if (item.priceCurrency === "CNY") return sum + lineTotal
-        return sum + (convertRubToCnyApprox(lineTotal, cnyPerRub) ?? 0)
-      }, 0)
-    }
-
+  const totalAmountRub = useMemo(() => {
     return items.reduce((sum, item) => {
       const lineTotal = item.price * item.quantity
       if (item.priceCurrency === "RUB") return sum + lineTotal
       return sum + (convertCnyToRubApprox(lineTotal, cnyPerRub) ?? 0)
     }, 0)
-  }, [cnyPerRub, items, totalCurrency])
+  }, [cnyPerRub, items])
+
+  const hasValidRate = Number.isFinite(cnyPerRub) && cnyPerRub > 0
+
+  const primaryTotal = useMemo(() => {
+    return formatCny(totalAmountCny, 0)
+  }, [totalAmountCny])
+
+  const secondaryTotal = useMemo(() => {
+    if (!hasValidRate) return null
+    return `≈ ${formatRub(totalAmountRub, 0)}`
+  }, [hasValidRate, totalAmountRub])
+
+  const rateRubPerCnyText = useMemo(() => {
+    if (!hasValidRate) return null
+    const rubPerCny = 1 / cnyPerRub
+    if (!Number.isFinite(rubPerCny)) return null
+
+    return new Intl.NumberFormat("ru-RU", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(rubPerCny)
+  }, [cnyPerRub, hasValidRate])
+
+  const hasRateDetails = secondaryTotal !== null && rateRubPerCnyText !== null
 
   useEffect(() => {
     const handleCartOpen = () => setIsOpen(true)
     window.addEventListener("cart:open", handleCartOpen)
     return () => window.removeEventListener("cart:open", handleCartOpen)
+  }, [])
+
+  useEffect(() => {
+    const media = window.matchMedia("(hover: hover) and (pointer: fine)")
+    const sync = () => {
+      const supportsHover = media.matches
+      setCanHover(supportsHover)
+      setIsRateDetailsOpen(false)
+    }
+
+    sync()
+    media.addEventListener("change", sync)
+    return () => media.removeEventListener("change", sync)
   }, [])
 
   const submitOrder = () => {
@@ -84,8 +119,27 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
     })
   }
 
+  const handleRateLineClick = () => {
+    if (!hasRateDetails) return
+    if (canHover) {
+      setIsRateDetailsOpen(true)
+      return
+    }
+    setIsRateDetailsOpen((prev) => !prev)
+  }
+
+  const handleRateMouseEnter = () => {
+    if (!hasRateDetails || !canHover) return
+    setIsRateDetailsOpen(true)
+  }
+
+  const handleRateMouseLeave = () => {
+    if (!canHover) return
+    setIsRateDetailsOpen(false)
+  }
+
   return (
-    <div className="fixed bottom-2 right-4 z-50 w-[calc(100%-2rem)] max-w-[420px] sm:bottom-4 sm:w-[390px]">
+    <div className="fixed right-4 z-50 w-[calc(100%-2rem)] max-w-[420px] bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+1rem)] sm:w-[390px]">
       <div className="rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] shadow-2xl max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
         {!isOpen && (
           <button
@@ -103,9 +157,16 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-price tabular-nums text-base font-semibold text-black" suppressHydrationWarning>
-                {formatDualPrice({ amount: totalAmount, currency: totalCurrency, cnyPerRub })}
-              </span>
+              <div className="text-right">
+                <p className="font-price tabular-nums text-base font-semibold text-black" suppressHydrationWarning>
+                  {primaryTotal}
+                </p>
+                {secondaryTotal ? (
+                  <p className="font-price tabular-nums text-xs text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
+                    {secondaryTotal}
+                  </p>
+                ) : null}
+              </div>
               <ChevronUp className="h-4 w-4 text-[color:var(--color-text-tertiary)]" />
             </div>
           </button>
@@ -131,9 +192,23 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
               </div>
             ) : (
               <div className="mb-4 max-h-[400px] space-y-3 overflow-auto pr-1">
-                {items.map((item) => (
-                  <div key={item.lineId} className="rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-tertiary)] p-3">
-                    <div className="flex gap-3">
+                {items.map((item) => {
+                  const lineTotal = item.price * item.quantity
+                  const lineTotalCny = item.priceCurrency === "CNY"
+                    ? lineTotal
+                    : (hasValidRate ? (convertRubToCnyApprox(lineTotal, cnyPerRub) ?? null) : null)
+                  const lineTotalRubApprox = hasValidRate
+                    ? (item.priceCurrency === "CNY"
+                      ? (convertCnyToRubApprox(lineTotal, cnyPerRub) ?? null)
+                      : lineTotal)
+                    : null
+
+                  const linePrimary = lineTotalCny !== null ? formatCny(lineTotalCny) : formatRub(lineTotal)
+                  const lineSecondary = lineTotalRubApprox !== null ? `≈ ${formatRub(lineTotalRubApprox)}` : null
+
+                  return (
+                  <div key={item.lineId} className="rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-tertiary)] p-2.5">
+                    <div className="flex gap-2.5">
                       <div className="relative h-14 w-14 overflow-hidden rounded-md bg-[color:var(--color-bg-image)]">
                         <Image
                           src={item.image || "https://placehold.co/300x300/1a3d31/e7dcc6?text=E"}
@@ -155,13 +230,10 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
                         ) : item.colors && item.colors.length > 0 ? (
                           <p className="text-xs text-[color:var(--color-text-secondary)]">Цвета: {item.colors.join(", ")}</p>
                         ) : null}
-                        <p className="font-price tabular-nums mt-1 text-sm font-semibold text-black">
-                          {formatDualPrice({
-                            amount: item.price * item.quantity,
-                            currency: item.priceCurrency,
-                            cnyPerRub,
-                          })}
-                        </p>
+                        <p className="font-price tabular-nums mt-0.5 text-sm font-semibold text-black">{linePrimary}</p>
+                        {lineSecondary ? (
+                          <p className="font-price tabular-nums mt-0 text-xs text-[color:var(--color-text-secondary)]">{lineSecondary}</p>
+                        ) : null}
                       </div>
                       <button
                         type="button"
@@ -173,29 +245,29 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
                       </button>
                     </div>
 
-                    <div className="mt-3 flex items-center justify-end gap-2">
+                    <div className="mt-2.5 flex items-center justify-end gap-1.5">
                       <button
                         type="button"
                         onClick={() => decrement(item.lineId)}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-image)]"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-image)]"
                         aria-label={`Уменьшить количество ${item.name}`}
                       >
-                        <Minus className="h-4 w-4" />
+                        <Minus className="h-3.5 w-3.5" />
                       </button>
-                      <span className="min-w-8 text-center text-sm font-semibold text-[color:var(--color-text-primary)]">
+                      <span className="min-w-7 text-center text-sm font-semibold text-[color:var(--color-text-primary)]">
                         {item.quantity}
                       </span>
                       <button
                         type="button"
                         onClick={() => increment(item.lineId)}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-image)]"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-image)]"
                         aria-label={`Увеличить количество ${item.name}`}
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             )}
 
@@ -210,11 +282,37 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
               </button>
             </div>
 
-            <div className="mb-4 flex items-center justify-between text-sm">
-              <span className="text-[color:var(--color-text-secondary)]">Заказ на сумму</span>
-              <span className="font-price tabular-nums text-lg font-bold text-black" suppressHydrationWarning>
-                {formatDualPrice({ amount: totalAmount, currency: totalCurrency, cnyPerRub })}
-              </span>
+            <div className="mb-4 rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-tertiary)] p-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-sm text-[color:var(--color-text-secondary)]">Заказ на сумму</span>
+                <div className="text-right">
+                  <p className="font-price tabular-nums text-[22px] leading-none font-bold text-black" suppressHydrationWarning>
+                    {primaryTotal}
+                  </p>
+
+                  {hasRateDetails ? (
+                    <ExchangeRateTooltip isOpen={isRateDetailsOpen} rateText={rateRubPerCnyText} align="right" className="ml-auto mt-1">
+                      {({ describedBy }) => (
+                        <button
+                          type="button"
+                          onClick={handleRateLineClick}
+                          onMouseEnter={handleRateMouseEnter}
+                          onMouseLeave={handleRateMouseLeave}
+                          onFocus={() => setIsRateDetailsOpen(true)}
+                          onBlur={() => setIsRateDetailsOpen(false)}
+                          className={`ml-auto py-0 text-right text-xs leading-tight text-[color:var(--color-text-secondary)] transition-opacity ${canHover ? "cursor-pointer hover:opacity-85" : ""}`}
+                          aria-expanded={isRateDetailsOpen}
+                          aria-describedby={describedBy}
+                        >
+                          <span className="font-price tabular-nums block leading-none" suppressHydrationWarning>
+                            {secondaryTotal}
+                          </span>
+                        </button>
+                      )}
+                    </ExchangeRateTooltip>
+                  ) : null}
+                </div>
+              </div>
             </div>
 
             <button

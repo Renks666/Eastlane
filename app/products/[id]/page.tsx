@@ -2,11 +2,18 @@
 import { StoreShell } from "@/components/store/StoreShell"
 import { ProductGallery } from "@/components/store/ProductGallery"
 import { ProductPurchasePanel } from "@/components/store/ProductPurchasePanel"
+import { ProductPriceWithTooltip } from "@/components/store/ProductPriceWithTooltip"
 import { Breadcrumbs } from "@/components/store/Breadcrumbs"
 import { createClient } from "@/lib/supabase/server"
 import { getStorefrontContent } from "@/src/domains/content/services/storefront-content-service"
 import { isSeasonKey, normalizeSeason, SEASON_LABELS_RU, type SeasonKey } from "@/src/domains/product-attributes/seasons"
-import { formatDualPrice, normalizePriceCurrency } from "@/src/shared/lib/format-price"
+import {
+  convertCnyToRubApprox,
+  convertRubToCnyApprox,
+  formatCny,
+  formatRub,
+  normalizePriceCurrency,
+} from "@/src/shared/lib/format-price"
 
 type ProductPageProps = {
   params: Promise<{ id: string }>
@@ -24,6 +31,19 @@ type ProductData = {
   images: string[] | null
   categories: { name: string }[] | null
   brands: { name: string }[] | null
+}
+
+function resolveRelationName(relation: unknown): string | null {
+  if (!relation) return null
+  if (Array.isArray(relation)) {
+    const first = relation[0] as { name?: string } | undefined
+    return typeof first?.name === "string" ? first.name : null
+  }
+  if (typeof relation === "object") {
+    const single = relation as { name?: string }
+    return typeof single.name === "string" ? single.name : null
+  }
+  return null
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
@@ -48,6 +68,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const product = data as ProductData
   const sizes = product.sizes ?? []
   const colors = product.colors ?? []
+  const brandName = resolveRelationName(product.brands)
   const seasons = Array.from(
     new Set(
       (product.seasons ?? [])
@@ -56,6 +77,24 @@ export default async function ProductPage({ params }: ProductPageProps) {
     )
   )
   const inStock = sizes.length > 0
+  const priceCurrency = normalizePriceCurrency(product.price_currency)
+  const hasValidRate = Number.isFinite(content.exchangeRate.cnyPerRub) && content.exchangeRate.cnyPerRub > 0
+  const rateRubPerCnyText = hasValidRate
+    ? new Intl.NumberFormat("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(1 / content.exchangeRate.cnyPerRub)
+    : null
+
+  const displayPriceCny = priceCurrency === "CNY"
+    ? product.price
+    : (hasValidRate ? (convertRubToCnyApprox(product.price, content.exchangeRate.cnyPerRub) ?? null) : null)
+
+  const displayPriceRubApprox = hasValidRate
+    ? (priceCurrency === "CNY"
+      ? (convertCnyToRubApprox(product.price, content.exchangeRate.cnyPerRub) ?? null)
+      : product.price)
+    : null
+
+  const primaryPriceText = displayPriceCny !== null ? formatCny(displayPriceCny) : formatRub(product.price)
+  const secondaryPriceText = displayPriceRubApprox !== null ? `≈ ${formatRub(displayPriceRubApprox)}` : null
 
   return (
     <StoreShell>
@@ -70,21 +109,22 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="grid gap-6 lg:grid-cols-[1.05fr_1fr]">
           <ProductGallery images={product.images ?? []} name={product.name} />
           <article className="rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-5 md:p-6">
-            <h1 className="mt-3 text-3xl font-semibold text-[color:var(--color-brand-forest-light)]">{product.name}</h1>
-            <p className="font-price tabular-nums mt-4 text-3xl font-semibold text-black">
-              {formatDualPrice({
-                amount: product.price,
-                currency: normalizePriceCurrency(product.price_currency),
-                cnyPerRub: content.exchangeRate.cnyPerRub,
-              })}
-            </p>
+            {brandName ? (
+              <p className="mb-1 text-sm font-semibold leading-tight text-[color:var(--color-brand-forest-light)]">{brandName}</p>
+            ) : null}
+            <h1 className="mt-0 text-3xl font-semibold leading-tight text-[color:var(--color-brand-forest-light)]">{product.name}</h1>
+            <ProductPriceWithTooltip
+              primaryPrice={primaryPriceText}
+              secondaryPrice={secondaryPriceText}
+              rateText={rateRubPerCnyText}
+            />
 
             <ProductPurchasePanel
               product={{
                 id: product.id,
                 name: product.name,
                 price: product.price,
-                priceCurrency: normalizePriceCurrency(product.price_currency),
+                priceCurrency,
                 image: product.images?.[0],
                 sizes,
                 colors,
@@ -92,21 +132,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
             />
 
             <div className="mt-6 space-y-5">
-              <div>
-                <p className="mb-2 text-sm font-medium text-[color:var(--color-brand-forest-light)]">Цвет</p>
-                <div className="flex flex-wrap gap-2">
-                  {colors.length > 0 ? (
-                    colors.map((color) => (
-                      <span key={color} className="rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 py-1 text-sm text-[color:var(--color-text-secondary)]">
-                        {color}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-sm text-[color:var(--color-text-secondary)]">Уточните у менеджера</span>
-                  )}
-                </div>
-              </div>
-
               <div>
                 <p className="mb-2 text-sm font-medium text-[color:var(--color-brand-forest-light)]">Сезонность</p>
                 <div className="flex flex-wrap gap-2">

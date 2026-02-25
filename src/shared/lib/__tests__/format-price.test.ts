@@ -16,9 +16,9 @@ describe("format-price helpers", () => {
 
   it("formats dual CNY price", () => {
     const result = formatDualPrice({ amount: 500, currency: "CNY", cnyPerRub: 0.09 })
-    expect(result).toContain("500,00 ?")
+    expect(result).toContain("500,00 ¥")
     expect(result).toContain("~5")
-    expect(result).toContain("?")
+    expect(result).toContain("₽")
   })
 })
 

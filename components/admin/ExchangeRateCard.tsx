@@ -13,12 +13,21 @@ type ExchangeRateCardProps = {
 }
 
 export function ExchangeRateCard({ initialCnyPerRub }: ExchangeRateCardProps) {
-  const [cnyPerRub, setCnyPerRub] = useState(String(initialCnyPerRub))
+  const initialRubPerCny = initialCnyPerRub > 0 ? 1 / initialCnyPerRub : null
+  const [rubPerCny, setRubPerCny] = useState(
+    initialRubPerCny !== null ? String(Number(initialRubPerCny.toFixed(6))) : ""
+  )
   const [isPending, startTransition] = useTransition()
 
   const handleSubmit = () => {
+    const rubPerCnyValue = Number(rubPerCny)
+    if (!Number.isFinite(rubPerCnyValue) || rubPerCnyValue <= 0) {
+      toast.error("Укажите корректный курс юаня к рублю.")
+      return
+    }
+
     const formData = new FormData()
-    formData.set("cnyPerRub", cnyPerRub)
+    formData.set("cnyPerRub", String(1 / rubPerCnyValue))
 
     startTransition(async () => {
       const result = await saveExchangeRateSection(formData)
@@ -38,14 +47,14 @@ export function ExchangeRateCard({ initialCnyPerRub }: ExchangeRateCardProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-2">
-          <Label htmlFor="exchange-rate">1 RUB = X CNY</Label>
+          <Label htmlFor="exchange-rate">1 CNY = X RUB</Label>
           <Input
             id="exchange-rate"
             type="number"
-            step="0.000001"
-            min="0.000001"
-            value={cnyPerRub}
-            onChange={(event) => setCnyPerRub(event.target.value)}
+            step="0.01"
+            min="0.01"
+            value={rubPerCny}
+            onChange={(event) => setRubPerCny(event.target.value)}
           />
         </div>
         <Button

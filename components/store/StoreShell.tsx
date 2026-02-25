@@ -1,4 +1,4 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 import { Instagram, MessageCircle, Search, Send } from "lucide-react"
 import { EastlaneLogo } from "@/components/store/EastlaneLogo"
 import { MobileMenu } from "@/components/store/MobileMenu"
@@ -31,7 +31,16 @@ export async function StoreShell({ children }: StoreShellProps) {
               <Link href="/about" className="hover:text-[color:var(--color-brand-forest-light)]">О нас</Link>
               <Link href="/contacts" className="hover:text-[color:var(--color-brand-forest-light)]">Контакты</Link>
             </nav>
-            <form action="/catalog" className="ml-auto flex min-w-0 flex-1 items-center gap-2 rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-4 shadow-sm transition focus-within:border-[color:var(--color-brand-beige-dark)] focus-within:shadow-md md:ml-0 md:w-full md:max-w-sm md:flex-none">
+
+            <Link
+              href="/catalog"
+              className="ml-auto inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] min-[420px]:hidden"
+              aria-label="Открыть каталог и поиск"
+            >
+              <Search className="h-4 w-4" />
+            </Link>
+
+            <form action="/catalog" className="ml-auto hidden min-w-0 flex-1 items-center gap-2 rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-4 shadow-sm transition focus-within:border-[color:var(--color-brand-beige-dark)] focus-within:shadow-md min-[420px]:flex md:ml-0 md:w-full md:max-w-sm md:flex-none">
               <Search className="h-4 w-4 text-[color:var(--color-text-placeholder)]" />
               <input
                 name="q"
@@ -42,7 +51,7 @@ export async function StoreShell({ children }: StoreShellProps) {
           </div>
         </header>
 
-        <main>{children}</main>
+        <main className="pb-28 md:pb-0">{children}</main>
         <FloatingCart cnyPerRub={content.exchangeRate.cnyPerRub} />
 
         <footer className="mt-14 border-t border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/95">

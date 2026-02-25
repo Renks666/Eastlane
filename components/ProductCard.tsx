@@ -1,3 +1,4 @@
+﻿import Image from 'next/image'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -21,9 +22,9 @@ export function ProductCard({
 }: ProductCardProps) {
   return (
     <Card className="overflow-hidden">
-      <div className="aspect-square bg-gray-100 flex items-center justify-center">
+      <div className="relative aspect-square bg-gray-100 flex items-center justify-center">
         {image ? (
-          <img src={image} alt={name} className="object-contain w-full h-full" />
+          <Image src={image} alt={name} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-contain" />
         ) : (
           <span className="text-gray-400">Нет фото</span>
         )}
