@@ -60,68 +60,72 @@ export default async function AdminPage() {
         <p className="mt-1 text-sm text-muted-foreground">Вход выполнен: {user.email}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Card className="rounded-xl border-border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Товары</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{productsCount ?? 0}</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[max-content_max-content] lg:items-start lg:justify-start lg:gap-8">
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="h-40 w-40 gap-1 rounded-xl border-border py-2 shadow-sm sm:h-44 sm:w-44">
+            <CardHeader className="px-3 pb-0 pt-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Товары</CardTitle>
+            </CardHeader>
+            <CardContent className="px-3 pb-0 pt-0">
+              <p className="text-2xl font-semibold leading-none">{productsCount ?? 0}</p>
+            </CardContent>
+          </Card>
 
-        <Card className="rounded-xl border-border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Категории</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{categoriesCount ?? 0}</p>
-          </CardContent>
-        </Card>
+          <Card className="h-40 w-40 gap-1 rounded-xl border-border py-2 shadow-sm sm:h-44 sm:w-44">
+            <CardHeader className="px-3 pb-0 pt-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Заказы</CardTitle>
+            </CardHeader>
+            <CardContent className="px-3 pb-0 pt-0">
+              <p className="text-2xl font-semibold leading-none">{orders.length}</p>
+              <p className="text-xs text-muted-foreground">{newOrders} новых</p>
+            </CardContent>
+          </Card>
 
-        <Card className="rounded-xl border-border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Заказы</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{orders.length}</p>
-            <p className="text-xs text-muted-foreground">{newOrders} новых</p>
-          </CardContent>
-        </Card>
+          <Card className="h-40 w-40 gap-1 rounded-xl border-border py-2 shadow-sm sm:h-44 sm:w-44">
+            <CardHeader className="px-3 pb-0 pt-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Категории</CardTitle>
+            </CardHeader>
+            <CardContent className="px-3 pb-0 pt-0">
+              <p className="text-2xl font-semibold leading-none">{categoriesCount ?? 0}</p>
+            </CardContent>
+          </Card>
 
-        <Card className="rounded-xl border-border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Выручка</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="font-price tabular-nums text-2xl font-semibold text-black">
-              {formatCny(totalRevenueCny, 0)}
-              <span className="ml-1 text-sm font-medium text-muted-foreground">
-                (≈ {formatRub(totalRevenueRubApprox, 0)})
-              </span>
-            </p>
-          </CardContent>
-        </Card>
+          <Card className="h-40 w-40 gap-1 rounded-xl border-border py-2 shadow-sm sm:h-44 sm:w-44">
+            <CardHeader className="px-3 pb-0 pt-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Выручка</CardTitle>
+            </CardHeader>
+            <CardContent className="px-3 pb-0 pt-0">
+              <p className="font-price tabular-nums text-2xl font-semibold leading-none text-black">
+                {formatCny(totalRevenueCny, 0)}
+                <span className="ml-1 text-sm font-medium text-muted-foreground">
+                  (≈ {formatRub(totalRevenueRubApprox, 0)})
+                </span>
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
-        <ExchangeRateCard initialCnyPerRub={content.exchangeRate.cnyPerRub} />
+        <div className="grid grid-cols-2 gap-3 lg:ml-2 lg:border-l lg:border-border lg:pl-6 xl:grid-cols-1">
+          <Card className="h-40 w-40 gap-2 self-start rounded-xl border-border py-2 shadow-sm sm:h-44 sm:w-44">
+            <CardHeader className="px-3 pb-0 pt-0">
+              <CardTitle className="text-sm font-semibold">Быстрые действия</CardTitle>
+            </CardHeader>
+            <CardContent className="grid h-full content-center gap-2 px-3 pb-0 pt-0">
+              <Button asChild className="h-8 w-full text-xs">
+                <Link href="/admin/products/new">Создать товар</Link>
+              </Button>
+              <Button asChild variant="outline" className="h-8 w-full text-xs">
+                <Link href="/admin/orders">Заказы</Link>
+              </Button>
+            </CardContent>
+          </Card>
+          <ExchangeRateCard
+            initialCnyPerRub={content.exchangeRate.cnyPerRub}
+            compact
+            className="h-40 w-40 self-start sm:h-44 sm:w-44"
+          />
+        </div>
       </div>
-
-      <Card className="rounded-xl border-border shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-sm font-semibold">Быстрые действия</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-2 sm:flex sm:flex-wrap sm:gap-3">
-          <Button asChild className="w-full sm:w-auto">
-            <Link href="/admin/products">Товары</Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full sm:w-auto">
-            <Link href="/admin/categories">Категории</Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full sm:w-auto">
-            <Link href="/admin/orders">Заказы</Link>
-          </Button>
-        </CardContent>
-      </Card>
 
       <div className="rounded-xl border border-border bg-card shadow-sm">
         <div className="border-b border-border px-5 py-4">

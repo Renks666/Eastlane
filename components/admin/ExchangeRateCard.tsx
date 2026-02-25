@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
 
 type ExchangeRateCardProps = {
   initialCnyPerRub: number
+  compact?: boolean
+  className?: string
 }
 
-export function ExchangeRateCard({ initialCnyPerRub }: ExchangeRateCardProps) {
+export function ExchangeRateCard({ initialCnyPerRub, compact = false, className }: ExchangeRateCardProps) {
   const initialRubPerCny = initialCnyPerRub > 0 ? 1 / initialCnyPerRub : null
   const [rubPerCny, setRubPerCny] = useState(
     initialRubPerCny !== null ? String(Number(initialRubPerCny.toFixed(6))) : ""
@@ -41,13 +44,13 @@ export function ExchangeRateCard({ initialCnyPerRub }: ExchangeRateCardProps) {
   }
 
   return (
-    <Card className="rounded-xl border-border shadow-sm">
-      <CardHeader className="pb-2">
+    <Card className={cn("rounded-xl border-border shadow-sm", compact ? "aspect-square gap-2 py-2" : "", className)}>
+      <CardHeader className={cn(compact ? "px-3 pb-0 pt-0" : "pb-2")}>
         <CardTitle className="text-sm font-medium text-muted-foreground">Курс CNY/RUB</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="space-y-2">
-          <Label htmlFor="exchange-rate">1 CNY = X RUB</Label>
+      <CardContent className={cn(compact ? "flex h-full flex-col justify-between px-3 pb-0 pt-0" : "space-y-3")}>
+        <div className={cn(compact ? "space-y-1.5" : "space-y-2")}>
+          <Label htmlFor="exchange-rate" className={cn(compact ? "text-xs" : "")}>1 CNY = X RUB</Label>
           <Input
             id="exchange-rate"
             type="number"
@@ -55,13 +58,17 @@ export function ExchangeRateCard({ initialCnyPerRub }: ExchangeRateCardProps) {
             min="0.01"
             value={rubPerCny}
             onChange={(event) => setRubPerCny(event.target.value)}
+            className={cn(compact ? "h-8 text-sm" : "")}
           />
         </div>
         <Button
           type="button"
           onClick={handleSubmit}
           disabled={isPending}
-          className="bg-[color:var(--color-brand-forest)] text-white hover:bg-[color:var(--color-brand-forest-dark)]"
+          className={cn(
+            "bg-[color:var(--color-brand-forest)] text-white hover:bg-[color:var(--color-brand-forest-dark)]",
+            compact ? "h-8 w-full text-xs" : ""
+          )}
         >
           {isPending ? "Сохранение..." : "Сохранить курс"}
         </Button>

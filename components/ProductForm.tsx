@@ -14,13 +14,17 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { resolveColorSwatch } from "@/src/domains/product-attributes/color-swatches"
 import { buildSizeOptionsForCategory } from "@/src/domains/product-attributes/size-presets"
 import { normalizeAttributeValue, sanitizeAttributeValues } from "@/src/domains/product-attributes/types"
 import { isSeasonKey, normalizeSeason, SEASON_KEYS, SEASON_LABELS_RU, type SeasonKey } from "@/src/domains/product-attributes/seasons"
 import type { PriceCurrency } from "@/src/shared/lib/format-price"
 
-const MAX_SINGLE_IMAGE_BYTES = 3 * 1024 * 1024
-const MAX_TOTAL_UPLOAD_BYTES = 4 * 1024 * 1024
+const MAX_SINGLE_IMAGE_BYTES = 8 * 1024 * 1024
+const MAX_TOTAL_UPLOAD_BYTES = 20 * 1024 * 1024
+const OPTIMIZE_THRESHOLD_BYTES = 1500 * 1024
+const IMAGE_MAX_DIMENSION = 2200
+const JPEG_OPTIMIZE_QUALITY = 0.82
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Укажите название."),
@@ -85,6 +89,79 @@ function resolveFallbackMainImageKey(existing: string[], files: File[]) {
 
 function formatMb(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function isLikelyImageFile(file: File) {
+  if (file.type.startsWith("image/")) return true
+  return /\.(avif|gif|heic|heif|jpe?g|png|webp)$/i.test(file.name)
+}
+
+function withFileExtension(fileName: string, extension: string) {
+  if (fileName.includes(".")) {
+    return fileName.replace(/\.[^./\\]+$/, extension)
+  }
+  return `${fileName}${extension}`
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality?: number): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), type, quality)
+  })
+}
+
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new window.Image()
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error("Failed to decode image"))
+    image.src = url
+  })
+}
+
+async function optimizePickedImage(file: File) {
+  if (!isLikelyImageFile(file) || file.size <= OPTIMIZE_THRESHOLD_BYTES) {
+    return file
+  }
+
+  const objectUrl = URL.createObjectURL(file)
+  try {
+    const image = await loadImage(objectUrl)
+    const maxSide = Math.max(image.width, image.height)
+    const scale = maxSide > IMAGE_MAX_DIMENSION ? IMAGE_MAX_DIMENSION / maxSide : 1
+    const targetWidth = Math.max(1, Math.round(image.width * scale))
+    const targetHeight = Math.max(1, Math.round(image.height * scale))
+
+    const canvas = document.createElement("canvas")
+    canvas.width = targetWidth
+    canvas.height = targetHeight
+    const context = canvas.getContext("2d")
+    if (!context) {
+      return file
+    }
+
+    context.drawImage(image, 0, 0, targetWidth, targetHeight)
+    const usePng = file.type === "image/png"
+    const outputType = usePng ? "image/png" : "image/jpeg"
+    const blob = await canvasToBlob(
+      canvas,
+      outputType,
+      outputType === "image/jpeg" ? JPEG_OPTIMIZE_QUALITY : undefined
+    )
+
+    if (!blob || blob.size >= file.size) {
+      return file
+    }
+
+    const optimizedName = outputType === "image/jpeg" ? withFileExtension(file.name, ".jpg") : file.name
+    return new File([blob], optimizedName, {
+      type: outputType,
+      lastModified: file.lastModified,
+    })
+  } catch {
+    return file
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
 }
 
 function mergeWithOptions(baseOptions: string[], selectedValues: string[]) {
@@ -611,15 +688,25 @@ export function ProductForm({
                 {colorOptions.length === 0 ? (
                   <p className="px-2 py-1.5 text-sm text-muted-foreground">Нет доступных цветов</p>
                 ) : (
-                  colorOptions.map((color) => (
-                    <DropdownMenuCheckboxItem
-                      key={color}
-                      checked={colors.some((item) => normalizeAttributeValue(item) === normalizeAttributeValue(color))}
-                      onCheckedChange={() => toggleArrayValue(color, setColors)}
-                    >
-                      {color}
-                    </DropdownMenuCheckboxItem>
-                  ))
+                  colorOptions.map((color) => {
+                    const swatch = resolveColorSwatch(color)
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={color}
+                        checked={colors.some((item) => normalizeAttributeValue(item) === normalizeAttributeValue(color))}
+                        onCheckedChange={() => toggleArrayValue(color, setColors)}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <span
+                            aria-hidden
+                            className="inline-flex h-4 w-4 rounded-full border border-border"
+                            style={{ backgroundColor: swatch.hex }}
+                          />
+                          {color}
+                        </span>
+                      </DropdownMenuCheckboxItem>
+                    )
+                  })
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -662,10 +749,10 @@ export function ProductForm({
               type="file"
               accept="image/*"
               multiple
-              onChange={(e) => {
-                const files = Array.from(e.target.files ?? [])
+              onChange={async (e) => {
+                const files = Array.from(e.currentTarget.files ?? [])
                 if (files.length === 0) return
-                const invalidType = files.find((file) => !file.type.startsWith("image/"))
+                const invalidType = files.find((file) => !isLikelyImageFile(file))
                 if (invalidType) {
                   const message = "Можно загружать только изображения."
                   setFormError(message)
@@ -674,7 +761,9 @@ export function ProductForm({
                   return
                 }
 
-                const tooLarge = files.find((file) => file.size > MAX_SINGLE_IMAGE_BYTES)
+                const optimizedFiles = await Promise.all(files.map((file) => optimizePickedImage(file)))
+
+                const tooLarge = optimizedFiles.find((file) => file.size > MAX_SINGLE_IMAGE_BYTES)
                 if (tooLarge) {
                   const message = `Файл "${tooLarge.name}" больше ${formatMb(MAX_SINGLE_IMAGE_BYTES)}.`
                   setFormError(message)
@@ -684,7 +773,7 @@ export function ProductForm({
                 }
 
                 const currentTotal = newImages.reduce((sum, file) => sum + file.size, 0)
-                const pickedTotal = files.reduce((sum, file) => sum + file.size, 0)
+                const pickedTotal = optimizedFiles.reduce((sum, file) => sum + file.size, 0)
                 if (currentTotal + pickedTotal > MAX_TOTAL_UPLOAD_BYTES) {
                   const message = `Суммарный размер новых изображений не должен превышать ${formatMb(MAX_TOTAL_UPLOAD_BYTES)}.`
                   setFormError(message)
@@ -694,7 +783,7 @@ export function ProductForm({
                 }
 
                 setNewImages((prev) => {
-                  const next = [...prev, ...files]
+                  const next = [...prev, ...optimizedFiles]
                   if (!mainImageKey) {
                     setMainImageKey(resolveFallbackMainImageKey(existingImages, next))
                   }
