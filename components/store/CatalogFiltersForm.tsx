@@ -2,7 +2,7 @@ import Link from "next/link"
 import { ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { CatalogBrand, CatalogCategory, CatalogFilterParams } from "@/src/domains/catalog/types"
-import { BRAND_GROUP_LABELS, BRAND_GROUP_ORDER, type BrandGroupKey } from "@/src/domains/brand/types"
+import { resolveColorSwatch } from "@/src/domains/product-attributes/color-swatches"
 import { SEASON_LABELS_RU, type SeasonKey } from "@/src/domains/product-attributes/seasons"
 
 type CatalogFilterMeta = {
@@ -16,14 +16,14 @@ type CatalogFilterMeta = {
 type CatalogFiltersFormProps = {
   filters: CatalogFilterParams
   categories: CatalogCategory[]
-  groupedBrands: Record<BrandGroupKey, CatalogBrand[]>
+  brands: CatalogBrand[]
   meta: CatalogFilterMeta
 }
 
 export function CatalogFiltersForm({
   filters,
   categories,
-  groupedBrands,
+  brands,
   meta,
 }: CatalogFiltersFormProps) {
   const hasBrandSelection = filters.brands.length > 0
@@ -75,46 +75,21 @@ export function CatalogFiltersForm({
         </summary>
         <div className="grid grid-rows-[0fr] border-t border-[color:var(--color-border-secondary)] transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-open/section:grid-rows-[1fr]">
           <div className="overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] opacity-0 -translate-y-1 group-open/section:translate-y-0 group-open/section:opacity-100">
-            <div className="space-y-3 p-3">
-              {BRAND_GROUP_ORDER.map((groupKey) => {
-                const items = groupedBrands[groupKey]
-                if (!items || items.length === 0) return null
-                const hasSelectedInGroup = items.some((brand) => filters.brands.includes(brand.slug))
-                return (
-                  <details
-                    key={groupKey}
-                    open={hasSelectedInGroup}
-                    className="group/subsection overflow-hidden rounded-xl border border-[color:var(--color-border-secondary)] bg-[color:var(--color-bg-primary)] open:border-[color:var(--color-border-accent)]"
-                  >
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-left marker:content-none">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-tertiary)]">
-                        {BRAND_GROUP_LABELS[groupKey]}
-                      </span>
-                      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[color:var(--color-brand-beige-dark)] transition-transform duration-300 ease-out group-open/subsection:rotate-180" />
-                    </summary>
-                    <div className="grid grid-rows-[0fr] border-t border-[color:var(--color-border-secondary)] transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-open/subsection:grid-rows-[1fr]">
-                      <div className="overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] opacity-0 -translate-y-1 group-open/subsection:translate-y-0 group-open/subsection:opacity-100">
-                        <div className="grid grid-cols-1 gap-1.5 p-2.5">
-                          {items.map((brand) => (
-                            <label
-                              key={brand.id}
-                              className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2 py-1.5 text-xs text-[color:var(--color-text-secondary)]"
-                            >
-                              <input
-                                type="checkbox"
-                                name="brand"
-                                value={brand.slug}
-                                defaultChecked={filters.brands.includes(brand.slug)}
-                              />
-                              {brand.name}
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </details>
-                )
-              })}
+            <div className="grid grid-cols-1 gap-1.5 p-3">
+              {brands.map((brand) => (
+                <label
+                  key={brand.id}
+                  className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2 py-1.5 text-xs text-[color:var(--color-text-secondary)]"
+                >
+                  <input
+                    type="checkbox"
+                    name="brand"
+                    value={brand.slug}
+                    defaultChecked={filters.brands.includes(brand.slug)}
+                  />
+                  {brand.name}
+                </label>
+              ))}
             </div>
           </div>
         </div>
@@ -130,7 +105,7 @@ export function CatalogFiltersForm({
         </summary>
         <div className="grid grid-rows-[0fr] border-t border-[color:var(--color-border-secondary)] transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-open/section:grid-rows-[1fr]">
           <div className="overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] opacity-0 -translate-y-1 group-open/section:translate-y-0 group-open/section:opacity-100">
-            <div className="grid grid-cols-3 gap-2 p-3">
+            <div className="grid grid-cols-1 gap-1.5 p-3">
               {meta.allSizes.map((size) => (
                 <label key={size} className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2 py-1.5 text-xs text-[color:var(--color-text-secondary)]">
                   <input type="checkbox" name="size" value={size} defaultChecked={filters.sizes.includes(size)} />
@@ -152,13 +127,21 @@ export function CatalogFiltersForm({
         </summary>
         <div className="grid grid-rows-[0fr] border-t border-[color:var(--color-border-secondary)] transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-open/section:grid-rows-[1fr]">
           <div className="overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] opacity-0 -translate-y-1 group-open/section:translate-y-0 group-open/section:opacity-100">
-            <div className="grid grid-cols-2 gap-2 p-3">
-              {meta.allColors.map((color) => (
-                <label key={color} className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2 py-1.5 text-xs text-[color:var(--color-text-secondary)]">
-                  <input type="checkbox" name="color" value={color} defaultChecked={filters.colors.includes(color)} />
-                  {color}
-                </label>
-              ))}
+            <div className="grid grid-cols-1 gap-1.5 p-3">
+              {meta.allColors.map((color) => {
+                const swatch = resolveColorSwatch(color)
+                return (
+                  <label key={color} className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2 py-1.5 text-xs text-[color:var(--color-text-secondary)]">
+                    <input type="checkbox" name="color" value={color} defaultChecked={filters.colors.includes(color)} />
+                    <span
+                      aria-hidden
+                      className="inline-flex h-4 w-4 rounded-full border border-[color:var(--color-border-primary)]"
+                      style={{ backgroundColor: swatch.hex }}
+                    />
+                    {color}
+                  </label>
+                )
+              })}
             </div>
           </div>
         </div>
@@ -247,4 +230,3 @@ export function CatalogFiltersForm({
     </form>
   )
 }
-

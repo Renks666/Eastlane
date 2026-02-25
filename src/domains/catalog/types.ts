@@ -1,4 +1,3 @@
-import type { BrandGroupKey } from "@/src/domains/brand/types"
 import type { PriceCurrency } from "@/src/shared/lib/format-price"
 
 export type CatalogCategory = {
@@ -11,7 +10,6 @@ export type CatalogBrand = {
   id: number
   name: string
   slug: string
-  group_key: BrandGroupKey
   sort_order: number
   is_active: boolean
 }
@@ -27,7 +25,7 @@ export type CatalogProduct = {
   images: string[] | null
   created_at?: string
   categories: { name: string; slug?: string }[] | null
-  brands: { name: string; slug?: string; group_key?: BrandGroupKey }[] | null
+  brands: { name: string; slug?: string }[] | null
 }
 
 export type CatalogFilterParams = {

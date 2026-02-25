@@ -73,10 +73,10 @@ export default async function AdminAttributesPage({ searchParams }: AdminAttribu
 
       <Card className="rounded-xl border-border shadow-sm">
         <CardContent className="space-y-4 p-4">
-          <form className="flex gap-2" action="/admin/attributes">
+          <form className="flex flex-col gap-2 sm:flex-row" action="/admin/attributes">
             <input type="hidden" name="tab" value={currentTab} />
             <Input name="q" defaultValue={queryText} placeholder={`Поиск по ${currentTab === "sizes" ? "размерам" : "цветам"}...`} />
-            <Button type="submit" variant="outline">Найти</Button>
+            <Button type="submit" variant="outline" className="w-full sm:w-auto">Найти</Button>
           </form>
 
           <form action={createAttributeOption} className="grid gap-2 rounded-lg border p-3 md:grid-cols-[1fr_150px_auto_auto]">
@@ -87,7 +87,7 @@ export default async function AdminAttributesPage({ searchParams }: AdminAttribu
               <input type="checkbox" name="isActive" defaultChecked />
               Активно
             </label>
-            <Button type="submit">Добавить</Button>
+            <Button type="submit" className="w-full md:w-auto">Добавить</Button>
           </form>
 
           {list.length === 0 ? (
@@ -105,13 +105,13 @@ export default async function AdminAttributesPage({ searchParams }: AdminAttribu
                       <input type="checkbox" name="isActive" defaultChecked={item.is_active} />
                       Активно
                     </label>
-                    <Button type="submit" variant="outline">Сохранить</Button>
+                    <Button type="submit" variant="outline" className="w-full sm:w-auto">Сохранить</Button>
                   </form>
                   <form action={deleteAttributeOption} className="mt-2">
                     <input type="hidden" name="id" value={item.id} />
                     <input type="hidden" name="kind" value={kind} />
                     <input type="hidden" name="valueNormalized" value={item.value_normalized} />
-                    <Button type="submit" variant="destructive" size="sm">Удалить</Button>
+                    <Button type="submit" variant="destructive" size="sm" className="w-full sm:w-auto">Удалить</Button>
                   </form>
                 </div>
               ))}
@@ -122,3 +122,4 @@ export default async function AdminAttributesPage({ searchParams }: AdminAttribu
     </div>
   )
 }
+

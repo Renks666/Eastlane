@@ -20,7 +20,7 @@ export default async function EditBrandPage({ params }: EditBrandPageProps) {
 
   const { data: brand, error } = await supabase
     .from("brands")
-    .select("id, name, slug, group_key, sort_order, is_active")
+    .select("id, name, slug, sort_order, is_active")
     .eq("id", brandId)
     .single()
 

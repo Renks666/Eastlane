@@ -12,7 +12,6 @@ import {
 import { getStorefrontContent } from "@/src/domains/content/services/storefront-content-service"
 import { parseCatalogFilterParams } from "@/src/domains/catalog/services/filter-params"
 import type { CatalogBrand, CatalogCategory, CatalogProduct } from "@/src/domains/catalog/types"
-import type { BrandGroupKey } from "@/src/domains/brand/types"
 
 type CatalogPageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -47,20 +46,6 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
     fetchCatalogProducts(supabase, filters, content.exchangeRate.cnyPerRub),
   ])
 
-  const groupedBrands = (brands as CatalogBrand[]).reduce<Record<BrandGroupKey, CatalogBrand[]>>(
-    (acc, brand) => {
-      acc[brand.group_key] = acc[brand.group_key] ?? []
-      acc[brand.group_key].push(brand)
-      return acc
-    },
-    {
-      "sport-streetwear": [],
-      "mass-market-casual": [],
-      "premium-designer": [],
-      outdoor: [],
-    }
-  )
-
   return (
     <StoreShell>
       <section className="mx-auto max-w-7xl px-6 pb-16 pt-12 md:px-12">
@@ -89,7 +74,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             <CatalogFiltersForm
               filters={filters}
               categories={categories as CatalogCategory[]}
-              groupedBrands={groupedBrands}
+              brands={brands as CatalogBrand[]}
               meta={meta}
             />
           </CatalogFiltersSheet>
@@ -100,7 +85,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
             <CatalogFiltersForm
               filters={filters}
               categories={categories as CatalogCategory[]}
-              groupedBrands={groupedBrands}
+              brands={brands as CatalogBrand[]}
               meta={meta}
             />
           </aside>

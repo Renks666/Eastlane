@@ -1,16 +1,14 @@
-import Link from "next/link"
+﻿import Link from "next/link"
 import { BrandDeleteButton } from "@/app/admin/brands/BrandDeleteButton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { createServerSupabaseClient } from "@/src/shared/lib/supabase/server"
 import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
-import { BRAND_GROUP_LABELS, compareBrandGroupKeys, type BrandGroupKey, isBrandGroupKey } from "@/src/domains/brand/types"
 
 type BrandRow = {
   id: number
   name: string
   slug: string
-  group_key: string
   sort_order: number
   is_active: boolean
 }
@@ -27,9 +25,7 @@ export default async function AdminBrandsPage({ searchParams }: AdminBrandsPageP
   const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase
     .from("brands")
-    .select("id, name, slug, group_key, sort_order, is_active")
-    .order("group_key", { ascending: true })
-    .order("sort_order", { ascending: true })
+    .select("id, name, slug, sort_order, is_active")
     .order("name", { ascending: true })
 
   if (error) {
@@ -39,22 +35,9 @@ export default async function AdminBrandsPage({ searchParams }: AdminBrandsPageP
   const brands = ((data ?? []) as BrandRow[])
     .filter((brand) => {
       if (!queryText) return true
-      const groupLabel = isBrandGroupKey(brand.group_key) ? BRAND_GROUP_LABELS[brand.group_key] : brand.group_key
-      return (
-        brand.name.toLowerCase().includes(queryText) ||
-        brand.slug.toLowerCase().includes(queryText) ||
-        brand.group_key.toLowerCase().includes(queryText) ||
-        groupLabel.toLowerCase().includes(queryText)
-      )
+      return brand.name.toLowerCase().includes(queryText) || brand.slug.toLowerCase().includes(queryText)
     })
-    .sort((a, b) => {
-      const aGroup = isBrandGroupKey(a.group_key) ? a.group_key : "outdoor"
-      const bGroup = isBrandGroupKey(b.group_key) ? b.group_key : "outdoor"
-      const byGroup = compareBrandGroupKeys(aGroup as BrandGroupKey, bGroup as BrandGroupKey)
-      if (byGroup !== 0) return byGroup
-      if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
-      return a.name.localeCompare(b.name)
-    })
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <div className="space-y-5">
@@ -78,16 +61,13 @@ export default async function AdminBrandsPage({ searchParams }: AdminBrandsPageP
         </Card>
       ) : (
         <>
-          <div className="space-y-3 md:hidden">
+          <div className="space-y-3 lg:hidden">
             {brands.map((brand) => (
               <Card key={brand.id} className="rounded-xl border-border shadow-sm">
                 <CardContent className="space-y-3 p-4">
                   <div className="space-y-1">
                     <p className="font-medium text-foreground">{brand.name}</p>
                     <p className="text-sm text-muted-foreground">{brand.slug}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {isBrandGroupKey(brand.group_key) ? BRAND_GROUP_LABELS[brand.group_key] : brand.group_key}
-                    </p>
                     <p className="text-xs text-muted-foreground">Сортировка: {brand.sort_order}</p>
                     <p className={`text-xs font-medium ${brand.is_active ? "text-emerald-700" : "text-amber-700"}`}>
                       {brand.is_active ? "Активен" : "Скрыт"}
@@ -104,12 +84,11 @@ export default async function AdminBrandsPage({ searchParams }: AdminBrandsPageP
             ))}
           </div>
 
-          <Card className="hidden rounded-xl border-border shadow-sm md:block">
+          <Card className="hidden rounded-xl border-border shadow-sm lg:block">
             <CardContent className="p-0">
-              <div className="grid grid-cols-[1fr_1fr_1fr_auto_auto_auto] gap-3 border-b border-border px-4 py-3 text-sm font-medium">
+              <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-3 border-b border-border px-4 py-3 text-sm font-medium">
                 <span>Название</span>
                 <span>Slug</span>
-                <span>Группа</span>
                 <span className="text-center">Порядок</span>
                 <span className="text-center">Статус</span>
                 <span className="text-right">Действия</span>
@@ -118,13 +97,10 @@ export default async function AdminBrandsPage({ searchParams }: AdminBrandsPageP
               {brands.map((brand) => (
                 <div
                   key={brand.id}
-                  className="grid grid-cols-[1fr_1fr_1fr_auto_auto_auto] items-center gap-3 border-b border-border px-4 py-3 last:border-b-0"
+                  className="grid grid-cols-[1fr_1fr_auto_auto_auto] items-center gap-3 border-b border-border px-4 py-3 last:border-b-0"
                 >
                   <span className="font-medium">{brand.name}</span>
                   <span className="text-sm text-muted-foreground">{brand.slug}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {isBrandGroupKey(brand.group_key) ? BRAND_GROUP_LABELS[brand.group_key] : brand.group_key}
-                  </span>
                   <span className="text-center text-sm">{brand.sort_order}</span>
                   <span className={`text-center text-xs font-medium ${brand.is_active ? "text-emerald-700" : "text-amber-700"}`}>
                     {brand.is_active ? "Активен" : "Скрыт"}
@@ -144,3 +120,4 @@ export default async function AdminBrandsPage({ searchParams }: AdminBrandsPageP
     </div>
   )
 }
+

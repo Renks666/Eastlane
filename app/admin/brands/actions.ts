@@ -1,10 +1,9 @@
-"use server"
+﻿"use server"
 
 import { revalidatePath } from "next/cache"
 import { requireAdminUser } from "@/src/shared/lib/auth/require-admin"
 import { logger } from "@/src/shared/lib/logger"
 import { toActionError } from "@/src/shared/lib/action-result"
-import { isBrandGroupKey } from "@/src/domains/brand/types"
 
 type ActionResult = {
   ok: boolean
@@ -14,7 +13,6 @@ type ActionResult = {
 type BrandPayload = {
   name: string
   slug: string
-  groupKey: string
   sortOrder: number
   isActive: boolean
 }
@@ -37,7 +35,6 @@ function parseBoolean(value: FormDataEntryValue | null) {
 function parsePayload(formData: FormData): BrandPayload {
   const name = String(formData.get("name") ?? "").trim()
   const slugRaw = String(formData.get("slug") ?? "").trim()
-  const groupKeyRaw = String(formData.get("groupKey") ?? "").trim()
   const sortOrderRaw = String(formData.get("sortOrder") ?? "").trim()
   const isActive = parseBoolean(formData.get("isActive"))
 
@@ -53,9 +50,6 @@ function parsePayload(formData: FormData): BrandPayload {
   if (!/^[a-z0-9-]+$/.test(slug)) {
     throw new Error("Slug может содержать только строчные латинские буквы, цифры и дефис.")
   }
-  if (!isBrandGroupKey(groupKeyRaw)) {
-    throw new Error("Некорректная группа бренда.")
-  }
   if (!Number.isInteger(sortOrder) || sortOrder < 0) {
     throw new Error("Порядок сортировки должен быть целым числом больше или равным 0.")
   }
@@ -63,7 +57,6 @@ function parsePayload(formData: FormData): BrandPayload {
   return {
     name,
     slug,
-    groupKey: groupKeyRaw,
     sortOrder,
     isActive,
   }
@@ -113,7 +106,6 @@ export async function createBrand(formData: FormData): Promise<ActionResult> {
     const { error } = await supabase.from("brands").insert({
       name: payload.name,
       slug: payload.slug,
-      group_key: payload.groupKey,
       sort_order: payload.sortOrder,
       is_active: payload.isActive,
     })
@@ -149,7 +141,6 @@ export async function updateBrand(id: number, formData: FormData): Promise<Actio
       .update({
         name: payload.name,
         slug: payload.slug,
-        group_key: payload.groupKey,
         sort_order: payload.sortOrder,
         is_active: payload.isActive,
       })
@@ -205,3 +196,4 @@ export async function deleteBrand(id: number): Promise<ActionResult> {
     }
   }
 }
+

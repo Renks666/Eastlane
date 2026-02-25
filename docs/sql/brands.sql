@@ -5,7 +5,6 @@ create table if not exists public.brands (
   id bigint generated always as identity primary key,
   name text not null,
   slug text not null,
-  group_key text not null,
   sort_order integer not null default 100,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
@@ -41,20 +40,9 @@ begin
     alter table public.brands add constraint brands_slug_format_check check (slug ~ '^[a-z0-9-]+$');
   end if;
 
-  if not exists (
-    select 1
-    from pg_constraint
-    where conname = 'brands_group_key_check'
-      and conrelid = 'public.brands'::regclass
-  ) then
-    alter table public.brands add constraint brands_group_key_check check (
-      group_key in ('sport-streetwear', 'mass-market-casual', 'premium-designer', 'outdoor')
-    );
-  end if;
 end
 $$;
 
-create index if not exists idx_brands_group_key on public.brands(group_key);
 create index if not exists idx_brands_sort_order on public.brands(sort_order);
 create index if not exists idx_brands_is_active on public.brands(is_active);
 

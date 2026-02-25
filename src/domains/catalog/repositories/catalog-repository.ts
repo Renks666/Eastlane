@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { CatalogBrand, CatalogCategory, CatalogFilterParams, CatalogProduct } from "@/src/domains/catalog/types"
-import { compareBrandGroupKeys } from "@/src/domains/brand/types"
 import { SEASON_KEYS } from "@/src/domains/product-attributes/seasons"
 import { convertRubToCnyApprox } from "@/src/shared/lib/format-price"
 
@@ -8,6 +7,62 @@ type CatalogProductRow = CatalogProduct & {
   created_at: string
   brand_id?: number | null
   category_id?: number | null
+}
+
+const LETTER_SIZE_ORDER: Record<string, number> = {
+  "3XS": 0,
+  "XXXS": 0,
+  "2XS": 1,
+  "XXS": 1,
+  XS: 2,
+  S: 3,
+  M: 4,
+  L: 5,
+  XL: 6,
+  "2XL": 7,
+  XXL: 7,
+  "3XL": 8,
+  XXXL: 8,
+  "4XL": 9,
+  XXXXL: 9,
+  "5XL": 10,
+  XXXXXL: 10,
+}
+
+function normalizeSizeToken(value: string) {
+  return value.trim().toUpperCase().replace(/\s+/g, "")
+}
+
+function extractNumericSize(value: string) {
+  const match = value.replace(",", ".").match(/\d+(?:\.\d+)?/)
+  if (!match) return null
+  const parsed = Number(match[0])
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function compareSizesAsc(a: string, b: string) {
+  const aToken = normalizeSizeToken(a)
+  const bToken = normalizeSizeToken(b)
+
+  const aLetterRank = LETTER_SIZE_ORDER[aToken]
+  const bLetterRank = LETTER_SIZE_ORDER[bToken]
+  const aHasLetterRank = Number.isInteger(aLetterRank)
+  const bHasLetterRank = Number.isInteger(bLetterRank)
+
+  if (aHasLetterRank && bHasLetterRank && aLetterRank !== bLetterRank) {
+    return aLetterRank - bLetterRank
+  }
+
+  const aNumeric = extractNumericSize(aToken)
+  const bNumeric = extractNumericSize(bToken)
+  const aHasNumeric = typeof aNumeric === "number"
+  const bHasNumeric = typeof bNumeric === "number"
+
+  if (aHasNumeric && bHasNumeric && aNumeric !== bNumeric) {
+    return aNumeric - bNumeric
+  }
+
+  return a.localeCompare(b, "ru-RU", { numeric: true, sensitivity: "base" })
 }
 
 function toDisplayCnyAmount(product: Pick<CatalogProduct, "price" | "price_currency">, cnyPerRub: number) {
@@ -48,22 +103,15 @@ export async function fetchCatalogCategories(supabase: SupabaseClient) {
 export async function fetchCatalogBrands(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("brands")
-    .select("id, name, slug, group_key, sort_order, is_active")
+    .select("id, name, slug, sort_order, is_active")
     .eq("is_active", true)
-    .order("group_key", { ascending: true })
-    .order("sort_order", { ascending: true })
     .order("name", { ascending: true })
 
   if (error) {
     throw new Error(`Failed to load brands: ${error.message}`)
   }
 
-  return [...((data ?? []) as CatalogBrand[])].sort((a, b) => {
-    const byGroup = compareBrandGroupKeys(a.group_key, b.group_key)
-    if (byGroup !== 0) return byGroup
-    if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
-    return a.name.localeCompare(b.name)
-  })
+  return (data ?? []) as CatalogBrand[]
 }
 
 export async function fetchCatalogFilterMeta(
@@ -72,7 +120,7 @@ export async function fetchCatalogFilterMeta(
   cnyPerRub: number
 ) {
   const rows = await fetchCatalogProducts(supabase, { ...filters, minPrice: undefined, maxPrice: undefined }, cnyPerRub)
-  const allSizes = Array.from(new Set(rows.flatMap((item) => item.sizes || []))).sort()
+  const allSizes = Array.from(new Set(rows.flatMap((item) => item.sizes || []))).sort(compareSizesAsc)
   const allColors = Array.from(new Set(rows.flatMap((item) => item.colors || []))).sort()
   const prices = rows.map((item) => toDisplayCnyAmount(item, cnyPerRub)).filter((value) => Number.isFinite(value))
 
@@ -128,7 +176,7 @@ export async function fetchCatalogProducts(
   const buildBaseQuery = () => {
     let query = supabase
       .from("products")
-      .select("id, name, price, price_currency, colors, sizes, seasons, images, created_at, categories(name, slug), brands(name, slug, group_key)")
+      .select("id, name, price, price_currency, colors, sizes, seasons, images, created_at, categories(name, slug), brands(name, slug)")
 
     if (categoryIds.length > 0) {
       query = query.in("category_id", categoryIds)

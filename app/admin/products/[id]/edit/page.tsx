@@ -10,6 +10,7 @@ type EditPageProps = {
 type Category = {
   id: number
   name: string
+  slug: string
 }
 
 type Brand = {
@@ -39,7 +40,7 @@ export default async function EditProductPage({ params }: EditPageProps) {
     { data: colorOptions, error: colorsError },
     { data: product, error: productError },
   ] = await Promise.all([
-    supabase.from("categories").select("id, name").order("name", { ascending: true }),
+    supabase.from("categories").select("id, name, slug").order("name", { ascending: true }),
     supabase.from("brands").select("id, name, slug").order("name", { ascending: true }),
     supabase.from("product_sizes").select("value").eq("is_active", true).order("sort_order", { ascending: true }).order("value", { ascending: true }),
     supabase.from("product_colors").select("value").eq("is_active", true).order("sort_order", { ascending: true }).order("value", { ascending: true }),

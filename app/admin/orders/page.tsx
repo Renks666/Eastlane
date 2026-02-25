@@ -6,7 +6,7 @@ import type { OrderStatus } from "@/src/domains/order/types"
 import { requireAdminUserOrRedirect } from "@/src/shared/lib/auth/require-admin"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { OrderStatusSelect } from "@/app/admin/orders/OrderStatusSelect"
-import { formatDualPrice } from "@/src/shared/lib/format-price"
+import { formatCny, formatDualPrice, formatRub } from "@/src/shared/lib/format-price"
 
 type OrderItem = {
   id: number
@@ -174,11 +174,28 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   const pageStart = (currentPage - 1) * PAGE_SIZE
   const pageOrders = filtered.slice(pageStart, pageStart + PAGE_SIZE)
 
-  const totalRevenueRub = filtered.reduce((sum, order) => {
+  const completedOrders = filtered.filter((order) => order.status === "done")
+  const totalRevenueCny = completedOrders.reduce((sum, order) => {
+    const amount = Number(order.total_amount)
+    if (!Number.isFinite(amount) || amount <= 0) return sum
+    if (order.total_currency === "CNY") return sum + amount
+
+    const rate = Number(order.exchange_rate_snapshot ?? content.exchangeRate.cnyPerRub)
+    if (!Number.isFinite(rate) || rate <= 0) return sum
+    return sum + amount * rate
+  }, 0)
+
+  const totalRevenueRubApprox = completedOrders.reduce((sum, order) => {
+    const amount = Number(order.total_amount)
+    if (!Number.isFinite(amount) || amount <= 0) return sum
+    if (order.total_currency === "RUB") return sum + amount
+
     const rubApprox = Number(order.total_amount_rub_approx ?? 0)
     if (Number.isFinite(rubApprox) && rubApprox > 0) return sum + rubApprox
-    if (order.total_currency === "RUB") return sum + Number(order.total_amount)
-    return sum + Number(order.total_amount) / Number(order.exchange_rate_snapshot ?? content.exchangeRate.cnyPerRub)
+
+    const rate = Number(order.exchange_rate_snapshot ?? content.exchangeRate.cnyPerRub)
+    if (!Number.isFinite(rate) || rate <= 0) return sum
+    return sum + amount / rate
   }, 0)
 
   const newCount = filtered.filter((order) => order.status === "new").length
@@ -229,7 +246,10 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           </CardHeader>
           <CardContent>
             <p className="font-price tabular-nums text-2xl font-semibold text-black">
-              {formatDualPrice({ amount: totalRevenueRub, currency: "RUB", cnyPerRub: content.exchangeRate.cnyPerRub })}
+              {formatCny(totalRevenueCny, 0)}
+              <span className="ml-1 text-sm font-medium text-muted-foreground">
+                (≈ {formatRub(totalRevenueRubApprox, 0)})
+              </span>
             </p>
             <p className="text-xs text-muted-foreground">Выполнено: {doneCount}</p>
           </CardContent>

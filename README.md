@@ -13,7 +13,6 @@ Next.js storefront + admin panel for a fashion store. The project uses Supabase 
 
 - `app/*`: routing and composition layer (pages + server actions entrypoints)
 - `src/domains/catalog/*`: catalog filters DTO/parser + repository
-- `src/domains/brand/*`: brand groups and labels
 - `src/domains/product-attributes/*`: sizes/colors dictionaries and normalization
 - `src/domains/order/*`: checkout validation, order services, order repository, statuses/types
 - `src/domains/product/*`: product image service (upload/remove/reorder)
@@ -42,19 +41,20 @@ Run in Supabase SQL editor:
 2. `docs/sql/site_sections.sql`
 3. `docs/sql/brands.sql`
 4. `docs/sql/brands_seed.sql`
-5. `docs/sql/products_rls.sql`
-6. `docs/sql/categories_rls.sql`
-7. `docs/sql/brands_rls.sql`
-8. `docs/sql/product_sizes.sql`
-9. `docs/sql/product_colors.sql`
-10. `docs/sql/product_attributes_seed_from_products.sql`
-11. `docs/sql/product_sizes_rls.sql`
-12. `docs/sql/product_colors_rls.sql`
-13. `docs/sql/admin_users.sql` (set your admin emails in SQL before run)
+5. `docs/sql/brands_drop_group_key.sql` (for existing DBs migrating off brand groups)
+6. `docs/sql/products_rls.sql`
+7. `docs/sql/categories_rls.sql`
+8. `docs/sql/brands_rls.sql`
+9. `docs/sql/product_sizes.sql`
+10. `docs/sql/product_colors.sql`
+11. `docs/sql/product_attributes_seed_from_products.sql`
+12. `docs/sql/product_sizes_rls.sql`
+13. `docs/sql/product_colors_rls.sql`
+14. `docs/sql/admin_users.sql` (set your admin emails in SQL before run)
 
 Phase 2 (after backfill all `products.brand_id`):
 
-14. `docs/sql/products_brand_not_null.sql`
+15. `docs/sql/products_brand_not_null.sql`
 
 ## Local Development
 

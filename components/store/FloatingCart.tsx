@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { useEffect, useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import Image from "next/image"
 import { ChevronDown, ChevronUp, Loader2, Minus, Plus, Send, ShoppingCart, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -27,6 +27,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
   const [contactValue, setContactValue] = useState("")
   const [customerName, setCustomerName] = useState("")
   const [isPending, startTransition] = useTransition()
+  const rateTooltipRootRef = useRef<HTMLDivElement | null>(null)
   const { items, increment, decrement, removeItem, clear } = useCart()
 
   const itemsCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])
@@ -89,6 +90,20 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
     media.addEventListener("change", sync)
     return () => media.removeEventListener("change", sync)
   }, [])
+
+  useEffect(() => {
+    if (!isRateDetailsOpen || canHover) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null
+      if (!target) return
+      if (rateTooltipRootRef.current?.contains(target)) return
+      setIsRateDetailsOpen(false)
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown)
+    return () => document.removeEventListener("pointerdown", handlePointerDown)
+  }, [canHover, isRateDetailsOpen])
 
   const submitOrder = () => {
     startTransition(async () => {
@@ -291,25 +306,27 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
                   </p>
 
                   {hasRateDetails ? (
-                    <ExchangeRateTooltip isOpen={isRateDetailsOpen} rateText={rateRubPerCnyText} align="right" className="ml-auto mt-1">
-                      {({ describedBy }) => (
-                        <button
-                          type="button"
-                          onClick={handleRateLineClick}
-                          onMouseEnter={handleRateMouseEnter}
-                          onMouseLeave={handleRateMouseLeave}
-                          onFocus={() => setIsRateDetailsOpen(true)}
-                          onBlur={() => setIsRateDetailsOpen(false)}
-                          className={`ml-auto py-0 text-right text-xs leading-tight text-[color:var(--color-text-secondary)] transition-opacity ${canHover ? "cursor-pointer hover:opacity-85" : ""}`}
-                          aria-expanded={isRateDetailsOpen}
-                          aria-describedby={describedBy}
-                        >
-                          <span className="font-price tabular-nums block leading-none" suppressHydrationWarning>
-                            {secondaryTotal}
-                          </span>
-                        </button>
-                      )}
-                    </ExchangeRateTooltip>
+                    <div ref={rateTooltipRootRef}>
+                      <ExchangeRateTooltip isOpen={isRateDetailsOpen} rateText={rateRubPerCnyText} align="right" className="ml-auto mt-1">
+                        {({ describedBy }) => (
+                          <button
+                            type="button"
+                            onClick={handleRateLineClick}
+                            onMouseEnter={handleRateMouseEnter}
+                            onMouseLeave={handleRateMouseLeave}
+                            onFocus={() => setIsRateDetailsOpen(true)}
+                            onBlur={() => setIsRateDetailsOpen(false)}
+                            className={`ml-auto py-0 text-right text-xs leading-tight text-[color:var(--color-text-secondary)] transition-opacity ${canHover ? "cursor-pointer hover:opacity-85" : ""}`}
+                            aria-expanded={isRateDetailsOpen}
+                            aria-describedby={describedBy}
+                          >
+                            <span className="font-price tabular-nums block leading-none" suppressHydrationWarning>
+                              {secondaryTotal}
+                            </span>
+                          </button>
+                        )}
+                      </ExchangeRateTooltip>
+                    </div>
                   ) : null}
                 </div>
               </div>

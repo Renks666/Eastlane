@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ExchangeRateTooltip } from "@/components/store/ExchangeRateTooltip"
 
 type ProductPriceWithTooltipProps = {
@@ -12,6 +12,7 @@ type ProductPriceWithTooltipProps = {
 export function ProductPriceWithTooltip({ primaryPrice, secondaryPrice, rateText }: ProductPriceWithTooltipProps) {
   const [canHover, setCanHover] = useState(false)
   const [isRateDetailsOpen, setIsRateDetailsOpen] = useState(false)
+  const rateTooltipRootRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const media = window.matchMedia("(hover: hover) and (pointer: fine)")
@@ -25,6 +26,20 @@ export function ProductPriceWithTooltip({ primaryPrice, secondaryPrice, rateText
     media.addEventListener("change", sync)
     return () => media.removeEventListener("change", sync)
   }, [])
+
+  useEffect(() => {
+    if (!isRateDetailsOpen || canHover) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null
+      if (!target) return
+      if (rateTooltipRootRef.current?.contains(target)) return
+      setIsRateDetailsOpen(false)
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown)
+    return () => document.removeEventListener("pointerdown", handlePointerDown)
+  }, [canHover, isRateDetailsOpen])
 
   const hasRateDetails = secondaryPrice !== null && rateText !== null
 
@@ -51,23 +66,25 @@ export function ProductPriceWithTooltip({ primaryPrice, secondaryPrice, rateText
     <div className="mt-4">
       <p className="font-price tabular-nums text-3xl font-semibold text-black">{primaryPrice}</p>
       {hasRateDetails ? (
-        <ExchangeRateTooltip isOpen={isRateDetailsOpen} rateText={rateText} align="left">
-          {({ describedBy }) => (
-            <button
-              type="button"
-              onClick={handleLineClick}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-              onFocus={() => setIsRateDetailsOpen(true)}
-              onBlur={() => setIsRateDetailsOpen(false)}
-              className={`mt-1 text-left text-base text-[color:var(--color-text-secondary)] transition-opacity ${canHover ? "cursor-pointer hover:opacity-85" : ""}`}
-              aria-expanded={isRateDetailsOpen}
-              aria-describedby={describedBy}
-            >
-              <span className="font-price tabular-nums block">{secondaryPrice}</span>
-            </button>
-          )}
-        </ExchangeRateTooltip>
+        <div ref={rateTooltipRootRef}>
+          <ExchangeRateTooltip isOpen={isRateDetailsOpen} rateText={rateText} align="left">
+            {({ describedBy }) => (
+              <button
+                type="button"
+                onClick={handleLineClick}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onFocus={() => setIsRateDetailsOpen(true)}
+                onBlur={() => setIsRateDetailsOpen(false)}
+                className={`mt-1 text-left text-base text-[color:var(--color-text-secondary)] transition-opacity ${canHover ? "cursor-pointer hover:opacity-85" : ""}`}
+                aria-expanded={isRateDetailsOpen}
+                aria-describedby={describedBy}
+              >
+                <span className="font-price tabular-nums block">{secondaryPrice}</span>
+              </button>
+            )}
+          </ExchangeRateTooltip>
+        </div>
       ) : null}
     </div>
   )

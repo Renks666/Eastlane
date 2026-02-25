@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { FormEvent, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
@@ -10,8 +10,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BRAND_GROUP_KEYS, BRAND_GROUP_LABELS } from "@/src/domains/brand/types"
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Укажите название бренда."),
@@ -20,7 +18,6 @@ const formSchema = z.object({
     .trim()
     .min(1, "Укажите slug.")
     .regex(/^[a-z0-9-]+$/, "Slug может содержать только строчные латинские буквы, цифры и дефис."),
-  groupKey: z.enum(BRAND_GROUP_KEYS),
   sortOrder: z.coerce.number().int().min(0, "Порядок сортировки должен быть больше или равен 0."),
   isActive: z.boolean(),
 })
@@ -31,7 +28,6 @@ type EditableBrand = {
   id: number
   name: string
   slug: string
-  group_key: (typeof BRAND_GROUP_KEYS)[number]
   sort_order: number
   is_active: boolean
 }
@@ -56,7 +52,6 @@ export function BrandForm({ mode, brand }: BrandFormProps) {
   const [isPending, startTransition] = useTransition()
   const [name, setName] = useState(brand?.name ?? "")
   const [slug, setSlug] = useState(brand?.slug ?? "")
-  const [groupKey, setGroupKey] = useState<(typeof BRAND_GROUP_KEYS)[number]>(brand?.group_key ?? "sport-streetwear")
   const [sortOrder, setSortOrder] = useState(String(brand?.sort_order ?? 100))
   const [isActive, setIsActive] = useState<boolean>(brand?.is_active ?? true)
   const [slugManuallyChanged, setSlugManuallyChanged] = useState(mode === "edit")
@@ -69,7 +64,6 @@ export function BrandForm({ mode, brand }: BrandFormProps) {
     const parsed = formSchema.safeParse({
       name,
       slug,
-      groupKey,
       sortOrder,
       isActive,
     })
@@ -83,7 +77,6 @@ export function BrandForm({ mode, brand }: BrandFormProps) {
     const formData = new FormData()
     formData.set("name", values.name)
     formData.set("slug", values.slug)
-    formData.set("groupKey", values.groupKey)
     formData.set("sortOrder", String(values.sortOrder))
     formData.set("isActive", String(values.isActive))
 
@@ -140,22 +133,6 @@ export function BrandForm({ mode, brand }: BrandFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label>Группа *</Label>
-              <Select value={groupKey} onValueChange={(value) => setGroupKey(value as (typeof BRAND_GROUP_KEYS)[number])}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {BRAND_GROUP_KEYS.map((key) => (
-                    <SelectItem key={key} value={key}>
-                      {BRAND_GROUP_LABELS[key]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="sortOrder">Порядок сортировки *</Label>
               <Input
                 id="sortOrder"
@@ -198,3 +175,4 @@ export function BrandForm({ mode, brand }: BrandFormProps) {
     </Card>
   )
 }
+
