@@ -1,9 +1,10 @@
-"use client"
+﻿"use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useSwipeCarousel } from "@/components/store/useSwipeCarousel"
 
 type ProductGalleryProps = {
   images: string[]
@@ -19,36 +20,56 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
       ? normalizedImages
       : ["https://placehold.co/1000x1200/efefe8/1f3d32?text=EASTLANE"]
   }, [images])
-  const [index, setIndex] = useState(0)
+
+  const {
+    emblaRef: mainEmblaRef,
+    selectedIndex: index,
+    scrollPrev: prev,
+    scrollNext: next,
+    scrollTo,
+  } = useSwipeCarousel({ slideCount: gallery.length, loop: true })
+
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
+
+  const {
+    emblaRef: viewerEmblaRef,
+    emblaApi: viewerEmblaApi,
+    selectedIndex: viewerIndex,
+    scrollPrev: viewerPrev,
+    scrollNext: viewerNext,
+    scrollTo: viewerScrollTo,
+  } = useSwipeCarousel({ slideCount: gallery.length, loop: true, canDrag: zoom <= 1 })
+
   const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 })
   const zoomRef = useRef(1)
   const panRef = useRef({ x: 0, y: 0 })
   const isDraggingRef = useRef(false)
 
-  const prev = () => setIndex((current) => (current === 0 ? gallery.length - 1 : current - 1))
-  const next = () => setIndex((current) => (current === gallery.length - 1 ? 0 : current + 1))
-  const closeViewer = () => {
-    setIsViewerOpen(false)
+  const resetViewerTransform = useCallback(() => {
     setZoom(1)
     zoomRef.current = 1
     setPan({ x: 0, y: 0 })
+    panRef.current = { x: 0, y: 0 }
     setIsDragging(false)
     isDraggingRef.current = false
-    panRef.current = { x: 0, y: 0 }
     dragStartRef.current = { x: 0, y: 0, panX: 0, panY: 0 }
-  }
+  }, [])
 
-  const openViewer = () => {
-    setZoom(1)
-    zoomRef.current = 1
-    setPan({ x: 0, y: 0 })
-    panRef.current = { x: 0, y: 0 }
+  const closeViewer = useCallback(() => {
+    if (gallery.length > 1) {
+      scrollTo(viewerIndex)
+    }
+    setIsViewerOpen(false)
+    resetViewerTransform()
+  }, [gallery.length, resetViewerTransform, scrollTo, viewerIndex])
+
+  const openViewer = useCallback(() => {
+    resetViewerTransform()
     setIsViewerOpen(true)
-  }
+  }, [resetViewerTransform])
 
   const handleWheelZoom = (event: React.WheelEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -122,18 +143,16 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
   }, [zoom])
 
   useEffect(() => {
+    if (!isViewerOpen || !viewerEmblaApi) return
+    viewerScrollTo(index)
+  }, [index, isViewerOpen, viewerEmblaApi, viewerScrollTo])
+
+  useEffect(() => {
     if (!isViewerOpen) return
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsViewerOpen(false)
-        setZoom(1)
-        zoomRef.current = 1
-        setPan({ x: 0, y: 0 })
-        setIsDragging(false)
-        isDraggingRef.current = false
-        panRef.current = { x: 0, y: 0 }
-        dragStartRef.current = { x: 0, y: 0, panX: 0, panY: 0 }
+        closeViewer()
       }
     }
 
@@ -144,20 +163,29 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
       window.removeEventListener("keydown", onKeyDown)
       document.body.style.overflow = ""
     }
-  }, [isViewerOpen])
+  }, [closeViewer, isViewerOpen])
 
   return (
     <div className="space-y-3">
       <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]">
-        <button type="button" className="h-full w-full" onClick={openViewer} aria-label="Открыть фото">
-          <Image
-            src={gallery[index]}
-            alt={`${name} ${index + 1}`}
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-contain"
-          />
-        </button>
+        <div className="h-full overflow-hidden touch-pan-y" ref={mainEmblaRef}>
+          <div className="flex h-full">
+            {gallery.map((image, i) => (
+              <div key={`${image}-${i}`} className="relative min-w-0 flex-[0_0_100%]">
+                <button type="button" className="relative h-full w-full" onClick={openViewer} aria-label="Открыть фото">
+                  <Image
+                    src={image}
+                    alt={`${name} ${i + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-contain"
+                  />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {gallery.length > 1 && (
           <>
             <Button
@@ -181,14 +209,17 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
           </>
         )}
       </div>
+
       {gallery.length > 1 && (
         <div className="grid grid-cols-4 gap-2">
           {gallery.map((image, i) => (
             <button
               key={`${image}-${i}`}
-              onClick={() => setIndex(i)}
+              onClick={() => scrollTo(i)}
               className={`relative aspect-square overflow-hidden rounded-xl border ${index === i ? "border-[color:var(--color-brand-gold-600)]" : "border-[color:var(--color-border-primary)]"}`}
               type="button"
+              aria-label={`Открыть фото ${i + 1}`}
+              aria-pressed={index === i}
             >
               <Image src={image} alt={`${name} превью ${i + 1}`} fill sizes="120px" className="object-contain" />
             </button>
@@ -210,30 +241,66 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
             >
               <X className="h-5 w-5" />
             </button>
-            <div
-              className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[color:var(--color-bg-primary)]"
-              onWheel={handleWheelZoom}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={stopDragging}
-              onPointerCancel={stopDragging}
-              onContextMenu={(event) => {
-                if (zoom > 1) event.preventDefault()
-              }}
-              style={{ cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "default" }}
-            >
-              <Image
-                src={gallery[index]}
-                alt={`${name} ${index + 1}`}
-                fill
-                sizes="(max-width: 1024px) 100vw, 1000px"
-                className={`pointer-events-none select-none object-contain ${isDragging ? "transition-none" : "transition-transform duration-200 ease-out"}`}
-                draggable={false}
-                style={{
-                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                  transformOrigin: "0 0",
-                }}
-              />
+
+            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[color:var(--color-bg-primary)]">
+              <div className="h-full overflow-hidden touch-pan-y" ref={viewerEmblaRef}>
+                <div className="flex h-full">
+                  {gallery.map((image, i) => (
+                    <div key={`viewer-${image}-${i}`} className="relative min-w-0 flex-[0_0_100%]">
+                      <div
+                        className="relative h-full w-full"
+                        onWheel={handleWheelZoom}
+                        onPointerDown={onPointerDown}
+                        onPointerMove={onPointerMove}
+                        onPointerUp={stopDragging}
+                        onPointerCancel={stopDragging}
+                        onContextMenu={(event) => {
+                          if (zoom > 1) event.preventDefault()
+                        }}
+                        style={{ cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "default" }}
+                      >
+                        <Image
+                          src={image}
+                          alt={`${name} ${i + 1}`}
+                          fill
+                          sizes="(max-width: 1024px) 100vw, 1000px"
+                          className={`pointer-events-none select-none object-contain ${isDragging ? "transition-none" : "transition-transform duration-200 ease-out"}`}
+                          draggable={false}
+                          style={{
+                            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                            transformOrigin: "0 0",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {gallery.length > 1 && (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90"
+                    onClick={viewerPrev}
+                    aria-label="Предыдущее фото"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90"
+                    onClick={viewerNext}
+                    aria-label="Следующее фото"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
             <p className="mt-2 text-center text-xs text-white/85">
               Масштаб: {Math.round(zoom * 100)}% • Колесико: zoom • ПКМ/ЛКМ + движение: переместить

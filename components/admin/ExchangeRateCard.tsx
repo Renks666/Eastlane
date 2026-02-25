@@ -44,11 +44,15 @@ export function ExchangeRateCard({ initialCnyPerRub, compact = false, className 
   }
 
   return (
-    <Card className={cn("rounded-xl border-border shadow-sm", compact ? "aspect-square gap-2 py-2" : "", className)}>
+    <Card className={cn("rounded-xl border-border shadow-sm", compact ? "gap-2 py-3" : "", className)}>
       <CardHeader className={cn(compact ? "px-3 pb-0 pt-0" : "pb-2")}>
-        <CardTitle className="text-sm font-medium text-muted-foreground">Курс CNY/RUB</CardTitle>
+        <CardTitle className="text-sm font-semibold text-foreground">Курс CNY/RUB</CardTitle>
       </CardHeader>
-      <CardContent className={cn(compact ? "flex h-full flex-col justify-between px-3 pb-0 pt-0" : "space-y-3")}>
+      <CardContent
+        className={cn(
+          compact ? "flex h-full flex-col justify-center gap-3 px-3 pb-0 pt-0" : "space-y-3"
+        )}
+      >
         <div className={cn(compact ? "space-y-1.5" : "space-y-2")}>
           <Label htmlFor="exchange-rate" className={cn(compact ? "text-xs" : "")}>1 CNY = X RUB</Label>
           <Input
@@ -67,7 +71,7 @@ export function ExchangeRateCard({ initialCnyPerRub, compact = false, className 
           disabled={isPending}
           className={cn(
             "bg-[color:var(--color-brand-forest)] text-white hover:bg-[color:var(--color-brand-forest-dark)]",
-            compact ? "h-8 w-full text-xs" : ""
+            compact ? "h-8 w-[92%] self-center text-xs" : ""
           )}
         >
           {isPending ? "Сохранение..." : "Сохранить курс"}

@@ -60,71 +60,56 @@ export default async function AdminPage() {
         <p className="mt-1 text-sm text-muted-foreground">Вход выполнен: {user.email}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[max-content_max-content] lg:items-start lg:justify-start lg:gap-8">
-        <div className="grid grid-cols-2 gap-3">
-          <Card className="aspect-square w-full gap-1 rounded-xl border-border py-2 shadow-sm lg:h-40 lg:w-40">
-            <CardHeader className="px-3 pb-0 pt-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Товары</CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-0 pt-0">
-              <p className="text-2xl font-semibold leading-none">{productsCount ?? 0}</p>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+        <Card className="w-full gap-1 rounded-xl border-border py-3 shadow-sm lg:min-h-[13rem]">
+          <CardHeader className="px-3 pb-0 pt-0">
+            <CardTitle className="text-sm font-semibold text-foreground">Товары</CardTitle>
+          </CardHeader>
+          <CardContent className="px-3 pb-0 pt-0">
+            <p className="text-2xl font-semibold leading-none sm:text-3xl">{productsCount ?? 0}</p>
+            <div className="mt-5 sm:mt-8">
+              <p className="text-sm font-semibold text-foreground">Категории</p>
+              <p className="text-2xl font-semibold leading-none sm:text-3xl">{categoriesCount ?? 0}</p>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="aspect-square w-full gap-1 rounded-xl border-border py-2 shadow-sm lg:h-40 lg:w-40">
-            <CardHeader className="px-3 pb-0 pt-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Заказы</CardTitle>
-            </CardHeader>
+        <Card className="w-full gap-1 rounded-xl border-border py-3 shadow-sm lg:min-h-[13rem]">
+          <CardHeader className="px-3 pb-0 pt-0">
+            <CardTitle className="text-sm font-semibold text-foreground">Заказы</CardTitle>
+          </CardHeader>
             <CardContent className="px-3 pb-0 pt-0">
-              <p className="text-2xl font-semibold leading-none">{orders.length}</p>
+            <div>
+              <p className="text-2xl font-semibold leading-none sm:text-3xl">{orders.length}</p>
               <p className="text-xs text-muted-foreground">{newOrders} новых</p>
-            </CardContent>
-          </Card>
-
-          <Card className="aspect-square w-full gap-1 rounded-xl border-border py-2 shadow-sm lg:h-40 lg:w-40">
-            <CardHeader className="px-3 pb-0 pt-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Категории</CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-0 pt-0">
-              <p className="text-2xl font-semibold leading-none">{categoriesCount ?? 0}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="aspect-square w-full gap-1 rounded-xl border-border py-2 shadow-sm lg:h-40 lg:w-40">
-            <CardHeader className="px-3 pb-0 pt-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Выручка</CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-0 pt-0">
-              <p className="font-price tabular-nums text-2xl font-semibold leading-none text-black">
+            </div>
+            <div className="mt-5 sm:mt-8">
+              <p className="text-sm font-semibold text-foreground">Выручка</p>
+              <p className="font-price tabular-nums text-2xl font-semibold leading-none text-black sm:text-3xl">
                 {formatCny(totalRevenueCny, 0)}
-                <span className="ml-1 text-sm font-medium text-muted-foreground">
+                <span className="mt-1 block text-xs font-medium text-muted-foreground sm:ml-1 sm:mt-0 sm:inline">
                   (≈ {formatRub(totalRevenueRubApprox, 0)})
                 </span>
               </p>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="grid grid-cols-2 gap-3 lg:ml-2 lg:grid-cols-1 lg:border-l lg:border-border lg:pl-6">
-          <Card className="aspect-square w-full gap-2 self-start rounded-xl border-border py-2 shadow-sm lg:h-40 lg:w-40">
-            <CardHeader className="px-3 pb-0 pt-0">
-              <CardTitle className="text-sm font-semibold">Быстрые действия</CardTitle>
-            </CardHeader>
-            <CardContent className="grid h-full content-center gap-2 px-3 pb-0 pt-0">
-              <Button asChild className="h-8 w-full text-xs">
-                <Link href="/admin/products/new">Создать товар</Link>
-              </Button>
-              <Button asChild variant="outline" className="h-8 w-full text-xs">
-                <Link href="/admin/orders">Заказы</Link>
-              </Button>
-            </CardContent>
-          </Card>
-          <ExchangeRateCard
-            initialCnyPerRub={content.exchangeRate.cnyPerRub}
-            compact
-            className="aspect-square w-full self-start lg:h-40 lg:w-40"
-          />
-        </div>
+        <Card className="w-full gap-2 rounded-xl border-border py-3 shadow-sm lg:min-h-[13rem]">
+          <CardHeader className="px-3 pb-0 pt-0">
+            <CardTitle className="text-sm font-semibold text-foreground">Быстрые действия</CardTitle>
+          </CardHeader>
+          <CardContent className="grid h-full content-center gap-2 px-3 pb-0 pt-0">
+            <Button asChild className="h-8 w-full text-xs">
+              <Link href="/admin/products/new">Создать товар</Link>
+            </Button>
+            <Button asChild variant="outline" className="h-8 w-full text-xs">
+              <Link href="/admin/orders">Заказы</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <ExchangeRateCard initialCnyPerRub={content.exchangeRate.cnyPerRub} compact className="w-full lg:min-h-[13rem]" />
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-sm">

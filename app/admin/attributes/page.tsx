@@ -21,7 +21,7 @@ type AttributeRow = {
 }
 
 type AdminAttributesPageProps = {
-  searchParams: Promise<{ q?: string; error?: string }>
+  searchParams: Promise<{ q?: string; error?: string; tab?: string }>
 }
 
 type AttributeKind = "size" | "color"
@@ -111,9 +111,10 @@ function AttributeColumn({ kind, title, replacementLabel, list }: AttributeColum
 
 export default async function AdminAttributesPage({ searchParams }: AdminAttributesPageProps) {
   await requireAdminUserOrRedirect()
-  const { q, error } = await searchParams
+  const { q, error, tab } = await searchParams
   const queryRaw = (q ?? "").trim()
   const queryText = queryRaw.toLowerCase()
+  const activeTab: "sizes" | "colors" = tab === "colors" ? "colors" : "sizes"
 
   const supabase = await createServerSupabaseClient()
   const [{ data: sizes, error: sizesError }, { data: colors, error: colorsError }] = await Promise.all([
@@ -155,15 +156,29 @@ export default async function AdminAttributesPage({ searchParams }: AdminAttribu
       ) : null}
 
       <form className="flex flex-col gap-2 sm:flex-row" action="/admin/attributes">
+        <input type="hidden" name="tab" value={activeTab} />
         <Input name="q" defaultValue={queryRaw} placeholder="Поиск по размерам и цветам..." className="h-9" />
         <Button type="submit" variant="outline" size="sm" className="w-full sm:w-auto">
           Найти
         </Button>
       </form>
 
+      <div className="flex gap-2 lg:hidden">
+        <Button asChild variant={activeTab === "sizes" ? "default" : "outline"} size="sm" className="flex-1">
+          <a href={`/admin/attributes?tab=sizes${queryRaw ? `&q=${encodeURIComponent(queryRaw)}` : ""}`}>Размеры</a>
+        </Button>
+        <Button asChild variant={activeTab === "colors" ? "default" : "outline"} size="sm" className="flex-1">
+          <a href={`/admin/attributes?tab=colors${queryRaw ? `&q=${encodeURIComponent(queryRaw)}` : ""}`}>Цвета</a>
+        </Button>
+      </div>
+
       <div className="grid gap-3 lg:grid-cols-2">
-        <AttributeColumn kind="size" title="Размеры" replacementLabel="размер" list={sizeList} />
-        <AttributeColumn kind="color" title="Цвета" replacementLabel="цвет" list={colorList} />
+        <div className={activeTab === "sizes" ? "block lg:block" : "hidden lg:block"}>
+          <AttributeColumn kind="size" title="Размеры" replacementLabel="размер" list={sizeList} />
+        </div>
+        <div className={activeTab === "colors" ? "block lg:block" : "hidden lg:block"}>
+          <AttributeColumn kind="color" title="Цвета" replacementLabel="цвет" list={colorList} />
+        </div>
       </div>
     </div>
   )

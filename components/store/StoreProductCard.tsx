@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { AddToCartButton } from "@/components/store/AddToCartButton"
 import { useCart } from "@/components/store/CartProvider"
 import { ExchangeRateTooltip } from "@/components/store/ExchangeRateTooltip"
+import { useSwipeCarousel } from "@/components/store/useSwipeCarousel"
 import {
   convertCnyToRubApprox,
   convertRubToCnyApprox,
@@ -45,7 +46,6 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
   }, [product.images])
   const { addItem } = useCart()
 
-  const [imageIndex, setImageIndex] = useState(0)
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
@@ -53,10 +53,24 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
   const [isRateDetailsOpen, setIsRateDetailsOpen] = useState(false)
   const quickAddRef = useRef<HTMLDivElement>(null)
 
+  const {
+    emblaRef: cardEmblaRef,
+    selectedIndex: cardSelectedIndex,
+    scrollPrev: scrollCardPrev,
+    scrollNext: scrollCardNext,
+    scrollTo: scrollCardTo,
+  } = useSwipeCarousel({ slideCount: images.length, loop: true })
+  const {
+    emblaRef: viewerEmblaRef,
+    emblaApi: viewerEmblaApi,
+    selectedIndex: viewerSelectedIndex,
+    scrollPrev: scrollViewerPrev,
+    scrollNext: scrollViewerNext,
+  } = useSwipeCarousel({ slideCount: images.length, loop: true })
+
   const hasVariants = sizes.length > 1 || colors.length > 1
   const visibleColors = colors.slice(0, 5)
   const hiddenColorsCount = Math.max(colors.length - visibleColors.length, 0)
-  const activeImage = images[imageIndex] || FALLBACK_IMAGE
   const hasValidRate = Number.isFinite(cnyPerRub) && cnyPerRub > 0
 
   const primaryPrice = useMemo(() => {
@@ -117,20 +131,15 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     return () => media.removeEventListener("change", sync)
   }, [])
 
-  const nextImage = () => {
-    setImageIndex((prev) => (prev + 1) % images.length)
-  }
-
-  const prevImage = () => {
-    setImageIndex((prev) => (prev - 1 + images.length) % images.length)
-  }
-
   const openViewer = () => {
     setZoom(1)
     setIsViewerOpen(true)
   }
 
   const closeViewer = () => {
+    if (images.length > 1) {
+      scrollCardTo(viewerSelectedIndex)
+    }
     setIsViewerOpen(false)
     setZoom(1)
   }
@@ -180,19 +189,32 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     setIsRateDetailsOpen(false)
   }
 
+  useEffect(() => {
+    if (!isViewerOpen || !viewerEmblaApi) return
+    viewerEmblaApi.scrollTo(cardSelectedIndex, true)
+  }, [cardSelectedIndex, isViewerOpen, viewerEmblaApi])
+
   return (
     <>
       <article className="group rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-3 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-28px_rgba(15,63,51,0.8)]">
         <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-[color:var(--color-border-secondary)] bg-[color:var(--color-bg-image)]">
-          <Link href={`/products/${product.id}`} className="block h-full w-full" aria-label={`Открыть товар ${product.name}`}>
-            <Image
-              src={activeImage}
-              alt={product.name}
-              fill
-              sizes="(max-width: 768px) 100vw, 33vw"
-              className="object-contain transition duration-300 group-hover:scale-105"
-            />
-          </Link>
+          <div className="h-full overflow-hidden touch-pan-y" ref={cardEmblaRef}>
+            <div className="flex h-full">
+              {images.map((image, idx) => (
+                <div key={`${product.id}-${idx}-${image}`} className="relative min-w-0 flex-[0_0_100%]">
+                  <Link href={`/products/${product.id}`} className="block h-full w-full" aria-label={`Открыть товар ${product.name}`}>
+                    <Image
+                      src={image}
+                      alt={`${product.name} ${idx + 1}`}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-contain transition duration-300 group-hover:scale-105"
+                    />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <button
             type="button"
@@ -207,7 +229,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
             <>
               <button
                 type="button"
-                onClick={prevImage}
+                onClick={scrollCardPrev}
                 className="absolute left-2 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                 aria-label="Предыдущее фото"
               >
@@ -215,7 +237,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
               </button>
               <button
                 type="button"
-                onClick={nextImage}
+                onClick={scrollCardNext}
                 className="absolute right-2 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                 aria-label="Следующее фото"
               >
@@ -231,9 +253,10 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
               <button
                 key={`${product.id}-${idx}`}
                 type="button"
-                onClick={() => setImageIndex(idx)}
-                className={`h-1.5 rounded-full transition ${idx === imageIndex ? "w-5 bg-[color:var(--color-brand-forest)]" : "w-1.5 bg-[color:var(--color-border-primary)] hover:bg-[color:var(--color-brand-beige-dark)]"}`}
+                onClick={() => scrollCardTo(idx)}
+                className={`h-1.5 rounded-full transition ${idx === cardSelectedIndex ? "w-5 bg-[color:var(--color-brand-forest)]" : "w-1.5 bg-[color:var(--color-border-primary)] hover:bg-[color:var(--color-brand-beige-dark)]"}`}
                 aria-label={`Открыть фото ${idx + 1}`}
+                aria-pressed={idx === cardSelectedIndex}
               />
             ))}
           </div>
@@ -417,20 +440,28 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
             </div>
 
             <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-[color:var(--color-bg-image)]">
-              <Image
-                src={activeImage}
-                alt={product.name}
-                fill
-                sizes="(max-width: 1024px) 100vw, 900px"
-                className="object-contain transition-transform duration-200"
-                style={{ transform: `scale(${zoom})` }}
-              />
+              <div className="h-full overflow-hidden touch-pan-y" ref={viewerEmblaRef}>
+                <div className="flex h-full">
+                  {images.map((image, idx) => (
+                    <div key={`viewer-${product.id}-${idx}-${image}`} className="relative min-w-0 flex-[0_0_100%]">
+                      <Image
+                        src={image}
+                        alt={`${product.name} ${idx + 1}`}
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 900px"
+                        className="object-contain transition-transform duration-200"
+                        style={{ transform: `scale(${zoom})` }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               {images.length > 1 && (
                 <>
                   <button
                     type="button"
-                    onClick={prevImage}
+                    onClick={scrollViewerPrev}
                     className="absolute left-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                     aria-label="Предыдущее фото"
                   >
@@ -438,7 +469,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                   </button>
                   <button
                     type="button"
-                    onClick={nextImage}
+                    onClick={scrollViewerNext}
                     className="absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                     aria-label="Следующее фото"
                   >
