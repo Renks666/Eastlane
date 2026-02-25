@@ -13,6 +13,10 @@ const config: Config = {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50%)" },
         },
+        "marquee-track": {
+          "0%": { transform: "translate3d(0, 0, 0)" },
+          "100%": { transform: "translate3d(-100%, 0, 0)" },
+        },
         "marquee-reverse": {
           "0%": { transform: "translateX(-50%)" },
           "100%": { transform: "translateX(0)" },
@@ -20,6 +24,7 @@ const config: Config = {
       },
       animation: {
         marquee: "marquee 40s linear infinite",
+        "marquee-track": "marquee-track 30s linear infinite",
         "marquee-reverse": "marquee-reverse 25s linear infinite",
       },
       fontFamily: {

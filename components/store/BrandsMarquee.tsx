@@ -41,29 +41,29 @@ async function getPublicBrandSlugs() {
   }
 }
 
-function BrandRow({ brands }: { brands: BrandLogo[] }) {
+function BrandTrack({ brands, ariaHidden = false }: { brands: BrandLogo[]; ariaHidden?: boolean }) {
   const minItemsPerTrack = 12
   const repeatsNeeded = Math.max(1, Math.ceil(minItemsPerTrack / brands.length))
   const baseTrack = Array.from({ length: repeatsNeeded }, () => brands).flat()
-  const repeatedBrands = baseTrack.concat(baseTrack)
 
   return (
     <div
       className={cn(
-        "flex w-max items-center gap-6 sm:gap-8 [will-change:transform] motion-reduce:animate-none",
-        "animate-marquee [animation-duration:30s] md:[animation-duration:40s]"
+        "flex min-w-full w-max items-center gap-6 sm:gap-8 [will-change:transform] motion-reduce:animate-none",
+        "animate-marquee-track md:[animation-duration:40s]"
       )}
+      aria-hidden={ariaHidden}
     >
-      {repeatedBrands.map((brand, index) => {
-        const isDuplicate = index >= baseTrack.length
-
+      {baseTrack.map((brand, index) => {
         return (
-          <div key={`${brand.slug}-${index}`} aria-hidden={isDuplicate} className="group shrink-0">
+          <div key={`${brand.slug}-${index}`} className="group shrink-0">
             <Image
               src={`/brands/${brand.slug}.svg`}
-              alt={isDuplicate ? "" : brand.alt}
+              alt={ariaHidden ? "" : brand.alt}
               width={120}
               height={32}
+              loading="eager"
+              unoptimized
               sizes="(max-width: 768px) 96px, 120px"
               className="h-6 w-auto opacity-70 grayscale transition duration-300 ease-out group-hover:opacity-100 group-hover:grayscale-0 group-focus-visible:opacity-100 group-focus-visible:grayscale-0 md:h-8"
             />
@@ -89,7 +89,12 @@ export async function BrandsMarquee({ className }: { className?: string }) {
     <div className={cn("relative max-w-full overflow-hidden", className)}>
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-[color:var(--color-bg-primary)] to-transparent md:w-20" />
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-[color:var(--color-bg-primary)] to-transparent md:w-20" />
-      <BrandRow brands={brands} />
+      <div className="relative">
+        <BrandTrack brands={brands} />
+        <div className="absolute left-full top-0">
+          <BrandTrack brands={brands} ariaHidden />
+        </div>
+      </div>
     </div>
   )
 }
