@@ -107,7 +107,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           ]}
         />
         <div className="grid gap-6 lg:grid-cols-[1.05fr_1fr]">
-          <ProductGallery images={product.images ?? []} name={product.name} />
+          <ProductGallery images={product.images ?? []} name={product.name} zoomMode="wb-hybrid" />
           <article className="rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-5 md:p-6">
             {brandName ? (
               <p className="mb-1 text-sm font-semibold leading-tight text-[color:var(--color-brand-forest-light)]">{brandName}</p>

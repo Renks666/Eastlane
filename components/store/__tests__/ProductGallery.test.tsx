@@ -1,9 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
+﻿/* eslint-disable @next/next/no-img-element */
 /* @vitest-environment jsdom */
 
 import React from "react"
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ProductGallery } from "@/components/store/ProductGallery"
 
 type SwipeParams = {
@@ -12,12 +12,9 @@ type SwipeParams = {
   canDrag?: boolean
 }
 
-const hookParams: SwipeParams[] = []
 const viewerCanDragValues: boolean[] = []
 const mainScrollTo = vi.fn()
 const viewerScrollTo = vi.fn()
-
-let hookCallIndex = 0
 
 vi.mock("next/image", () => ({
   default: (props: React.ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean }) => {
@@ -29,10 +26,7 @@ vi.mock("next/image", () => ({
 
 vi.mock("@/components/store/useSwipeCarousel", () => ({
   useSwipeCarousel: (params: SwipeParams) => {
-    hookCallIndex += 1
-    hookParams.push(params)
-
-    const isMainCarousel = hookCallIndex % 2 === 1
+    const isMainCarousel = typeof params.canDrag === "undefined"
 
     if (isMainCarousel) {
       return {
@@ -62,10 +56,12 @@ vi.mock("@/components/store/useSwipeCarousel", () => ({
 }))
 
 describe("ProductGallery", () => {
+  afterEach(() => {
+    cleanup()
+  })
+
   beforeEach(() => {
-    hookParams.length = 0
     viewerCanDragValues.length = 0
-    hookCallIndex = 0
     mainScrollTo.mockReset()
     viewerScrollTo.mockReset()
   })
@@ -84,24 +80,97 @@ describe("ProductGallery", () => {
     expect(mainScrollTo).toHaveBeenCalledWith(1)
   })
 
-  it("disables viewer swipe drag when zoom becomes greater than 1", async () => {
+  it("toggles zoom by double tap in fullscreen viewer", async () => {
     render(<ProductGallery name="Zoom Product" images={["/1.jpg", "/2.jpg"]} />)
 
     fireEvent.click(screen.getAllByRole("button", { name: "Открыть фото" })[0])
 
-    const scaleText = await screen.findByText(/Масштаб:/)
-    const viewerFrame = scaleText.previousElementSibling
-    const zoomSurface = viewerFrame?.querySelector('div[style*="cursor"]')
-    expect(zoomSurface).not.toBeNull()
+    const zoomSurface = await screen.findAllByTestId("viewer-zoom-surface")
+    const activeSurface = zoomSurface[0]
+    vi.spyOn(activeSurface, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 300,
+      bottom: 400,
+      width: 300,
+      height: 400,
+      toJSON: () => ({}),
+    } as DOMRect)
 
-    fireEvent.wheel(zoomSurface as Element, {
-      deltaY: -120,
-      clientX: 20,
-      clientY: 20,
-    })
+    fireEvent.touchEnd(activeSurface, { touches: [], changedTouches: [{ clientX: 80, clientY: 100 }] })
+    fireEvent.touchEnd(activeSurface, { touches: [], changedTouches: [{ clientX: 80, clientY: 100 }] })
+
+    await screen.findByText(/Масштаб: 200%/)
+
+    fireEvent.touchEnd(activeSurface, { touches: [], changedTouches: [{ clientX: 80, clientY: 100 }] })
+    fireEvent.touchEnd(activeSurface, { touches: [], changedTouches: [{ clientX: 80, clientY: 100 }] })
+
+    await screen.findByText(/Масштаб: 100%/)
+  })
+
+  it("disables viewer swipe drag when zoom is greater than 1 and re-enables at 1x", async () => {
+    render(<ProductGallery name="Drag Toggle" images={["/1.jpg", "/2.jpg"]} />)
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Открыть фото" })[0])
+
+    const zoomSurface = await screen.findAllByTestId("viewer-zoom-surface")
+    const activeSurface = zoomSurface[0]
+    vi.spyOn(activeSurface, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 300,
+      bottom: 400,
+      width: 300,
+      height: 400,
+      toJSON: () => ({}),
+    } as DOMRect)
+
+    fireEvent.touchEnd(activeSurface, { touches: [], changedTouches: [{ clientX: 80, clientY: 100 }] })
+    fireEvent.touchEnd(activeSurface, { touches: [], changedTouches: [{ clientX: 80, clientY: 100 }] })
 
     await waitFor(() => {
       expect(viewerCanDragValues).toContain(false)
     })
+
+    fireEvent.touchEnd(activeSurface, { touches: [], changedTouches: [{ clientX: 80, clientY: 100 }] })
+    fireEvent.touchEnd(activeSurface, { touches: [], changedTouches: [{ clientX: 80, clientY: 100 }] })
+
+    await waitFor(() => {
+      expect(viewerCanDragValues).toContain(true)
+    })
+  })
+
+  it("resets zoom and pan state after viewer close", async () => {
+    render(<ProductGallery name="Reset State" images={["/1.jpg", "/2.jpg"]} />)
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Открыть фото" })[0])
+
+    const zoomSurface = await screen.findAllByTestId("viewer-zoom-surface")
+    const activeSurface = zoomSurface[0]
+    vi.spyOn(activeSurface, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 300,
+      bottom: 400,
+      width: 300,
+      height: 400,
+      toJSON: () => ({}),
+    } as DOMRect)
+
+    fireEvent.touchEnd(activeSurface, { touches: [], changedTouches: [{ clientX: 80, clientY: 100 }] })
+    fireEvent.touchEnd(activeSurface, { touches: [], changedTouches: [{ clientX: 80, clientY: 100 }] })
+
+    await screen.findByText(/Масштаб: 200%/)
+
+    fireEvent.click(screen.getByRole("button", { name: "Закрыть фото" }))
+    fireEvent.click(screen.getAllByRole("button", { name: "Открыть фото" })[0])
+
+    await screen.findByText(/Масштаб: 100%/)
   })
 })

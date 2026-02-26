@@ -419,3 +419,26 @@
   --sidebar-border: oklch(0.91 0 0);
   --sidebar-ring: oklch(0.58 0.2 260);
 }
+
+.product-zoom-pane {
+  background-repeat: no-repeat;
+  background-origin: content-box;
+  will-change: background-position;
+  contain: paint;
+}
+
+.product-zoom-lens {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 1px rgba(15, 63, 51, 0.12), 0 8px 16px -10px rgba(15, 63, 51, 0.45);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.product-viewer-image {
+  will-change: transform;
+  contain: paint;
+}
