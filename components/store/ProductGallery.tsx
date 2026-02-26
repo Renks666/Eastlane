@@ -47,6 +47,33 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
   const zoomRef = useRef(1)
   const panRef = useRef({ x: 0, y: 0 })
   const isDraggingRef = useRef(false)
+  const pinchStartDistanceRef = useRef<number | null>(null)
+  const pinchStartZoomRef = useRef(1)
+
+  const applyZoomAtPoint = (nextZoom: number, pointX: number, pointY: number) => {
+    const clampedZoom = Math.min(4, Math.max(1, Number(nextZoom.toFixed(3))))
+    const oldZoom = zoomRef.current
+
+    if (clampedZoom <= 1) {
+      zoomRef.current = 1
+      panRef.current = { x: 0, y: 0 }
+      setZoom(1)
+      setPan({ x: 0, y: 0 })
+      return
+    }
+
+    const oldPan = panRef.current
+    const scale = clampedZoom / oldZoom
+    const nextPan = {
+      x: pointX - (pointX - oldPan.x) * scale,
+      y: pointY - (pointY - oldPan.y) * scale,
+    }
+
+    zoomRef.current = clampedZoom
+    panRef.current = nextPan
+    setZoom(clampedZoom)
+    setPan(nextPan)
+  }
 
   const resetViewerTransform = useCallback(() => {
     setZoom(1)
@@ -76,29 +103,8 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
     const rect = event.currentTarget.getBoundingClientRect()
     const cursorX = event.clientX - rect.left
     const cursorY = event.clientY - rect.top
-    const oldZoom = zoomRef.current
     const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12
-    const nextZoom = Math.min(4, Math.max(1, Number((oldZoom * factor).toFixed(3))))
-
-    if (nextZoom <= 1) {
-      zoomRef.current = 1
-      panRef.current = { x: 0, y: 0 }
-      setZoom(1)
-      setPan({ x: 0, y: 0 })
-      return
-    }
-
-    const oldPan = panRef.current
-    const scale = nextZoom / oldZoom
-    const nextPan = {
-      x: cursorX - (cursorX - oldPan.x) * scale,
-      y: cursorY - (cursorY - oldPan.y) * scale,
-    }
-
-    zoomRef.current = nextZoom
-    panRef.current = nextPan
-    setZoom(nextZoom)
-    setPan(nextPan)
+    applyZoomAtPoint(zoomRef.current * factor, cursorX, cursorY)
   }
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -132,6 +138,40 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
   const stopDragging = () => {
     isDraggingRef.current = false
     setIsDragging(false)
+  }
+
+  const onTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 2) {
+      pinchStartDistanceRef.current = null
+      return
+    }
+    const [first, second] = [event.touches[0], event.touches[1]]
+    const dx = second.clientX - first.clientX
+    const dy = second.clientY - first.clientY
+    pinchStartDistanceRef.current = Math.hypot(dx, dy)
+    pinchStartZoomRef.current = zoomRef.current
+  }
+
+  const onTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 2 || pinchStartDistanceRef.current === null) return
+    event.preventDefault()
+    const [first, second] = [event.touches[0], event.touches[1]]
+    const dx = second.clientX - first.clientX
+    const dy = second.clientY - first.clientY
+    const currentDistance = Math.hypot(dx, dy)
+    if (!Number.isFinite(currentDistance) || currentDistance <= 0) return
+
+    const rect = event.currentTarget.getBoundingClientRect()
+    const centerX = (first.clientX + second.clientX) / 2 - rect.left
+    const centerY = (first.clientY + second.clientY) / 2 - rect.top
+    const scale = currentDistance / pinchStartDistanceRef.current
+    applyZoomAtPoint(pinchStartZoomRef.current * scale, centerX, centerY)
+  }
+
+  const onTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length < 2) {
+      pinchStartDistanceRef.current = null
+    }
   }
 
   useEffect(() => {
@@ -250,6 +290,9 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
                       <div
                         className="relative h-full w-full"
                         onWheel={handleWheelZoom}
+                        onTouchStart={onTouchStart}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
                         onPointerDown={onPointerDown}
                         onPointerMove={onPointerMove}
                         onPointerUp={stopDragging}
@@ -257,7 +300,7 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
                         onContextMenu={(event) => {
                           if (zoom > 1) event.preventDefault()
                         }}
-                        style={{ cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "default" }}
+                        style={{ cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "default", touchAction: zoom > 1 ? "none" : "pan-y" }}
                       >
                         <Image
                           src={image}

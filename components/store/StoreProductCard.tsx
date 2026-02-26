@@ -48,6 +48,8 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
 
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [canHover, setCanHover] = useState(false)
   const [isRateDetailsOpen, setIsRateDetailsOpen] = useState(false)
@@ -66,7 +68,13 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     selectedIndex: viewerSelectedIndex,
     scrollPrev: scrollViewerPrev,
     scrollNext: scrollViewerNext,
-  } = useSwipeCarousel({ slideCount: images.length, loop: true })
+  } = useSwipeCarousel({ slideCount: images.length, loop: true, canDrag: zoom <= 1 })
+  const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 })
+  const zoomRef = useRef(1)
+  const panRef = useRef({ x: 0, y: 0 })
+  const isDraggingRef = useRef(false)
+  const pinchStartDistanceRef = useRef<number | null>(null)
+  const pinchStartZoomRef = useRef(1)
 
   const hasVariants = sizes.length > 1 || colors.length > 1
   const visibleColors = colors.slice(0, 5)
@@ -133,6 +141,11 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
 
   const openViewer = () => {
     setZoom(1)
+    zoomRef.current = 1
+    setPan({ x: 0, y: 0 })
+    panRef.current = { x: 0, y: 0 }
+    setIsDragging(false)
+    isDraggingRef.current = false
     setIsViewerOpen(true)
   }
 
@@ -142,10 +155,118 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     }
     setIsViewerOpen(false)
     setZoom(1)
+    zoomRef.current = 1
+    setPan({ x: 0, y: 0 })
+    panRef.current = { x: 0, y: 0 }
+    setIsDragging(false)
+    isDraggingRef.current = false
   }
 
   const zoomIn = () => setZoom((prev) => Math.min(prev + 0.25, 3))
   const zoomOut = () => setZoom((prev) => Math.max(prev - 0.25, 1))
+
+  const applyZoomAtPoint = (nextZoom: number, pointX: number, pointY: number) => {
+    const clampedZoom = Math.min(3, Math.max(1, Number(nextZoom.toFixed(3))))
+    const oldZoom = zoomRef.current
+
+    if (clampedZoom <= 1) {
+      zoomRef.current = 1
+      panRef.current = { x: 0, y: 0 }
+      setZoom(1)
+      setPan({ x: 0, y: 0 })
+      return
+    }
+
+    const oldPan = panRef.current
+    const scale = clampedZoom / oldZoom
+    const nextPan = {
+      x: pointX - (pointX - oldPan.x) * scale,
+      y: pointY - (pointY - oldPan.y) * scale,
+    }
+
+    zoomRef.current = clampedZoom
+    panRef.current = nextPan
+    setZoom(clampedZoom)
+    setPan(nextPan)
+  }
+
+  const handleViewerWheelZoom = (event: React.WheelEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    const rect = event.currentTarget.getBoundingClientRect()
+    const cursorX = event.clientX - rect.left
+    const cursorY = event.clientY - rect.top
+    const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12
+    applyZoomAtPoint(zoomRef.current * factor, cursorX, cursorY)
+  }
+
+  const handleViewerTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 2) {
+      pinchStartDistanceRef.current = null
+      return
+    }
+    const [first, second] = [event.touches[0], event.touches[1]]
+    const dx = second.clientX - first.clientX
+    const dy = second.clientY - first.clientY
+    pinchStartDistanceRef.current = Math.hypot(dx, dy)
+    pinchStartZoomRef.current = zoom
+  }
+
+  const handleViewerTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 2 || pinchStartDistanceRef.current === null) return
+    event.preventDefault()
+
+    const [first, second] = [event.touches[0], event.touches[1]]
+    const dx = second.clientX - first.clientX
+    const dy = second.clientY - first.clientY
+    const currentDistance = Math.hypot(dx, dy)
+    if (!Number.isFinite(currentDistance) || currentDistance <= 0) return
+
+    const rect = event.currentTarget.getBoundingClientRect()
+    const centerX = (first.clientX + second.clientX) / 2 - rect.left
+    const centerY = (first.clientY + second.clientY) / 2 - rect.top
+    const scale = currentDistance / pinchStartDistanceRef.current
+    applyZoomAtPoint(pinchStartZoomRef.current * scale, centerX, centerY)
+  }
+
+  const handleViewerTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length < 2) {
+      pinchStartDistanceRef.current = null
+      pinchStartZoomRef.current = zoom
+    }
+  }
+
+  const handleViewerPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (zoom <= 1) return
+    if (event.button !== 2 && event.button !== 0) return
+    event.preventDefault()
+    isDraggingRef.current = true
+    setIsDragging(true)
+    dragStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      panX: panRef.current.x,
+      panY: panRef.current.y,
+    }
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const handleViewerPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return
+    event.preventDefault()
+    const dx = event.clientX - dragStartRef.current.x
+    const dy = event.clientY - dragStartRef.current.y
+    const nextPan = {
+      x: dragStartRef.current.panX + dx,
+      y: dragStartRef.current.panY + dy,
+    }
+    panRef.current = nextPan
+    setPan(nextPan)
+  }
+
+  const stopViewerDragging = () => {
+    isDraggingRef.current = false
+    setIsDragging(false)
+  }
 
   const handleQuickAdd = (selectedSize: string) => {
     addItem({
@@ -193,6 +314,14 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     if (!isViewerOpen || !viewerEmblaApi) return
     viewerEmblaApi.scrollTo(cardSelectedIndex, true)
   }, [cardSelectedIndex, isViewerOpen, viewerEmblaApi])
+
+  useEffect(() => {
+    panRef.current = pan
+  }, [pan])
+
+  useEffect(() => {
+    zoomRef.current = zoom
+  }, [zoom])
 
   return (
     <>
@@ -440,18 +569,42 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
             </div>
 
             <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-[color:var(--color-bg-image)]">
-              <div className="h-full overflow-hidden touch-pan-y" ref={viewerEmblaRef}>
+              <div
+                className="h-full overflow-hidden"
+                ref={viewerEmblaRef}
+                onTouchStart={handleViewerTouchStart}
+                onTouchMove={handleViewerTouchMove}
+                onTouchEnd={handleViewerTouchEnd}
+                style={{ touchAction: zoom > 1 ? "none" : "pan-y" }}
+              >
                 <div className="flex h-full">
                   {images.map((image, idx) => (
                     <div key={`viewer-${product.id}-${idx}-${image}`} className="relative min-w-0 flex-[0_0_100%]">
-                      <Image
-                        src={image}
-                        alt={`${product.name} ${idx + 1}`}
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 900px"
-                        className="object-contain transition-transform duration-200"
-                        style={{ transform: `scale(${zoom})` }}
-                      />
+                      <div
+                        className="relative h-full w-full"
+                        onWheel={handleViewerWheelZoom}
+                        onPointerDown={handleViewerPointerDown}
+                        onPointerMove={handleViewerPointerMove}
+                        onPointerUp={stopViewerDragging}
+                        onPointerCancel={stopViewerDragging}
+                        onContextMenu={(event) => {
+                          if (zoom > 1) event.preventDefault()
+                        }}
+                        style={{ cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "default" }}
+                      >
+                        <Image
+                          src={image}
+                          alt={`${product.name} ${idx + 1}`}
+                          fill
+                          sizes="(max-width: 1024px) 100vw, 900px"
+                          className={`pointer-events-none select-none object-contain ${isDragging ? "transition-none" : "transition-transform duration-200 ease-out"}`}
+                          draggable={false}
+                          style={{
+                            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                            transformOrigin: "0 0",
+                          }}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
