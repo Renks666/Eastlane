@@ -48,8 +48,8 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
 
   return (
     <StoreShell>
-      <section className="mx-auto max-w-7xl px-6 pb-16 pt-12 md:px-12">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <section className="store-section pb-14 pt-8 md:pt-10">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3.5">
           <div>
             <h1 className="text-3xl font-semibold text-[color:var(--color-brand-forest)] md:text-4xl">Каталог</h1>
             <p className="mt-2 text-sm text-[color:var(--color-text-tertiary)]">
@@ -61,11 +61,11 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
               name="q"
               defaultValue={filters.q}
               placeholder="Например: кроссовки или Nike"
-              className="h-11 w-full rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-4 text-sm text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-placeholder)] outline-none focus:border-[color:var(--color-brand-beige-dark)]"
+              className="store-focus h-10 w-full rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-4 text-sm text-[color:var(--color-text-primary)] placeholder:text-[color:var(--color-text-placeholder)]"
             />
             <button
               type="submit"
-              className="rounded-full bg-[color:var(--color-brand-forest)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)]"
+              className="store-focus rounded-full bg-[color:var(--color-brand-forest)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)]"
             >
               Найти
             </button>
@@ -80,8 +80,8 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
           </CatalogFiltersSheet>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
-          <aside className="hidden h-fit rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-4 shadow-[0_14px_32px_-26px_rgba(15,63,51,0.6)] lg:block">
+        <div className="grid gap-4 lg:grid-cols-[280px_1fr] xl:gap-5">
+          <aside className="store-card hidden h-fit p-3.5 lg:block">
             <CatalogFiltersForm
               filters={filters}
               categories={categories as CatalogCategory[]}
@@ -91,7 +91,7 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
           </aside>
 
           <div>
-            <div className="mb-4 text-sm text-[color:var(--color-text-tertiary)]">Найдено товаров: {(products as CatalogProduct[]).length}</div>
+            <div className="mb-3 text-sm text-[color:var(--color-text-tertiary)]">Найдено товаров: {(products as CatalogProduct[]).length}</div>
             <AnimatedProductGrid
               products={(products as CatalogProduct[]).map((product) => ({
                 id: product.id,

@@ -442,3 +442,21 @@
   will-change: transform;
   contain: paint;
 }
+
+@layer utilities {
+  .store-section {
+    @apply mx-auto max-w-7xl px-4 md:px-8 xl:px-10;
+  }
+
+  .store-card {
+    @apply rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/95 shadow-[0_14px_34px_-28px_rgba(15,63,51,0.5)];
+  }
+
+  .store-focus {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-brand-beige-dark)]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--color-bg-primary)];
+  }
+
+  .store-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--color-text-accent)];
+  }
+}

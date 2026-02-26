@@ -12,14 +12,14 @@ type BreadcrumbsProps = {
 
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
   return (
-    <nav aria-label="Breadcrumb" className="mb-6">
+    <nav aria-label="Breadcrumb" className="mb-4 md:mb-5">
       <ol className="flex flex-wrap items-center gap-2 text-sm">
         {items.map((item, index) => (
           <li key={index} className="flex items-center gap-2">
             {item.href ? (
               <Link 
                 href={item.href} 
-                className="text-[color:var(--color-text-secondary)] transition hover:text-[color:var(--color-brand-forest-light)]"
+                className="store-focus text-[color:var(--color-text-secondary)] transition hover:text-[color:var(--color-brand-forest-light)]"
               >
                 {item.label}
               </Link>

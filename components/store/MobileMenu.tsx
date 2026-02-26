@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import Link from "next/link"
@@ -26,7 +26,7 @@ export function MobileMenu({ className }: MobileMenuProps) {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button
-          className={`inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:hidden ${className}`}
+          className={`store-focus inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:hidden ${className}`}
           aria-label="Открыть меню"
         >
           <Menu className="h-5 w-5" />
@@ -42,7 +42,7 @@ export function MobileMenu({ className }: MobileMenuProps) {
               <ScrollToFaqLink
                 key={item.href}
                 onNavigate={() => setOpen(false)}
-                className="rounded-lg px-4 py-3 text-base font-medium text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-accent)]"
+                className="store-focus rounded-lg px-4 py-3 text-base font-medium text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-accent)]"
               >
                 {item.label}
               </ScrollToFaqLink>
@@ -51,7 +51,7 @@ export function MobileMenu({ className }: MobileMenuProps) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="rounded-lg px-4 py-3 text-base font-medium text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-accent)]"
+                className="store-focus rounded-lg px-4 py-3 text-base font-medium text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-accent)]"
               >
                 {item.label}
               </Link>

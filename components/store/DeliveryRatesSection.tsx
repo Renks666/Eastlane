@@ -1,4 +1,4 @@
-import {
+﻿import {
   Clock3,
   DollarSign,
   Info,
@@ -22,7 +22,7 @@ const RATE_COLUMNS: Array<{ key: keyof DeliveryRateValue; label: string }> = [
   { key: "kg3", label: "3 кг" },
   { key: "kg5", label: "5 кг" },
   { key: "kg10", label: "10 кг" },
-  { key: "kg20Plus", label: "20 кг +" },
+  { key: "kg20Plus", label: "20 кг+" },
 ]
 
 const NOTE_ICONS: Record<DeliveryRateNoteIcon, LucideIcon> = {
@@ -100,9 +100,7 @@ function CountryFlagIcon({ code }: CountryFlagIconProps) {
     )
   }
 
-  if (!normalized) {
-    return null
-  }
+  if (!normalized) return null
 
   return (
     <span
@@ -121,8 +119,8 @@ export function DeliveryRatesSection({ content }: DeliveryRatesSectionProps) {
     "Оплата доставки транспортной компанией (СДЭК) оплачивается отдельно."
 
   return (
-    <section className="mx-auto max-w-7xl px-3 pb-12 sm:px-4 md:px-12 md:pb-20">
-      <div className="relative overflow-hidden rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-4 shadow-[0_20px_60px_-40px_rgba(15,63,51,0.28)] sm:p-5 md:rounded-3xl md:p-8">
+    <section className="store-section pb-12 md:pb-16">
+      <div className="relative overflow-hidden rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-4 shadow-[0_20px_60px_-40px_rgba(15,63,51,0.28)] md:p-6">
         <div className="pointer-events-none absolute inset-0">
           {Array.from({ length: 9 }).map((_, index) => (
             <span
@@ -141,16 +139,16 @@ export function DeliveryRatesSection({ content }: DeliveryRatesSectionProps) {
         </div>
 
         <div className="relative">
-          <h2 className="text-2xl font-semibold text-[color:var(--color-brand-forest-light)] sm:text-3xl md:text-5xl">{content.title}</h2>
+          <h2 className="text-2xl font-semibold text-[color:var(--color-brand-forest-light)] sm:text-3xl md:text-4xl">{content.title}</h2>
         </div>
 
-        <div className="relative mt-6 sm:mt-7 md:mt-8">
-          <article className="overflow-hidden rounded-2xl border border-[color:var(--color-brand-forest-light)]/35 bg-[linear-gradient(160deg,#07120f_0%,#0b221c_60%,#102f27_100%)] p-2.5 text-white sm:p-3 md:p-4">
-            <div className="space-y-4 md:space-y-5">
+        <div className="relative mt-5 md:mt-6">
+          <article className="overflow-hidden rounded-xl border border-[color:var(--color-brand-forest-light)]/35 bg-[linear-gradient(160deg,#07120f_0%,#0b221c_60%,#102f27_100%)] p-2.5 text-white md:p-3">
+            <div className="space-y-4">
               {content.groups.map((group, index) => (
                 <section
                   key={group.destination}
-                  className={index === 0 ? "" : "border-t border-cyan-300/20 pt-3.5 sm:pt-4 md:pt-5"}
+                  className={index === 0 ? "" : "border-t border-cyan-300/20 pt-3.5 md:pt-4"}
                 >
                   <div className="overflow-x-auto overscroll-x-contain rounded-xl border border-cyan-300/35 bg-[#071915]/50">
                     <table className="min-w-[720px] w-full border-collapse text-sm">
@@ -183,7 +181,7 @@ export function DeliveryRatesSection({ content }: DeliveryRatesSectionProps) {
                     </table>
                   </div>
 
-                  <div className="mt-3.5 text-sm sm:mt-4">
+                  <div className="mt-3 text-sm">
                     <ul className="space-y-2 text-cyan-50/95">
                       {group.notes.map((note) => {
                         const Icon = NOTE_ICONS[note.icon]

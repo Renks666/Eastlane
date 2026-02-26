@@ -8,7 +8,7 @@ export default async function DeliveryPage() {
 
   return (
     <StoreShell>
-      <div className="pt-12 md:pt-16">
+      <div className="pt-8 md:pt-10">
         <DeliveryRatesSection content={deliveryRates} />
         <EastlaneTariffsSection content={eastlaneTariffs} />
       </div>

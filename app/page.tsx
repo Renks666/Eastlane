@@ -49,27 +49,27 @@ export default async function HomePage() {
     <StoreShell>
       <ScrollToHowWeWorkOnMount />
       <ScrollToFaqOnMount />
-      <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-16 pt-12 md:grid-cols-[1.15fr_1fr] md:px-12 md:pt-20">
-        <div className="min-w-0 rounded-3xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-6 shadow-[0_18px_48px_-34px_rgba(18,39,33,0.25)] md:p-7">
+      <section className="store-section grid gap-6 pb-14 pt-8 md:grid-cols-[1.15fr_1fr] md:pt-12 xl:gap-8">
+        <div className="store-card min-w-0 p-5 md:p-6">
           <div className="max-w-xl">
             <HeroShutterText text={content.hero.badge} />
           </div>
-          <h1 className="mt-6 text-3xl font-semibold leading-[1.1] text-[color:var(--color-brand-forest-light)] md:text-5xl lg:text-6xl">
+          <h1 className="mt-5 text-3xl font-semibold leading-[1.1] text-[color:var(--color-brand-forest-light)] md:text-5xl lg:text-6xl">
             {content.hero.title}
             <span className="block text-[color:var(--color-brand-beige-dark)]">{content.hero.accent}</span>
           </h1>
-          <p className="mt-4 max-w-lg text-sm text-[color:var(--color-text-secondary)] md:text-base">{content.hero.description}</p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row md:mt-8">
-            <Link href={content.hero.primaryCtaHref} className="inline-flex items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-forest)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[color:var(--color-brand-forest-dark)]">
+          <p className="mt-3.5 max-w-lg text-sm text-[color:var(--color-text-secondary)] md:text-base">{content.hero.description}</p>
+          <div className="mt-5 flex flex-col gap-2.5 sm:flex-row md:mt-7">
+            <Link href={content.hero.primaryCtaHref} className="store-focus inline-flex items-center justify-center gap-2 rounded-full bg-[color:var(--color-brand-forest)] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[color:var(--color-brand-forest-dark)]">
               {content.hero.primaryCtaLabel} <ArrowRight className="h-4 w-4" />
             </Link>
-            <ScrollToHowWeWorkLink className="inline-flex items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-5 py-3 text-sm font-medium text-[color:var(--color-text-tertiary)] transition hover:bg-[color:var(--color-bg-accent)]">
+            <ScrollToHowWeWorkLink className="store-focus inline-flex items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-5 py-2.5 text-sm font-medium text-[color:var(--color-text-tertiary)] transition hover:bg-[color:var(--color-bg-accent)]">
               {content.hero.secondaryCtaLabel}
             </ScrollToHowWeWorkLink>
           </div>
-          <BrandsMarquee className="mt-7 md:mt-8" />
+          <BrandsMarquee className="mt-6 md:mt-7" />
         </div>
-        <div className="relative hidden overflow-hidden rounded-3xl border border-[color:var(--color-brand-forest-light)] bg-[color:var(--color-brand-forest-light)] p-6 md:block">
+        <div className="relative hidden overflow-hidden rounded-2xl border border-[color:var(--color-brand-forest-light)] bg-[color:var(--color-brand-forest-light)] p-5 md:block">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(198,161,91,0.34),transparent_45%)]" />
           <p className="relative text-xs uppercase tracking-[0.26em] text-[color:var(--color-brand-gold-400)]">{content.lookbook.title}</p>
           <div className="relative mt-4 grid grid-cols-2 gap-3">
@@ -90,10 +90,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 pb-16 md:px-12">
+      <section className="store-section pb-14">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-semibold text-[color:var(--color-brand-forest-light)] md:text-3xl">Товары</h2>
-          <Link href="/catalog" className="text-sm font-medium text-[color:var(--color-brand-beige-dark)] hover:text-[color:var(--color-brand-gold-700)]">В каталог</Link>
+          <Link href="/catalog" className="store-focus text-sm font-medium text-[color:var(--color-brand-beige-dark)] hover:text-[color:var(--color-brand-gold-700)]">В каталог</Link>
         </div>
         <AnimatedProductGrid
           products={productItems.map((product) => ({
@@ -112,7 +112,7 @@ export default async function HomePage() {
       </section>
 
       {/* Как мы работаем */}
-      <section id="how-we-work" className="mx-auto max-w-7xl px-4 pb-10 md:px-12 md:pb-16">
+      <section id="how-we-work" className="store-section pb-10 md:pb-14">
         <div className="mx-auto max-w-[900px]">
           <div className="relative rounded-xl md:rounded-3xl">
             <ShineBorder
@@ -127,12 +127,12 @@ export default async function HomePage() {
 
       <FaqSection />
 
-      <section className="mx-auto max-w-7xl px-6 pb-20 md:px-12">
-        <div className="rounded-3xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-6 md:p-8">
+      <section className="store-section pb-16">
+        <div className="store-card p-5 md:p-6">
           <h2 className="text-2xl font-semibold text-[color:var(--color-brand-forest-light)]">{content.benefits.title}</h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="mt-4 grid gap-3.5 md:grid-cols-3">
             {content.benefits.items.map((item) => (
-              <div key={item.title} className="rounded-xl border border-[color:var(--color-border-secondary)] bg-[color:var(--color-bg-tertiary)] p-4">
+              <div key={item.title} className="rounded-xl border border-[color:var(--color-border-secondary)] bg-[color:var(--color-bg-tertiary)] p-3.5">
                 <p className="font-medium text-[color:var(--color-brand-forest-light)]">{item.title}</p>
                 <p className="mt-2 text-sm text-[color:var(--color-text-secondary)]">{item.description}</p>
               </div>

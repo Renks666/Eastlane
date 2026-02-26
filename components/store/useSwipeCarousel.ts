@@ -48,10 +48,10 @@ export function useSwipeCarousel({ slideCount, loop = true, canDrag = true }: Us
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi])
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi])
   const scrollTo = useCallback(
-    (index: number) => {
+    (index: number, jump = false) => {
       if (!emblaApi) return
       if (index < 0 || index >= slideCount) return
-      emblaApi.scrollTo(index)
+      emblaApi.scrollTo(index, jump)
     },
     [emblaApi, slideCount]
   )

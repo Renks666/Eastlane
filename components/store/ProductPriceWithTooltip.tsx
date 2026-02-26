@@ -63,8 +63,8 @@ export function ProductPriceWithTooltip({ primaryPrice, secondaryPrice, rateText
   }
 
   return (
-    <div className="mt-4">
-      <p className="font-price tabular-nums text-3xl font-semibold text-black">{primaryPrice}</p>
+    <div className="mt-3.5">
+      <p className="font-price tabular-nums text-[30px] leading-none font-semibold text-black">{primaryPrice}</p>
       {hasRateDetails ? (
         <div ref={rateTooltipRootRef}>
           <ExchangeRateTooltip isOpen={isRateDetailsOpen} rateText={rateText} align="left">
@@ -76,7 +76,7 @@ export function ProductPriceWithTooltip({ primaryPrice, secondaryPrice, rateText
                 onMouseLeave={handleMouseLeave}
                 onFocus={() => setIsRateDetailsOpen(true)}
                 onBlur={() => setIsRateDetailsOpen(false)}
-                className={`mt-1 text-left text-base text-[color:var(--color-text-secondary)] transition-opacity ${canHover ? "cursor-pointer hover:opacity-85" : ""}`}
+                className={`store-focus mt-1 text-left text-sm text-[color:var(--color-text-secondary)] transition-opacity ${canHover ? "cursor-pointer hover:opacity-85" : ""}`}
                 aria-expanded={isRateDetailsOpen}
                 aria-describedby={describedBy}
               >

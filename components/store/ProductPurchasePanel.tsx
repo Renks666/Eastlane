@@ -41,9 +41,9 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
   })()
 
   return (
-    <div className="mt-5 space-y-3">
+    <div className="space-y-3.5">
       <div>
-        <p className="mb-2 text-sm font-medium text-[color:var(--color-brand-forest-light)]">{TEXT.availableColors}</p>
+        <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.11em] text-[color:var(--color-brand-forest-light)]">{TEXT.availableColors}</p>
         {product.colors.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
             {visibleColors.map((color) => {
@@ -54,7 +54,7 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
                   role="img"
                   title={swatch.label}
                   aria-label={swatch.label}
-                  className="inline-flex h-5 w-5 rounded-full border border-[color:var(--color-border-primary)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25)]"
+                  className="inline-flex h-6 w-6 rounded-full border border-[color:var(--color-border-primary)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25)]"
                   style={{ backgroundColor: swatch.hex }}
                 />
               )
@@ -70,12 +70,12 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
 
       {requiresSize && (
         <div>
-          <p className="mb-2 text-sm font-medium text-[color:var(--color-brand-forest-light)]">{TEXT.chooseSize}</p>
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.11em] text-[color:var(--color-brand-forest-light)]">{TEXT.chooseSize}</p>
           <DropdownMenu open={sizeMenuOpen} onOpenChange={setSizeMenuOpen}>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-11 w-full items-center justify-between rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 text-sm font-medium text-[color:var(--color-text-primary)] transition hover:border-[color:var(--color-brand-beige-dark)]"
+                className="store-focus inline-flex h-10 w-full items-center justify-between rounded-xl border border-[color:var(--color-border-primary)] bg-white px-3 text-sm font-medium text-[color:var(--color-text-primary)] transition hover:border-[color:var(--color-brand-beige-dark)]"
                 aria-label={TEXT.chooseSize}
               >
                 <span>{activeSize ?? TEXT.chooseSize}</span>
@@ -96,7 +96,7 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
                       setActiveSize(size)
                       setSizeMenuOpen(false)
                     }}
-                    className="mb-1 last:mb-0 cursor-pointer rounded-lg border border-[color:var(--color-border-primary)] px-2 py-2 text-[color:var(--color-text-primary)] hover:border-[color:var(--color-brand-beige-dark)]"
+                    className="mb-1 last:mb-0 cursor-pointer rounded-lg border border-[color:var(--color-border-primary)] px-2 py-2 text-[color:var(--color-text-primary)] hover:border-[color:var(--color-brand-beige-dark)] hover:bg-[color:var(--color-bg-tertiary)]"
                   >
                     <span className="inline-flex items-center gap-2">
                       <span
@@ -119,7 +119,7 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
         </div>
       )}
 
-      {helperText ? <p className="text-xs text-[color:var(--color-text-tertiary)]">{helperText}</p> : null}
+      {helperText ? <p className="text-xs leading-snug text-[color:var(--color-text-tertiary)]">{helperText}</p> : null}
 
       <AddToCartButton
         product={{
@@ -134,7 +134,7 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
           selectedColor: product.colors.length === 1 ? product.colors[0] : undefined,
         }}
         disabled={addDisabled}
-        className="w-full rounded-xl bg-[color:var(--color-brand-forest)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)]"
+        className="w-full rounded-xl bg-[color:var(--color-brand-forest)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_-16px_rgba(10,61,49,0.7)] transition hover:bg-[color:var(--color-brand-forest-dark)]"
       />
     </div>
   )

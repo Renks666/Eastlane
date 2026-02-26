@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import type { ReactNode } from "react"
 import { SlidersHorizontal } from "lucide-react"
@@ -14,7 +14,7 @@ export function CatalogFiltersSheet({ children }: CatalogFiltersSheetProps) {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-4 text-sm font-medium text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] lg:hidden"
+          className="store-focus inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-4 text-sm font-medium text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] lg:hidden"
         >
           <SlidersHorizontal className="h-4 w-4" />
           Фильтры
@@ -29,4 +29,3 @@ export function CatalogFiltersSheet({ children }: CatalogFiltersSheetProps) {
     </Sheet>
   )
 }
-

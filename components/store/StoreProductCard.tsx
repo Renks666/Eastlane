@@ -35,6 +35,18 @@ type StoreProductCardProps = {
 
 const FALLBACK_IMAGE = "https://placehold.co/600x800/f1efe7/18362e?text=EASTLANE"
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function clampPanToBounds(pan: { x: number; y: number }, zoom: number, width: number, height: number) {
+  if (zoom <= 1 || width <= 0 || height <= 0) return { x: 0, y: 0 }
+  return {
+    x: clamp(pan.x, width - width * zoom, 0),
+    y: clamp(pan.y, height - height * zoom, 0),
+  }
+}
+
 export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) {
   const sizes = useMemo(() => product.sizes ?? [], [product.sizes])
   const colors = useMemo(() => product.colors ?? [], [product.colors])
@@ -47,6 +59,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
   const { addItem } = useCart()
 
   const [isViewerOpen, setIsViewerOpen] = useState(false)
+  const [isViewerSynced, setIsViewerSynced] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
@@ -70,6 +83,8 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     scrollNext: scrollViewerNext,
   } = useSwipeCarousel({ slideCount: images.length, loop: true, canDrag: zoom <= 1 })
   const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 })
+  const touchPanStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null)
+  const viewerSurfaceRef = useRef<HTMLDivElement | null>(null)
   const zoomRef = useRef(1)
   const panRef = useRef({ x: 0, y: 0 })
   const isDraggingRef = useRef(false)
@@ -146,6 +161,8 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     panRef.current = { x: 0, y: 0 }
     setIsDragging(false)
     isDraggingRef.current = false
+    touchPanStartRef.current = null
+    setIsViewerSynced(false)
     setIsViewerOpen(true)
   }
 
@@ -160,10 +177,22 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     panRef.current = { x: 0, y: 0 }
     setIsDragging(false)
     isDraggingRef.current = false
+    touchPanStartRef.current = null
+    setIsViewerSynced(false)
   }
 
-  const zoomIn = () => setZoom((prev) => Math.min(prev + 0.25, 3))
-  const zoomOut = () => setZoom((prev) => Math.max(prev - 0.25, 1))
+  const zoomIn = () => {
+    const surface = viewerSurfaceRef.current
+    if (!surface) return
+    const rect = surface.getBoundingClientRect()
+    applyZoomAtPoint(zoomRef.current + 0.25, rect.width / 2, rect.height / 2)
+  }
+  const zoomOut = () => {
+    const surface = viewerSurfaceRef.current
+    if (!surface) return
+    const rect = surface.getBoundingClientRect()
+    applyZoomAtPoint(zoomRef.current - 0.25, rect.width / 2, rect.height / 2)
+  }
 
   const applyZoomAtPoint = (nextZoom: number, pointX: number, pointY: number) => {
     const clampedZoom = Math.min(3, Math.max(1, Number(nextZoom.toFixed(3))))
@@ -184,10 +213,14 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
       y: pointY - (pointY - oldPan.y) * scale,
     }
 
+    const surface = viewerSurfaceRef.current
+    const rect = surface?.getBoundingClientRect()
+    const boundedPan = clampPanToBounds(nextPan, clampedZoom, rect?.width ?? 0, rect?.height ?? 0)
+
     zoomRef.current = clampedZoom
-    panRef.current = nextPan
+    panRef.current = boundedPan
     setZoom(clampedZoom)
-    setPan(nextPan)
+    setPan(boundedPan)
   }
 
   const handleViewerWheelZoom = (event: React.WheelEvent<HTMLDivElement>) => {
@@ -200,6 +233,17 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
   }
 
   const handleViewerTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (zoomRef.current > 1 && event.touches.length === 1) {
+      const touch = event.touches[0]
+      touchPanStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        panX: panRef.current.x,
+        panY: panRef.current.y,
+      }
+      return
+    }
+
     if (event.touches.length !== 2) {
       pinchStartDistanceRef.current = null
       return
@@ -212,6 +256,22 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
   }
 
   const handleViewerTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (zoomRef.current > 1 && event.touches.length === 1 && touchPanStartRef.current) {
+      event.preventDefault()
+      const touch = event.touches[0]
+      const start = touchPanStartRef.current
+      const surface = viewerSurfaceRef.current
+      const rect = surface?.getBoundingClientRect()
+      const nextPan = {
+        x: start.panX + (touch.clientX - start.x),
+        y: start.panY + (touch.clientY - start.y),
+      }
+      const boundedPan = clampPanToBounds(nextPan, zoomRef.current, rect?.width ?? 0, rect?.height ?? 0)
+      panRef.current = boundedPan
+      setPan(boundedPan)
+      return
+    }
+
     if (event.touches.length !== 2 || pinchStartDistanceRef.current === null) return
     event.preventDefault()
 
@@ -229,6 +289,9 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
   }
 
   const handleViewerTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length === 0) {
+      touchPanStartRef.current = null
+    }
     if (event.touches.length < 2) {
       pinchStartDistanceRef.current = null
       pinchStartZoomRef.current = zoom
@@ -259,8 +322,11 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
       x: dragStartRef.current.panX + dx,
       y: dragStartRef.current.panY + dy,
     }
-    panRef.current = nextPan
-    setPan(nextPan)
+    const surface = viewerSurfaceRef.current
+    const rect = surface?.getBoundingClientRect()
+    const boundedPan = clampPanToBounds(nextPan, zoomRef.current, rect?.width ?? 0, rect?.height ?? 0)
+    panRef.current = boundedPan
+    setPan(boundedPan)
   }
 
   const stopViewerDragging = () => {
@@ -313,6 +379,14 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
   useEffect(() => {
     if (!isViewerOpen || !viewerEmblaApi) return
     viewerEmblaApi.scrollTo(cardSelectedIndex, true)
+
+    const frame = window.requestAnimationFrame(() => {
+      setIsViewerSynced(true)
+    })
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+    }
   }, [cardSelectedIndex, isViewerOpen, viewerEmblaApi])
 
   useEffect(() => {
@@ -323,15 +397,55 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     zoomRef.current = zoom
   }, [zoom])
 
+  useEffect(() => {
+    if (!isViewerOpen) return
+
+    const scrollY = window.scrollY
+    const previousBodyOverflow = document.body.style.overflow
+    const previousBodyPosition = document.body.style.position
+    const previousBodyTop = document.body.style.top
+    const previousBodyWidth = document.body.style.width
+    const previousHtmlOverflow = document.documentElement.style.overflow
+
+    const preventScroll = (event: Event) => {
+      event.preventDefault()
+    }
+
+    window.addEventListener("wheel", preventScroll, { passive: false })
+    window.addEventListener("touchmove", preventScroll, { passive: false })
+    document.documentElement.style.overflow = "hidden"
+    document.body.style.overflow = "hidden"
+    document.body.style.position = "fixed"
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = "100%"
+
+    return () => {
+      window.removeEventListener("wheel", preventScroll)
+      window.removeEventListener("touchmove", preventScroll)
+      document.documentElement.style.overflow = previousHtmlOverflow
+      document.body.style.overflow = previousBodyOverflow
+      document.body.style.position = previousBodyPosition
+      document.body.style.top = previousBodyTop
+      document.body.style.width = previousBodyWidth
+      if (typeof window.scrollTo === "function") {
+        try {
+          window.scrollTo(0, scrollY)
+        } catch {
+          // jsdom does not implement scrollTo
+        }
+      }
+    }
+  }, [isViewerOpen])
+
   return (
     <>
-      <article className="group rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-3 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-28px_rgba(15,63,51,0.8)]">
+      <article className="group rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/95 p-3 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-28px_rgba(15,63,51,0.8)]">
         <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-[color:var(--color-border-secondary)] bg-[color:var(--color-bg-image)]">
           <div className="h-full overflow-hidden touch-pan-y" ref={cardEmblaRef}>
             <div className="flex h-full">
               {images.map((image, idx) => (
                 <div key={`${product.id}-${idx}-${image}`} className="relative min-w-0 flex-[0_0_100%]">
-                  <Link href={`/products/${product.id}`} className="block h-full w-full" aria-label={`Открыть товар ${product.name}`}>
+                  <Link href={`/products/${product.id}`} className="store-focus block h-full w-full" aria-label={`Открыть товар ${product.name}`}>
                     <Image
                       src={image}
                       alt={`${product.name} ${idx + 1}`}
@@ -348,7 +462,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
           <button
             type="button"
             onClick={openViewer}
-            className="absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
+            className="store-focus absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
             aria-label="Открыть фото"
           >
             <Search className="h-4 w-4" />
@@ -359,7 +473,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
               <button
                 type="button"
                 onClick={scrollCardPrev}
-                className="absolute left-2 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
+                className="store-focus absolute left-2 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                 aria-label="Предыдущее фото"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -367,7 +481,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
               <button
                 type="button"
                 onClick={scrollCardNext}
-                className="absolute right-2 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
+                className="store-focus absolute right-2 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                 aria-label="Следующее фото"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -383,7 +497,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                 key={`${product.id}-${idx}`}
                 type="button"
                 onClick={() => scrollCardTo(idx)}
-                className={`h-1.5 rounded-full transition ${idx === cardSelectedIndex ? "w-5 bg-[color:var(--color-brand-forest)]" : "w-1.5 bg-[color:var(--color-border-primary)] hover:bg-[color:var(--color-brand-beige-dark)]"}`}
+                className={`store-focus h-1.5 rounded-full transition ${idx === cardSelectedIndex ? "w-5 bg-[color:var(--color-brand-forest)]" : "w-1.5 bg-[color:var(--color-border-primary)] hover:bg-[color:var(--color-brand-beige-dark)]"}`}
                 aria-label={`Открыть фото ${idx + 1}`}
                 aria-pressed={idx === cardSelectedIndex}
               />
@@ -396,7 +510,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
           {product.brandName ? (
             <p className="mt-1 text-sm font-semibold text-[color:var(--color-brand-forest-light)]">{product.brandName}</p>
           ) : null}
-          <Link href={`/products/${product.id}`} className="mt-1 block line-clamp-2 text-base font-medium leading-snug text-[color:var(--color-text-primary)] hover:text-[color:var(--color-brand-forest-light)]">
+          <Link href={`/products/${product.id}`} className="store-focus mt-1 block line-clamp-2 text-base font-medium leading-snug text-[color:var(--color-text-primary)] hover:text-[color:var(--color-brand-forest-light)]">
             {product.name}
           </Link>
 
@@ -469,7 +583,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                     <button
                       type="button"
                       onClick={() => setQuickAddOpen((v) => !v)}
-                      className="inline-flex h-10 w-10 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+                      className="store-focus inline-flex h-10 w-10 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
                       aria-label="Быстро добавить в корзину"
                       aria-expanded={quickAddOpen}
                     >
@@ -487,7 +601,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                               key={size}
                               type="button"
                               onClick={() => handleQuickAdd(size)}
-                              className="w-full border-t border-b border-[color:var(--color-border-secondary)] py-2 text-center text-xs font-medium text-[color:var(--color-text-secondary)] transition first:border-t-[color:var(--color-border-secondary)] hover:bg-[color:var(--color-bg-accent)] hover:text-[color:var(--color-brand-forest-light)] hover:border-2 hover:border-[color:var(--color-brand-beige-dark)] focus:outline-none focus:bg-[color:var(--color-bg-accent)] focus:text-[color:var(--color-brand-forest-light)] focus:border-2 focus:border-[color:var(--color-brand-beige-dark)]"
+                              className="store-focus w-full border-t border-b border-[color:var(--color-border-secondary)] py-2 text-center text-xs font-medium text-[color:var(--color-text-secondary)] transition first:border-t-[color:var(--color-border-secondary)] hover:bg-[color:var(--color-bg-accent)] hover:text-[color:var(--color-brand-forest-light)] hover:border-2 hover:border-[color:var(--color-brand-beige-dark)] focus:bg-[color:var(--color-bg-accent)] focus:text-[color:var(--color-brand-forest-light)] focus:border-2 focus:border-[color:var(--color-brand-beige-dark)]"
                             >
                               {size}
                             </button>
@@ -499,7 +613,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                 )}
                 <Link
                   href={`/products/${product.id}`}
-                  className="inline-flex min-h-[44px] min-w-[84px] whitespace-nowrap items-center justify-center gap-1 rounded-lg bg-[color:var(--color-brand-forest)] px-2 py-2 text-xs font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)] sm:min-w-[92px] sm:px-3"
+                  className="store-focus inline-flex min-h-[44px] min-w-[84px] whitespace-nowrap items-center justify-center gap-1 rounded-lg bg-[color:var(--color-brand-forest)] px-2 py-2 text-xs font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)] sm:min-w-[92px] sm:px-3"
                 >
                   К товару
                 </Link>
@@ -517,7 +631,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                   selectedSize: sizes.length === 1 ? sizes[0] : undefined,
                   selectedColor: colors.length === 1 ? colors[0] : undefined,
                 }}
-                className="rounded-lg bg-[color:var(--color-brand-forest)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)]"
+              className="store-focus rounded-lg bg-[color:var(--color-brand-forest)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)]"
               />
             )}
           </div>
@@ -533,7 +647,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
             <button
               type="button"
               onClick={closeViewer}
-              className="absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/95 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
+              className="store-focus absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/95 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
               aria-label="Закрыть фото"
             >
               <X className="h-4 w-4" />
@@ -544,7 +658,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                 <button
                   type="button"
                   onClick={zoomOut}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
+                  className="store-focus inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
                   aria-label="Отдалить"
                 >
                   <ZoomOut className="h-4 w-4" />
@@ -552,7 +666,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                 <button
                   type="button"
                   onClick={zoomIn}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
+                  className="store-focus inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
                   aria-label="Приблизить"
                 >
                   <ZoomIn className="h-4 w-4" />
@@ -560,7 +674,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                 <button
                   type="button"
                   onClick={closeViewer}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
+                  className="store-focus inline-flex h-8 w-8 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
                   aria-label="Закрыть"
                 >
                   <X className="h-4 w-4" />
@@ -570,7 +684,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
 
             <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-[color:var(--color-bg-image)]">
               <div
-                className="h-full overflow-hidden"
+                className={`h-full overflow-hidden transition-opacity duration-150 ${isViewerSynced ? "opacity-100" : "opacity-0"}`}
                 ref={viewerEmblaRef}
                 onTouchStart={handleViewerTouchStart}
                 onTouchMove={handleViewerTouchMove}
@@ -582,6 +696,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                     <div key={`viewer-${product.id}-${idx}-${image}`} className="relative min-w-0 flex-[0_0_100%]">
                       <div
                         className="relative h-full w-full"
+                        ref={idx === viewerSelectedIndex ? viewerSurfaceRef : null}
                         onWheel={handleViewerWheelZoom}
                         onPointerDown={handleViewerPointerDown}
                         onPointerMove={handleViewerPointerMove}
@@ -600,7 +715,9 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                           className={`pointer-events-none select-none object-contain ${isDragging ? "transition-none" : "transition-transform duration-200 ease-out"}`}
                           draggable={false}
                           style={{
-                            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                            transform: idx === viewerSelectedIndex
+                              ? `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`
+                              : "translate3d(0, 0, 0) scale(1)",
                             transformOrigin: "0 0",
                           }}
                         />
@@ -615,7 +732,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                   <button
                     type="button"
                     onClick={scrollViewerPrev}
-                    className="absolute left-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
+                    className="store-focus absolute left-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                     aria-label="Предыдущее фото"
                   >
                     <ChevronLeft className="h-5 w-5" />
@@ -623,7 +740,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
                   <button
                     type="button"
                     onClick={scrollViewerNext}
-                    className="absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
+                    className="store-focus absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-primary)]"
                     aria-label="Следующее фото"
                   >
                     <ChevronRight className="h-5 w-5" />

@@ -6,12 +6,12 @@ export default async function AboutPage() {
 
   return (
     <StoreShell>
-      <section className="mx-auto max-w-4xl px-6 pb-20 pt-16 md:px-12">
-        <div className="rounded-3xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]/90 p-7 md:p-10">
-          <p className="text-xs uppercase tracking-[0.22em] text-[color:var(--color-text-accent)]">{about.eyebrow}</p>
-          <h1 className="mt-3 text-4xl font-semibold text-[color:var(--color-brand-forest-light)]">{about.title}</h1>
+      <section className="store-section max-w-4xl pb-16 pt-10 md:pt-12">
+        <div className="store-card p-6 md:p-8">
+          <p className="store-eyebrow">{about.eyebrow}</p>
+          <h1 className="mt-2.5 text-3xl font-semibold text-[color:var(--color-brand-forest-light)] md:text-4xl">{about.title}</h1>
           {about.paragraphs.map((paragraph) => (
-            <p key={paragraph} className="mt-4 text-base leading-relaxed text-[color:var(--color-text-secondary)]">
+            <p key={paragraph} className="mt-3.5 text-base leading-relaxed text-[color:var(--color-text-secondary)]">
               {paragraph}
             </p>
           ))}
@@ -20,4 +20,3 @@ export default async function AboutPage() {
     </StoreShell>
   )
 }
-

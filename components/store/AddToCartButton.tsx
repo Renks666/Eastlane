@@ -66,7 +66,7 @@ export function AddToCartButton({ product, className, disabled }: AddToCartButto
       disabled={disabled || isAdding}
       onClick={handleAddToCart}
       className={cn(
-        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
+        "store-focus inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
         "bg-[color:var(--color-brand-forest)] text-white hover:bg-[color:var(--color-brand-forest-dark)]",
         className
       )}

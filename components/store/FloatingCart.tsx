@@ -160,7 +160,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left transition hover:bg-[color:var(--color-bg-accent)]"
+            className="store-focus flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left transition hover:bg-[color:var(--color-bg-accent)]"
             aria-label="Открыть корзину"
           >
             <div className="flex items-center gap-3">
@@ -194,7 +194,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md transition hover:bg-[color:var(--color-bg-image)]"
+                className="store-focus inline-flex h-8 w-8 items-center justify-center rounded-md transition hover:bg-[color:var(--color-bg-image)]"
                 aria-label="Свернуть корзину"
               >
                 <ChevronDown className="h-5 w-5 text-[color:var(--color-text-tertiary)]" />
@@ -206,7 +206,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
                 Ваша корзина пуста. Добавьте товары из каталога.
               </div>
             ) : (
-              <div className="mb-4 max-h-[400px] space-y-3 overflow-auto pr-1">
+              <div className="mb-4 max-h-[400px] space-y-2.5 overflow-auto pr-1">
                 {items.map((item) => {
                   const lineTotal = item.price * item.quantity
                   const lineTotalCny = item.priceCurrency === "CNY"
@@ -253,7 +253,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
                       <button
                         type="button"
                         onClick={() => removeItem(item.lineId)}
-                        className="self-start rounded-md p-1.5 text-[color:var(--color-text-tertiary)] transition hover:bg-[color:var(--color-bg-image)] hover:text-[color:var(--color-brand-beige-dark)]"
+                        className="store-focus self-start rounded-md p-1.5 text-[color:var(--color-text-tertiary)] transition hover:bg-[color:var(--color-bg-image)] hover:text-[color:var(--color-brand-beige-dark)]"
                         aria-label={`Удалить ${item.name}`}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -264,7 +264,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
                       <button
                         type="button"
                         onClick={() => decrement(item.lineId)}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-image)]"
+                        className="store-focus inline-flex h-7 w-7 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-image)]"
                         aria-label={`Уменьшить количество ${item.name}`}
                       >
                         <Minus className="h-3.5 w-3.5" />
@@ -275,7 +275,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
                       <button
                         type="button"
                         onClick={() => increment(item.lineId)}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-image)]"
+                        className="store-focus inline-flex h-7 w-7 items-center justify-center rounded-md border border-[color:var(--color-border-primary)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-image)]"
                         aria-label={`Увеличить количество ${item.name}`}
                       >
                         <Plus className="h-3.5 w-3.5" />
@@ -291,7 +291,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
                 type="button"
                 onClick={clear}
                 disabled={items.length === 0}
-                className="rounded-md border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2.5 py-1 text-xs text-[color:var(--color-text-secondary)] transition hover:bg-[color:var(--color-bg-accent)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="store-focus rounded-md border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-2.5 py-1 text-xs text-[color:var(--color-text-secondary)] transition hover:bg-[color:var(--color-bg-accent)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Очистить корзину
               </button>
@@ -335,7 +335,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
             <button
               type="button"
               onClick={() => setIsCheckoutOpen(true)}
-              className="w-full rounded-xl bg-[color:var(--color-brand-forest)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)]"
+              className="store-focus w-full rounded-xl bg-[color:var(--color-brand-forest)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)]"
             >
               Оформить заказ
             </button>
@@ -357,21 +357,21 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
                 value={customerName}
                 onChange={(event) => setCustomerName(event.target.value)}
                 placeholder="Ваше имя"
-                className="h-10 w-full rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 text-sm text-[color:var(--color-text-primary)] outline-none focus:border-[color:var(--color-brand-beige-dark)]"
+                className="store-focus h-10 w-full rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 text-sm text-[color:var(--color-text-primary)]"
               />
 
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setContactChannel("telegram")}
-                  className={`rounded-xl border px-3 py-2 text-sm transition ${contactChannel === "telegram" ? "border-[color:var(--color-brand-beige-dark)] bg-[color:var(--color-bg-tertiary)] text-[color:var(--color-brand-forest-light)]" : "border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-tertiary)]"}`}
+                  className={`store-focus rounded-xl border px-3 py-2 text-sm transition ${contactChannel === "telegram" ? "border-[color:var(--color-brand-beige-dark)] bg-[color:var(--color-bg-tertiary)] text-[color:var(--color-brand-forest-light)]" : "border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-tertiary)]"}`}
                 >
                   Telegram
                 </button>
                 <button
                   type="button"
                   onClick={() => setContactChannel("phone")}
-                  className={`rounded-xl border px-3 py-2 text-sm transition ${contactChannel === "phone" ? "border-[color:var(--color-brand-beige-dark)] bg-[color:var(--color-bg-tertiary)] text-[color:var(--color-brand-forest-light)]" : "border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-tertiary)]"}`}
+                  className={`store-focus rounded-xl border px-3 py-2 text-sm transition ${contactChannel === "phone" ? "border-[color:var(--color-brand-beige-dark)] bg-[color:var(--color-bg-tertiary)] text-[color:var(--color-brand-forest-light)]" : "border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-tertiary)]"}`}
                 >
                   Телефон
                 </button>
@@ -382,7 +382,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
                 value={contactValue}
                 onChange={(event) => setContactValue(event.target.value)}
                 placeholder={contactChannel === "telegram" ? "@username или t.me/..." : "+7 (900) 000-00-00"}
-                className="h-10 w-full rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 text-sm text-[color:var(--color-text-primary)] outline-none focus:border-[color:var(--color-brand-beige-dark)]"
+                className="store-focus h-10 w-full rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 text-sm text-[color:var(--color-text-primary)]"
               />
             </div>
 
@@ -390,7 +390,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
               type="button"
               onClick={submitOrder}
               disabled={isPending || items.length === 0 || !contactValue.trim() || !customerName.trim()}
-              className="mt-5 flex w-full items-center gap-3 rounded-xl bg-[color:var(--color-brand-forest)] p-3 text-left transition hover:bg-[color:var(--color-brand-forest-dark)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="store-focus mt-5 flex w-full items-center gap-3 rounded-xl bg-[color:var(--color-brand-forest)] p-3 text-left transition hover:bg-[color:var(--color-brand-forest-dark)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white">
                 {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
@@ -404,7 +404,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
               <button
                 type="button"
                 onClick={() => setIsCheckoutOpen(false)}
-                className="w-full rounded-xl border border-[color:var(--color-border-primary)] px-4 py-2.5 text-sm text-[color:var(--color-text-tertiary)] transition hover:bg-[color:var(--color-bg-accent)]"
+                className="store-focus w-full rounded-xl border border-[color:var(--color-border-primary)] px-4 py-2.5 text-sm text-[color:var(--color-text-tertiary)] transition hover:bg-[color:var(--color-bg-accent)]"
               >
                 Закрыть
               </button>

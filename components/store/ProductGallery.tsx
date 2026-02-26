@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useSwipeCarousel } from "@/components/store/useSwipeCarousel"
 
@@ -19,6 +19,7 @@ type ProductGalleryProps = {
 
 type Point = { x: number; y: number }
 const DEFAULT_MOBILE_ZOOM = 4
+const DEFAULT_OPEN_ZOOM = 2
 const DOUBLE_TAP_DELAY = 280
 const DOUBLE_TAP_DISTANCE = 24
 
@@ -45,6 +46,9 @@ export function ProductGallery({
   maxZoomDesktop = 2.5,
   maxZoomMobile = DEFAULT_MOBILE_ZOOM,
 }: ProductGalleryProps) {
+  void zoomMode
+  void maxZoomDesktop
+
   const gallery = useMemo(() => {
     const normalizedImages = Array.isArray(images)
       ? images.filter((image): image is string => typeof image === "string" && image.trim().length > 0)
@@ -64,6 +68,8 @@ export function ProductGallery({
 
   const [mode, setMode] = useState<GalleryMode>("idle")
   const [isViewerOpen, setIsViewerOpen] = useState(false)
+  const [isViewerSynced, setIsViewerSynced] = useState(false)
+  const [viewerOpenIndex, setViewerOpenIndex] = useState(0)
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
@@ -132,20 +138,41 @@ export function ProductGallery({
     [maxZoomMobile, resetViewerTransform]
   )
 
+  const applyLoupeZoomAtCenter = useCallback(
+    (targetZoom: number) => {
+      const target = viewerSurfaceRef.current
+      if (!target) return
+      const rect = target.getBoundingClientRect()
+      applyZoomAtPoint(targetZoom, rect.width / 2, rect.height / 2)
+    },
+    [applyZoomAtPoint]
+  )
+
   const closeViewer = useCallback(() => {
     if (gallery.length > 1) {
-      scrollTo(viewerIndex)
+      scrollTo(viewerIndex, true)
     }
     setIsViewerOpen(false)
+    setIsViewerSynced(false)
     setMode("idle")
     resetViewerTransform()
   }, [gallery.length, resetViewerTransform, scrollTo, viewerIndex])
 
-  const openViewer = useCallback(() => {
+  const openViewer = useCallback((openIndex: number) => {
     resetViewerTransform()
+    setViewerOpenIndex(openIndex)
+    setIsViewerSynced(false)
     setIsViewerOpen(true)
     setMode("fullscreen")
   }, [resetViewerTransform])
+
+  const toggleLoupeZoom = useCallback(() => {
+    if (zoomRef.current > 1) {
+      resetViewerTransform()
+      return
+    }
+    applyLoupeZoomAtCenter(Math.min(DEFAULT_OPEN_ZOOM, maxZoomMobile))
+  }, [applyLoupeZoomAtCenter, maxZoomMobile, resetViewerTransform])
 
   const handleWheelZoom = (event: React.WheelEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -309,11 +336,28 @@ export function ProductGallery({
 
   useEffect(() => {
     if (!isViewerOpen || !viewerEmblaApi) return
-    viewerScrollTo(index)
-  }, [index, isViewerOpen, viewerEmblaApi, viewerScrollTo])
+    viewerScrollTo(viewerOpenIndex, true)
+    const frame = window.requestAnimationFrame(() => {
+      setIsViewerSynced(true)
+    })
+    return () => {
+      window.cancelAnimationFrame(frame)
+    }
+  }, [isViewerOpen, viewerEmblaApi, viewerOpenIndex, viewerScrollTo])
 
   useEffect(() => {
     if (!isViewerOpen) return
+
+    const scrollY = window.scrollY
+    const previousBodyOverflow = document.body.style.overflow
+    const previousBodyPosition = document.body.style.position
+    const previousBodyTop = document.body.style.top
+    const previousBodyWidth = document.body.style.width
+    const previousHtmlOverflow = document.documentElement.style.overflow
+
+    const preventScroll = (event: Event) => {
+      event.preventDefault()
+    }
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -322,17 +366,36 @@ export function ProductGallery({
     }
 
     window.addEventListener("keydown", onKeyDown)
+    window.addEventListener("wheel", preventScroll, { passive: false })
+    window.addEventListener("touchmove", preventScroll, { passive: false })
+    document.documentElement.style.overflow = "hidden"
     document.body.style.overflow = "hidden"
+    document.body.style.position = "fixed"
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = "100%"
 
     return () => {
       window.removeEventListener("keydown", onKeyDown)
-      document.body.style.overflow = ""
+      window.removeEventListener("wheel", preventScroll)
+      window.removeEventListener("touchmove", preventScroll)
+      document.documentElement.style.overflow = previousHtmlOverflow
+      document.body.style.overflow = previousBodyOverflow
+      document.body.style.position = previousBodyPosition
+      document.body.style.top = previousBodyTop
+      document.body.style.width = previousBodyWidth
+      if (typeof window.scrollTo === "function") {
+        try {
+          window.scrollTo(0, scrollY)
+        } catch {
+          // jsdom does not implement scrollTo
+        }
+      }
     }
   }, [closeViewer, isViewerOpen])
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)]">
+      <div className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] shadow-[0_16px_40px_-30px_rgba(15,63,51,0.65)]">
         <div className="h-full overflow-hidden touch-pan-y" ref={mainEmblaRef}>
           <div className="flex h-full">
             {gallery.map((image, i) => (
@@ -340,7 +403,7 @@ export function ProductGallery({
                 <button
                   type="button"
                   className="relative h-full w-full"
-                  onClick={openViewer}
+                  onClick={() => openViewer(i)}
                   aria-label="Открыть фото"
                 >
                   <Image
@@ -362,7 +425,7 @@ export function ProductGallery({
               type="button"
               variant="outline"
               size="icon"
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90"
+              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border-[color:var(--color-border-primary)] bg-white/95 text-[color:var(--color-brand-forest-light)] shadow-sm transition-opacity group-hover:opacity-100 lg:opacity-0"
               onClick={prev}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -371,7 +434,7 @@ export function ProductGallery({
               type="button"
               variant="outline"
               size="icon"
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90"
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border-[color:var(--color-border-primary)] bg-white/95 text-[color:var(--color-brand-forest-light)] shadow-sm transition-opacity group-hover:opacity-100 lg:opacity-0"
               onClick={next}
             >
               <ChevronRight className="h-4 w-4" />
@@ -386,7 +449,7 @@ export function ProductGallery({
             <button
               key={`${image}-${i}`}
               onClick={() => scrollTo(i)}
-              className={`relative aspect-square overflow-hidden rounded-xl border ${index === i ? "border-[color:var(--color-brand-gold-600)]" : "border-[color:var(--color-border-primary)]"}`}
+              className={`relative aspect-square overflow-hidden rounded-xl border bg-white transition ${index === i ? "border-[color:var(--color-brand-gold-600)] shadow-[0_10px_18px_-14px_rgba(168,130,67,0.95)]" : "border-[color:var(--color-border-primary)] hover:border-[color:var(--color-brand-beige-dark)]"}`}
               type="button"
               aria-label={`Открыть фото ${i + 1}`}
               aria-pressed={index === i}
@@ -405,6 +468,14 @@ export function ProductGallery({
           <div className="relative w-full max-w-4xl" onClick={(event) => event.stopPropagation()}>
             <button
               type="button"
+              className="absolute right-16 top-3 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-black/65 text-white transition hover:bg-black/80"
+              onClick={toggleLoupeZoom}
+              aria-label={zoom > 1 ? "Сбросить масштаб" : "Увеличить фото"}
+            >
+              <Search className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
               className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-black/65 text-white transition hover:bg-black/80"
               onClick={closeViewer}
               aria-label="Закрыть фото"
@@ -413,7 +484,10 @@ export function ProductGallery({
             </button>
 
             <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[color:var(--color-bg-primary)]">
-              <div className="h-full overflow-hidden touch-pan-y" ref={viewerEmblaRef}>
+              <div
+                className={`h-full overflow-hidden touch-pan-y transition-opacity duration-150 ${isViewerSynced ? "opacity-100" : "opacity-0"}`}
+                ref={viewerEmblaRef}
+              >
                 <div className="flex h-full">
                   {gallery.map((image, i) => (
                     <div key={`viewer-${image}-${i}`} className="relative min-w-0 flex-[0_0_100%]">
@@ -483,7 +557,7 @@ export function ProductGallery({
               )}
             </div>
             <p className="mt-2 text-center text-xs text-white/85">
-              Масштаб: {Math.round(zoom * 100)}% • Режим: {mode} • Колесико/Pinch: zoom • Double-tap: 1x/2x
+              Масштаб: {Math.round(zoom * 100)}% • Режим: {mode} • Лупа: 1x/2x • Колесико/Pinch: zoom • Double-tap: 1x/2x
             </p>
           </div>
         </div>
