@@ -89,11 +89,11 @@ function FavoriteCartAction({ item }: FavoriteCartActionProps) {
   }
 
   return (
-    <div className="relative" ref={quickAddRef}>
+    <div className="relative w-full" ref={quickAddRef}>
       <button
         type="button"
         onClick={() => setQuickAddOpen((prev) => !prev)}
-        className="store-focus inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 text-sm font-semibold text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
+        className="store-focus inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[color:var(--color-brand-forest)] px-3 text-sm font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)]"
         aria-label="Выбрать размер и добавить в корзину"
         aria-expanded={quickAddOpen}
       >
@@ -102,15 +102,15 @@ function FavoriteCartAction({ item }: FavoriteCartActionProps) {
       </button>
 
       {quickAddOpen ? (
-        <div className="absolute left-0 top-full z-[90] mt-1.5 min-w-[140px] rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-2 shadow-lg">
+        <div className="absolute bottom-full left-0 z-[90] mb-1.5 min-w-[140px] rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-2 shadow-lg">
           <p className="mb-2 text-center text-sm font-medium text-[color:var(--color-text-primary)]">Размер:</p>
-          <div className="flex flex-col">
+          <div className="max-h-40 overflow-auto">
             {sizes.map((size) => (
               <button
                 key={`${item.id}-${size}`}
                 type="button"
                 onClick={() => handleQuickAdd(size)}
-                className="store-focus w-full border-t border-b border-[color:var(--color-border-secondary)] py-2 text-center text-xs font-medium text-[color:var(--color-text-secondary)] transition first:border-t-[color:var(--color-border-secondary)] hover:bg-[color:var(--color-bg-accent)] hover:text-[color:var(--color-brand-forest-light)] hover:border-2 hover:border-[color:var(--color-brand-beige-dark)] focus:bg-[color:var(--color-bg-accent)] focus:text-[color:var(--color-brand-forest-light)] focus:border-2 focus:border-[color:var(--color-brand-beige-dark)]"
+                className="store-focus w-full border-t border-b border-[color:var(--color-border-secondary)] py-2 text-center text-xs font-medium text-[color:var(--color-text-secondary)] transition first:border-t-[color:var(--color-border-secondary)] hover:bg-[color:var(--color-bg-accent)] hover:text-[color:var(--color-brand-forest-light)]"
               >
                 {size}
               </button>
@@ -206,7 +206,7 @@ export function FavoritesPageClient() {
               </button>
               <Link
                 href={`/products/${item.id}`}
-                className="store-focus col-span-2 inline-flex h-10 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 text-sm font-semibold text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
+                className="store-focus col-span-2 inline-flex h-10 items-center justify-center rounded-lg bg-[color:var(--color-brand-forest)] px-3 text-sm font-semibold text-white transition hover:bg-[color:var(--color-brand-forest-dark)]"
               >
                 К товару
               </Link>

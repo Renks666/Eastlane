@@ -2,7 +2,7 @@
 
 import React from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { StoreHeaderClient } from "@/components/store/StoreHeaderClient"
 
 const useCartMock = vi.fn()
@@ -17,7 +17,9 @@ vi.mock("@/components/store/FavoritesProvider", () => ({
 }))
 
 vi.mock("@/components/store/MobileMenu", () => ({
-  MobileMenu: () => <button type="button" aria-label="Открыть меню">menu</button>,
+  MobileMenu: ({ className }: { className?: string }) => (
+    <button type="button" aria-label="Открыть меню" className={className}>menu</button>
+  ),
 }))
 
 vi.mock("@/components/store/EastlaneLogo", () => ({
@@ -45,6 +47,27 @@ describe("StoreHeaderClient", () => {
     useFavoritesMock.mockReturnValue({
       favoritesCount: 3,
       isHydrated: true,
+    })
+
+    Object.defineProperty(window, "scrollY", {
+      value: 0,
+      writable: true,
+      configurable: true,
+    })
+
+    Object.defineProperty(window, "requestAnimationFrame", {
+      value: (callback: FrameRequestCallback) => {
+        callback(0)
+        return 1
+      },
+      writable: true,
+      configurable: true,
+    })
+
+    Object.defineProperty(window, "cancelAnimationFrame", {
+      value: () => undefined,
+      writable: true,
+      configurable: true,
     })
   })
 
@@ -80,5 +103,52 @@ describe("StoreHeaderClient", () => {
 
     expect(screen.getByText("3")).toBeTruthy()
     expect(screen.getByText("2")).toBeTruthy()
+  })
+
+  it("renders transparent mobile icon controls without white backgrounds", () => {
+    render(<StoreHeaderClient />)
+
+    const menuButton = screen.getByRole("button", { name: "Открыть меню" })
+    const searchButton = screen.getByTestId("mobile-search-toggle")
+    const favoritesLink = screen.getByTestId("mobile-favorites-link")
+    const cartButton = screen.getByTestId("mobile-cart-toggle")
+
+    expect(menuButton.className).toContain("!bg-transparent")
+    expect(searchButton.className).toContain("bg-transparent")
+    expect(favoritesLink.className).toContain("bg-transparent")
+    expect(cartButton.className).toContain("bg-transparent")
+  })
+
+  it("switches mobile header to compact height on scroll", async () => {
+    render(<StoreHeaderClient />)
+
+    const row = screen.getByTestId("mobile-header-row")
+    expect(row.className).toContain("h-20")
+
+    window.scrollY = 20
+    window.dispatchEvent(new Event("scroll"))
+
+    await waitFor(() => {
+      expect(row.className).toContain("h-[68px]")
+    })
+  })
+
+  it("restores default height when returning to top", async () => {
+    render(<StoreHeaderClient />)
+    const row = screen.getByTestId("mobile-header-row")
+
+    window.scrollY = 20
+    window.dispatchEvent(new Event("scroll"))
+
+    await waitFor(() => {
+      expect(row.className).toContain("h-[68px]")
+    })
+
+    window.scrollY = 0
+    window.dispatchEvent(new Event("scroll"))
+
+    await waitFor(() => {
+      expect(row.className).toContain("h-20")
+    })
   })
 })

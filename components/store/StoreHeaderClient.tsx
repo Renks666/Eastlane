@@ -19,6 +19,7 @@ function CountBadge({ count }: { count: number }) {
 
 export function StoreHeaderClient() {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null)
   const { items, isHydrated: isCartHydrated } = useCart()
   const { favoritesCount, isHydrated: isFavoritesHydrated } = useFavorites()
@@ -33,27 +34,61 @@ export function StoreHeaderClient() {
     mobileSearchInputRef.current?.focus()
   }, [isMobileSearchOpen])
 
+  useEffect(() => {
+    let frame = 0
+
+    const syncScrolled = () => {
+      frame = 0
+      const next = window.scrollY > 8
+      setIsScrolled((prev) => (prev === next ? prev : next))
+    }
+
+    const onScroll = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(syncScrolled)
+    }
+
+    syncScrolled()
+    window.addEventListener("scroll", onScroll, { passive: true })
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      window.removeEventListener("scroll", onScroll)
+    }
+  }, [])
+
   const openCart = () => {
     window.dispatchEvent(new CustomEvent("cart:open"))
   }
 
+  const mobileIconButtonSize = isScrolled ? "h-9 w-9" : "h-10 w-10"
+  const mobileHeaderHeight = isScrolled ? "h-[68px]" : "h-20"
+
   return (
     <div className="mx-auto max-w-7xl px-4 md:px-8">
-      <div className="relative flex h-20 items-center gap-2 md:gap-4">
+      <div
+        data-testid="mobile-header-row"
+        className={`relative flex items-center gap-2 transition-[height,padding] duration-200 ease-out md:h-20 md:gap-4 ${mobileHeaderHeight}`}
+      >
         <div className="flex shrink-0 items-center gap-1 md:hidden">
-          <MobileMenu />
+          <MobileMenu
+            className={`${mobileIconButtonSize} !border-0 !bg-transparent hover:!bg-[color:var(--color-bg-accent)]`}
+          />
           <button
             type="button"
             onClick={() => setIsMobileSearchOpen((prev) => !prev)}
-            className="store-focus inline-flex h-10 w-10 items-center justify-center rounded-lg border-0 bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
+            className={`store-focus inline-flex items-center justify-center rounded-lg border-0 bg-transparent text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:h-10 md:w-10 ${mobileIconButtonSize}`}
             aria-label={isMobileSearchOpen ? "Скрыть поиск" : "Открыть поиск"}
             aria-expanded={isMobileSearchOpen}
+            data-testid="mobile-search-toggle"
           >
             {isMobileSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
           </button>
         </div>
 
-        <div className="absolute left-1/2 z-10 min-w-0 -translate-x-1/2 md:static md:left-auto md:translate-x-0 md:shrink-0">
+        <div
+          className={`absolute left-1/2 z-10 min-w-0 -translate-x-1/2 transition-transform duration-200 ease-out md:static md:left-auto md:translate-x-0 md:shrink-0 ${isScrolled ? "max-md:scale-95" : ""}`}
+        >
           <EastlaneLogo compact className="max-w-full" />
         </div>
 
@@ -78,8 +113,9 @@ export function StoreHeaderClient() {
         <div className="ml-auto flex shrink-0 items-center gap-1.5 md:ml-0 md:gap-2">
           <Link
             href="/favorites"
-            className="store-focus relative inline-flex h-10 w-10 items-center justify-center rounded-lg border-0 bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:border md:border-[color:var(--color-border-primary)]"
+            className={`store-focus relative inline-flex items-center justify-center rounded-lg border-0 bg-transparent text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:h-10 md:w-10 md:border md:border-[color:var(--color-border-primary)] md:bg-[color:var(--color-bg-primary)] ${mobileIconButtonSize}`}
             aria-label="Открыть избранное"
+            data-testid="mobile-favorites-link"
           >
             <Heart className="h-4 w-4" />
             {isFavoritesHydrated && favoritesCount > 0 ? <CountBadge count={favoritesCount} /> : null}
@@ -88,8 +124,9 @@ export function StoreHeaderClient() {
           <button
             type="button"
             onClick={openCart}
-            className="store-focus relative inline-flex h-10 w-10 items-center justify-center rounded-lg border-0 bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:border md:border-[color:var(--color-border-primary)]"
+            className={`store-focus relative inline-flex items-center justify-center rounded-lg border-0 bg-transparent text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:h-10 md:w-10 md:border md:border-[color:var(--color-border-primary)] md:bg-[color:var(--color-bg-primary)] ${mobileIconButtonSize}`}
             aria-label="Открыть корзину"
+            data-testid="mobile-cart-toggle"
           >
             <ShoppingCart className="h-4 w-4" />
             {isCartHydrated && cartCount > 0 ? <CountBadge count={cartCount} /> : null}
