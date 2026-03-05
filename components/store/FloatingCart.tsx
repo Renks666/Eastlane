@@ -16,10 +16,9 @@ import {
 
 type FloatingCartProps = {
   cnyPerRub: number
-  hideMobileCollapsedTrigger?: boolean
 }
 
-export function FloatingCart({ cnyPerRub, hideMobileCollapsedTrigger = false }: FloatingCartProps) {
+export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [canHover, setCanHover] = useState(false)
@@ -163,29 +162,6 @@ export function FloatingCart({ cnyPerRub, hideMobileCollapsedTrigger = false }: 
     >
       {!isOpen && hasItems ? (
         <>
-          {!hideMobileCollapsedTrigger ? (
-            <button
-              type="button"
-              onClick={() => setIsOpen(true)}
-              className="store-focus ml-auto flex min-h-11 w-auto max-w-[300px] items-center gap-2 rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 py-2 text-left text-[color:var(--color-text-primary)] shadow-2xl transition hover:bg-[color:var(--color-bg-accent)] sm:hidden"
-              aria-label="Открыть корзину"
-            >
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--color-bg-image)]">
-                <ShoppingCart className="h-4 w-4 text-[color:var(--color-brand-forest)]" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-xs text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
-                  Корзина ({itemsCount}) · <span className="font-price tabular-nums text-sm font-semibold text-black">{primaryTotal}</span>
-                </p>
-                {secondaryTotal ? (
-                  <p className="font-price tabular-nums truncate text-xs text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
-                    {secondaryTotal}
-                  </p>
-                ) : null}
-              </div>
-            </button>
-          ) : null}
-
           <div className="hidden rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] shadow-2xl sm:block">
             <button
               type="button"

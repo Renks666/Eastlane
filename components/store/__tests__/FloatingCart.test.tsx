@@ -95,7 +95,7 @@ describe("FloatingCart", () => {
     })
   })
 
-  it("renders mobile capsule and desktop bar when cart has items", () => {
+  it("shows desktop bar and no mobile capsule when cart has items", () => {
     cartState = {
       isHydrated: true,
       items: [
@@ -114,8 +114,7 @@ describe("FloatingCart", () => {
 
     const openButtons = screen.getAllByRole("button", { name: "Открыть корзину" })
     const mobileButton = openButtons.find((button) => button.className.includes("sm:hidden"))
-    expect(mobileButton).toBeDefined()
-    expect(mobileButton?.textContent).toContain("100")
+    expect(mobileButton).toBeUndefined()
 
     const desktopWrapper = document.querySelector("div.sm\\:block")
     expect(desktopWrapper).toBeTruthy()
@@ -150,26 +149,5 @@ describe("FloatingCart", () => {
 
     expect(screen.getByText("Корзина (1)")).toBeTruthy()
     expect(screen.queryByRole("button", { name: "Свернуть корзину" })).toBeNull()
-  })
-
-  it("hides mobile capsule when hideMobileCollapsedTrigger is enabled", () => {
-    cartState = {
-      isHydrated: true,
-      items: [
-        {
-          lineId: "1::M::Black",
-          id: 1,
-          name: "Тестовый товар",
-          price: 100,
-          priceCurrency: "CNY",
-          quantity: 1,
-        },
-      ],
-    }
-    render(<FloatingCart cnyPerRub={0.12} hideMobileCollapsedTrigger />)
-
-    const openButtons = screen.getAllByRole("button", { name: "Открыть корзину" })
-    const mobileButton = openButtons.find((button) => button.className.includes("sm:hidden"))
-    expect(mobileButton).toBeUndefined()
   })
 })

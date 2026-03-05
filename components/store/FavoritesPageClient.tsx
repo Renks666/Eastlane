@@ -1,13 +1,126 @@
 "use client"
 
+import { useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Heart, Trash2 } from "lucide-react"
+import { Heart, ShoppingCart, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import { AddToCartButton } from "@/components/store/AddToCartButton"
+import { useCart } from "@/components/store/CartProvider"
 import { useFavorites } from "@/components/store/FavoritesProvider"
+import type { FavoriteItem } from "@/components/store/favorite-types"
 import { formatCny, formatRub } from "@/src/shared/lib/format-price"
 
 const FALLBACK_IMAGE = "https://placehold.co/600x800/f1efe7/18362e?text=EASTLANE"
+
+type FavoriteCartActionProps = {
+  item: FavoriteItem
+}
+
+function FavoriteCartAction({ item }: FavoriteCartActionProps) {
+  const { addItem } = useCart()
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const quickAddRef = useRef<HTMLDivElement | null>(null)
+
+  const sizes = useMemo(() => item.sizes ?? [], [item.sizes])
+  const colors = useMemo(() => item.colors ?? [], [item.colors])
+  const requiresSizeChoice = sizes.length > 1
+
+  useEffect(() => {
+    if (!quickAddOpen) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (quickAddRef.current && !quickAddRef.current.contains(event.target as Node)) {
+        setQuickAddOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [quickAddOpen])
+
+  const selectedSizeFallback = item.selectedSize ?? (sizes.length === 1 ? sizes[0] : undefined)
+  const selectedColorFallback = item.selectedColor ?? (colors.length === 1 ? colors[0] : undefined)
+
+  const handleQuickAdd = (selectedSize: string) => {
+    addItem({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      priceCurrency: item.priceCurrency,
+      image: item.image,
+      sizes,
+      colors,
+      selectedSize,
+      selectedColor: selectedColorFallback,
+    })
+
+    toast.success("Товар добавлен в корзину", {
+      description: item.name,
+      action: {
+        label: "Открыть корзину",
+        onClick: () => {
+          window.dispatchEvent(new CustomEvent("cart:open"))
+        },
+      },
+      duration: 3000,
+    })
+
+    setQuickAddOpen(false)
+  }
+
+  if (!requiresSizeChoice) {
+    return (
+      <AddToCartButton
+        product={{
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          priceCurrency: item.priceCurrency,
+          image: item.image,
+          sizes,
+          colors,
+          selectedSize: selectedSizeFallback,
+          selectedColor: selectedColorFallback,
+        }}
+        className="h-10 w-full rounded-lg px-3 text-sm"
+      />
+    )
+  }
+
+  return (
+    <div className="relative" ref={quickAddRef}>
+      <button
+        type="button"
+        onClick={() => setQuickAddOpen((prev) => !prev)}
+        className="store-focus inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 text-sm font-semibold text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
+        aria-label="Выбрать размер и добавить в корзину"
+        aria-expanded={quickAddOpen}
+      >
+        <ShoppingCart className="h-4 w-4" />
+        Выбрать размер
+      </button>
+
+      {quickAddOpen ? (
+        <div className="absolute left-0 top-full z-[90] mt-1.5 min-w-[140px] rounded-xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-2 shadow-lg">
+          <p className="mb-2 text-center text-sm font-medium text-[color:var(--color-text-primary)]">Размер:</p>
+          <div className="flex flex-col">
+            {sizes.map((size) => (
+              <button
+                key={`${item.id}-${size}`}
+                type="button"
+                onClick={() => handleQuickAdd(size)}
+                className="store-focus w-full border-t border-b border-[color:var(--color-border-secondary)] py-2 text-center text-xs font-medium text-[color:var(--color-text-secondary)] transition first:border-t-[color:var(--color-border-secondary)] hover:bg-[color:var(--color-bg-accent)] hover:text-[color:var(--color-brand-forest-light)] hover:border-2 hover:border-[color:var(--color-brand-beige-dark)] focus:bg-[color:var(--color-bg-accent)] focus:text-[color:var(--color-brand-forest-light)] focus:border-2 focus:border-[color:var(--color-brand-beige-dark)]"
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}
 
 export function FavoritesPageClient() {
   const { items, isHydrated, removeItem, clear } = useFavorites()
@@ -82,20 +195,7 @@ export function FavoritesPageClient() {
             </div>
 
             <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-2">
-              <AddToCartButton
-                product={{
-                  id: item.id,
-                  name: item.name,
-                  price: item.price,
-                  priceCurrency: item.priceCurrency,
-                  image: item.image,
-                  sizes: item.sizes ?? [],
-                  colors: item.colors ?? [],
-                  selectedSize: item.selectedSize,
-                  selectedColor: item.selectedColor,
-                }}
-                className="h-10 w-full rounded-lg px-3 text-sm"
-              />
+              <FavoriteCartAction item={item} />
               <button
                 type="button"
                 onClick={() => removeItem(item.id)}

@@ -39,13 +39,13 @@ export function StoreHeaderClient() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 md:px-8">
-      <div className="flex h-20 items-center gap-2 md:gap-4">
+      <div className="relative flex h-20 items-center gap-2 md:gap-4">
         <div className="flex shrink-0 items-center gap-1 md:hidden">
           <MobileMenu />
           <button
             type="button"
             onClick={() => setIsMobileSearchOpen((prev) => !prev)}
-            className="store-focus inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
+            className="store-focus inline-flex h-10 w-10 items-center justify-center rounded-lg border-0 bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
             aria-label={isMobileSearchOpen ? "Скрыть поиск" : "Открыть поиск"}
             aria-expanded={isMobileSearchOpen}
           >
@@ -53,7 +53,7 @@ export function StoreHeaderClient() {
           </button>
         </div>
 
-        <div className="min-w-0 shrink md:shrink-0">
+        <div className="absolute left-1/2 z-10 min-w-0 -translate-x-1/2 md:static md:left-auto md:translate-x-0 md:shrink-0">
           <EastlaneLogo compact className="max-w-full" />
         </div>
 
@@ -78,7 +78,7 @@ export function StoreHeaderClient() {
         <div className="ml-auto flex shrink-0 items-center gap-1.5 md:ml-0 md:gap-2">
           <Link
             href="/favorites"
-            className="store-focus relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
+            className="store-focus relative inline-flex h-10 w-10 items-center justify-center rounded-lg border-0 bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:border md:border-[color:var(--color-border-primary)]"
             aria-label="Открыть избранное"
           >
             <Heart className="h-4 w-4" />
@@ -88,7 +88,7 @@ export function StoreHeaderClient() {
           <button
             type="button"
             onClick={openCart}
-            className="store-focus relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)]"
+            className="store-focus relative inline-flex h-10 w-10 items-center justify-center rounded-lg border-0 bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:border md:border-[color:var(--color-border-primary)]"
             aria-label="Открыть корзину"
           >
             <ShoppingCart className="h-4 w-4" />
