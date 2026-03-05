@@ -16,9 +16,10 @@ import {
 
 type FloatingCartProps = {
   cnyPerRub: number
+  hideMobileCollapsedTrigger?: boolean
 }
 
-export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
+export function FloatingCart({ cnyPerRub, hideMobileCollapsedTrigger = false }: FloatingCartProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [canHover, setCanHover] = useState(false)
@@ -28,7 +29,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
   const [customerName, setCustomerName] = useState("")
   const [isPending, startTransition] = useTransition()
   const rateTooltipRootRef = useRef<HTMLDivElement | null>(null)
-  const { items, increment, decrement, removeItem, clear, isHydrated } = useCart()
+  const { items, increment, decrement, removeItem, clear } = useCart()
 
   const itemsCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])
   const hasItems = itemsCount > 0
@@ -160,43 +161,30 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
         isOpen || hasItems ? "w-[calc(100%-2rem)] max-w-[420px] sm:w-[390px]" : "w-auto"
       }`}
     >
-      {!isOpen && !isHydrated ? (
-        <div aria-hidden className="h-11 w-11 rounded-full opacity-0" />
-      ) : null}
-
-      {!isOpen && isHydrated && !hasItems ? (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="store-focus inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest)] shadow-2xl transition hover:bg-[color:var(--color-bg-accent)] sm:-translate-x-4 sm:-translate-y-6"
-          aria-label="Открыть корзину"
-        >
-          <ShoppingCart className="h-5 w-5" />
-        </button>
-      ) : null}
-
       {!isOpen && hasItems ? (
         <>
-          <button
-            type="button"
-            onClick={() => setIsOpen(true)}
-            className="store-focus ml-auto flex min-h-11 w-auto max-w-[300px] items-center gap-2 rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 py-2 text-left text-[color:var(--color-text-primary)] shadow-2xl transition hover:bg-[color:var(--color-bg-accent)] sm:hidden"
-            aria-label="Открыть корзину"
-          >
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--color-bg-image)]">
-              <ShoppingCart className="h-4 w-4 text-[color:var(--color-brand-forest)]" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-xs text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
-                Корзина ({itemsCount}) · <span className="font-price tabular-nums text-sm font-semibold text-black">{primaryTotal}</span>
-              </p>
-              {secondaryTotal ? (
-                <p className="font-price tabular-nums truncate text-xs text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
-                  {secondaryTotal}
+          {!hideMobileCollapsedTrigger ? (
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="store-focus ml-auto flex min-h-11 w-auto max-w-[300px] items-center gap-2 rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 py-2 text-left text-[color:var(--color-text-primary)] shadow-2xl transition hover:bg-[color:var(--color-bg-accent)] sm:hidden"
+              aria-label="Открыть корзину"
+            >
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--color-bg-image)]">
+                <ShoppingCart className="h-4 w-4 text-[color:var(--color-brand-forest)]" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-xs text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
+                  Корзина ({itemsCount}) · <span className="font-price tabular-nums text-sm font-semibold text-black">{primaryTotal}</span>
                 </p>
-              ) : null}
-            </div>
-          </button>
+                {secondaryTotal ? (
+                  <p className="font-price tabular-nums truncate text-xs text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
+                    {secondaryTotal}
+                  </p>
+                ) : null}
+              </div>
+            </button>
+          ) : null}
 
           <div className="hidden rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] shadow-2xl sm:block">
             <button

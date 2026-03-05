@@ -1,8 +1,10 @@
 ﻿"use client"
 
 import { useState } from "react"
-import { Check, ChevronDown } from "lucide-react"
+import { motion } from "framer-motion"
+import { Check, ChevronDown, Heart } from "lucide-react"
 import { AddToCartButton } from "@/components/store/AddToCartButton"
+import { useFavorites } from "@/components/store/FavoritesProvider"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { resolveColorSwatch } from "@/src/domains/product-attributes/color-swatches"
 import type { PriceCurrency } from "@/src/shared/lib/format-price"
@@ -16,6 +18,8 @@ type ProductPurchasePanelProps = {
     image?: string
     sizes: string[]
     colors: string[]
+    brandName?: string | null
+    categoryName?: string | null
   }
 }
 
@@ -29,9 +33,11 @@ const TEXT = {
 export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
   const [activeSize, setActiveSize] = useState<string | null>(product.sizes.length === 1 ? product.sizes[0] : null)
   const [sizeMenuOpen, setSizeMenuOpen] = useState(false)
+  const { hasItem, toggleItem } = useFavorites()
 
   const requiresSize = product.sizes.length > 0
   const addDisabled = requiresSize && !activeSize
+  const isFavorite = hasItem(product.id)
   const visibleColors = product.colors.slice(0, 8)
   const hiddenColorsCount = Math.max(product.colors.length - visibleColors.length, 0)
 
@@ -39,6 +45,22 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
     if (requiresSize) return TEXT.pickSizeFirst
     return null
   })()
+
+  const handleFavoriteToggle = () => {
+    toggleItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      priceCurrency: product.priceCurrency,
+      image: product.image,
+      sizes: product.sizes,
+      colors: product.colors,
+      selectedSize: activeSize ?? undefined,
+      selectedColor: product.colors.length === 1 ? product.colors[0] : undefined,
+      brandName: product.brandName,
+      categoryName: product.categoryName,
+    })
+  }
 
   return (
     <div className="space-y-3.5">
@@ -121,21 +143,44 @@ export function ProductPurchasePanel({ product }: ProductPurchasePanelProps) {
 
       {helperText ? <p className="text-xs leading-snug text-[color:var(--color-text-tertiary)]">{helperText}</p> : null}
 
-      <AddToCartButton
-        product={{
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          priceCurrency: product.priceCurrency,
-          image: product.image,
-          sizes: product.sizes,
-          colors: product.colors,
-          selectedSize: activeSize ?? undefined,
-          selectedColor: product.colors.length === 1 ? product.colors[0] : undefined,
-        }}
-        disabled={addDisabled}
-        className="w-full rounded-xl bg-[color:var(--color-brand-forest)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_-16px_rgba(10,61,49,0.7)] transition hover:bg-[color:var(--color-brand-forest-dark)]"
-      />
+      <div className="flex items-center gap-2">
+        <AddToCartButton
+          product={{
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            priceCurrency: product.priceCurrency,
+            image: product.image,
+            sizes: product.sizes,
+            colors: product.colors,
+            selectedSize: activeSize ?? undefined,
+            selectedColor: product.colors.length === 1 ? product.colors[0] : undefined,
+          }}
+          disabled={addDisabled}
+          className="w-full rounded-xl bg-[color:var(--color-brand-forest)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_-16px_rgba(10,61,49,0.7)] transition hover:bg-[color:var(--color-brand-forest-dark)]"
+        />
+        <motion.button
+          type="button"
+          onClick={handleFavoriteToggle}
+          whileTap={{ scale: 0.92 }}
+          className={`store-focus inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border bg-[color:var(--color-bg-primary)] transition hover:bg-[color:var(--color-bg-accent)] ${
+            isFavorite
+              ? "border-[color:var(--color-brand-beige-dark)] text-[color:var(--color-brand-beige-dark)]"
+              : "border-[color:var(--color-border-primary)] text-[color:var(--color-brand-forest-light)]"
+          }`}
+          aria-label={isFavorite ? "Убрать из избранного" : "Добавить в избранное"}
+          aria-pressed={isFavorite}
+        >
+          <motion.span
+            key={isFavorite ? "favorite" : "not-favorite"}
+            initial={{ scale: 0.75, opacity: 0.85 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+          </motion.span>
+        </motion.button>
+      </div>
     </div>
   )
 }

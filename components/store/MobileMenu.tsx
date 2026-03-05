@@ -16,6 +16,7 @@ export function MobileMenu({ className }: MobileMenuProps) {
   const menuItems = [
     { href: "/", label: "Главная" },
     { href: "/catalog", label: "Каталог" },
+    { href: "/favorites", label: "Избранное" },
     { href: "/delivery", label: "Тарифы и доставка" },
     { href: "/#faq", label: "FAQ" },
     { href: "/about", label: "О нас" },

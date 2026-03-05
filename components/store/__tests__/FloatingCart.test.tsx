@@ -1,7 +1,8 @@
 /* @vitest-environment jsdom */
+/* eslint-disable @next/next/no-img-element */
 
 import React from "react"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { FloatingCart } from "@/components/store/FloatingCart"
 import type { CartItem } from "@/components/store/cart-types"
@@ -78,23 +79,23 @@ describe("FloatingCart", () => {
     })
   })
 
-  it("renders only compact empty FAB when cart is empty and hydrated", () => {
+  it("does not render empty floating trigger when cart is empty", () => {
     render(<FloatingCart cnyPerRub={0.12} />)
 
-    const openButton = screen.getByRole("button", { name: "Открыть корзину" })
-    expect(openButton.className).toContain("h-11")
-    expect(openButton.className).toContain("w-11")
+    expect(screen.queryByRole("button", { name: "Открыть корзину" })).toBeNull()
     expect(screen.queryByText(/Корзина \(\d+\)/)).toBeNull()
   })
 
-  it("opens empty cart panel on empty FAB click", () => {
+  it("opens empty cart panel via cart:open event", async () => {
     render(<FloatingCart cnyPerRub={0.12} />)
 
-    fireEvent.click(screen.getByRole("button", { name: "Открыть корзину" }))
-    expect(screen.getByText("Ваша корзина пуста. Добавьте товары из каталога.")).toBeTruthy()
+    window.dispatchEvent(new CustomEvent("cart:open"))
+    await waitFor(() => {
+      expect(screen.getByText("Ваша корзина пуста. Добавьте товары из каталога.")).toBeTruthy()
+    })
   })
 
-  it("renders mobile compact capsule and desktop full bar when cart has items", () => {
+  it("renders mobile capsule and desktop bar when cart has items", () => {
     cartState = {
       isHydrated: true,
       items: [
@@ -114,23 +115,21 @@ describe("FloatingCart", () => {
     const openButtons = screen.getAllByRole("button", { name: "Открыть корзину" })
     const mobileButton = openButtons.find((button) => button.className.includes("sm:hidden"))
     expect(mobileButton).toBeDefined()
-    expect(mobileButton?.textContent).toContain("100 ¥")
-    expect(mobileButton?.textContent).toContain("1")
+    expect(mobileButton?.textContent).toContain("100")
 
     const desktopWrapper = document.querySelector("div.sm\\:block")
     expect(desktopWrapper).toBeTruthy()
     expect(screen.getByText("Корзина (1)")).toBeTruthy()
   })
 
-  it("does not show empty FAB before cart hydration", () => {
+  it("does not show empty panel before cart hydration", () => {
     cartState = { items: [], isHydrated: false }
     render(<FloatingCart cnyPerRub={0.12} />)
 
-    expect(screen.queryByRole("button", { name: "Открыть корзину" })).toBeNull()
     expect(screen.queryByText("Ваша корзина пуста. Добавьте товары из каталога.")).toBeNull()
   })
 
-  it("switches from empty to non-empty closed state without auto-opening panel", () => {
+  it("switches from empty to non-empty closed state without auto-opening", () => {
     const { rerender } = render(<FloatingCart cnyPerRub={0.12} />)
 
     cartState = {
@@ -151,5 +150,26 @@ describe("FloatingCart", () => {
 
     expect(screen.getByText("Корзина (1)")).toBeTruthy()
     expect(screen.queryByRole("button", { name: "Свернуть корзину" })).toBeNull()
+  })
+
+  it("hides mobile capsule when hideMobileCollapsedTrigger is enabled", () => {
+    cartState = {
+      isHydrated: true,
+      items: [
+        {
+          lineId: "1::M::Black",
+          id: 1,
+          name: "Тестовый товар",
+          price: 100,
+          priceCurrency: "CNY",
+          quantity: 1,
+        },
+      ],
+    }
+    render(<FloatingCart cnyPerRub={0.12} hideMobileCollapsedTrigger />)
+
+    const openButtons = screen.getAllByRole("button", { name: "Открыть корзину" })
+    const mobileButton = openButtons.find((button) => button.className.includes("sm:hidden"))
+    expect(mobileButton).toBeUndefined()
   })
 })

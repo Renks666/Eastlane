@@ -3,10 +3,12 @@
 import { useMemo, useRef, useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Search, ShoppingCart, ZoomIn, ZoomOut, X } from "lucide-react"
+import { motion } from "framer-motion"
+import { ChevronLeft, ChevronRight, Heart, Search, ShoppingCart, ZoomIn, ZoomOut, X } from "lucide-react"
 import { toast } from "sonner"
 import { AddToCartButton } from "@/components/store/AddToCartButton"
 import { useCart } from "@/components/store/CartProvider"
+import { useFavorites } from "@/components/store/FavoritesProvider"
 import { ExchangeRateTooltip } from "@/components/store/ExchangeRateTooltip"
 import { useSwipeCarousel } from "@/components/store/useSwipeCarousel"
 import {
@@ -57,6 +59,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     return normalizedImages.length > 0 ? normalizedImages : [FALLBACK_IMAGE]
   }, [product.images])
   const { addItem } = useCart()
+  const { hasItem, toggleItem } = useFavorites()
 
   const [isViewerOpen, setIsViewerOpen] = useState(false)
   const [isViewerSynced, setIsViewerSynced] = useState(false)
@@ -92,6 +95,7 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
   const pinchStartZoomRef = useRef(1)
 
   const hasVariants = sizes.length > 1 || colors.length > 1
+  const isFavorite = hasItem(product.id)
   const visibleColors = colors.slice(0, 5)
   const hiddenColorsCount = Math.max(colors.length - visibleColors.length, 0)
   const hasValidRate = Number.isFinite(cnyPerRub) && cnyPerRub > 0
@@ -376,6 +380,22 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
     setIsRateDetailsOpen(false)
   }
 
+  const handleFavoriteToggle = () => {
+    toggleItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      priceCurrency: product.priceCurrency,
+      image: product.images?.[0],
+      sizes,
+      colors,
+      selectedSize: sizes.length === 1 ? sizes[0] : undefined,
+      selectedColor: colors.length === 1 ? colors[0] : undefined,
+      brandName: product.brandName,
+      categoryName: product.categoryName,
+    })
+  }
+
   useEffect(() => {
     if (!isViewerOpen || !viewerEmblaApi) return
     viewerEmblaApi.scrollTo(cardSelectedIndex, true)
@@ -458,6 +478,28 @@ export function StoreProductCard({ product, cnyPerRub }: StoreProductCardProps) 
               ))}
             </div>
           </div>
+
+          <motion.button
+            type="button"
+            onClick={handleFavoriteToggle}
+            whileTap={{ scale: 0.9 }}
+            className={`store-focus absolute left-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-[color:var(--color-bg-primary)]/90 transition hover:bg-[color:var(--color-bg-primary)] ${
+              isFavorite
+                ? "border-[color:var(--color-brand-beige-dark)] text-[color:var(--color-brand-beige-dark)]"
+                : "border-[color:var(--color-border-primary)] text-[color:var(--color-brand-forest-light)]"
+            }`}
+            aria-label={isFavorite ? "Убрать из избранного" : "Добавить в избранное"}
+            aria-pressed={isFavorite}
+          >
+            <motion.span
+              key={isFavorite ? "favorite" : "not-favorite"}
+              initial={{ scale: 0.75, opacity: 0.85 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+            </motion.span>
+          </motion.button>
 
           <button
             type="button"

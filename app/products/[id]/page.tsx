@@ -69,6 +69,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const sizes = product.sizes ?? []
   const colors = product.colors ?? []
   const brandName = resolveRelationName(product.brands)
+  const categoryName = resolveRelationName(product.categories)
   const seasons = Array.from(
     new Set(
       (product.seasons ?? [])
@@ -127,6 +128,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   image: product.images?.[0],
                   sizes,
                   colors,
+                  brandName,
+                  categoryName,
                 }}
               />
             </div>
