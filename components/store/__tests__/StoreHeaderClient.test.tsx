@@ -151,4 +151,25 @@ describe("StoreHeaderClient", () => {
       expect(row.className).toContain("h-20")
     })
   })
+
+  it("keeps icon sizes unchanged on scroll", async () => {
+    render(<StoreHeaderClient />)
+
+    const searchButton = screen.getByTestId("mobile-search-toggle")
+    const favoritesLink = screen.getByTestId("mobile-favorites-link")
+    const cartButton = screen.getByTestId("mobile-cart-toggle")
+
+    expect(searchButton.className).toContain("h-10 w-10")
+    expect(favoritesLink.className).toContain("h-10 w-10")
+    expect(cartButton.className).toContain("h-10 w-10")
+
+    window.scrollY = 20
+    window.dispatchEvent(new Event("scroll"))
+
+    await waitFor(() => {
+      expect(searchButton.className).toContain("h-10 w-10")
+      expect(favoritesLink.className).toContain("h-10 w-10")
+      expect(cartButton.className).toContain("h-10 w-10")
+    })
+  })
 })

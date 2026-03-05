@@ -61,7 +61,6 @@ export function StoreHeaderClient() {
     window.dispatchEvent(new CustomEvent("cart:open"))
   }
 
-  const mobileIconButtonSize = isScrolled ? "h-9 w-9" : "h-10 w-10"
   const mobileHeaderHeight = isScrolled ? "h-[68px]" : "h-20"
 
   return (
@@ -72,12 +71,12 @@ export function StoreHeaderClient() {
       >
         <div className="flex shrink-0 items-center gap-1 md:hidden">
           <MobileMenu
-            className={`${mobileIconButtonSize} !border-0 !bg-transparent hover:!bg-[color:var(--color-bg-accent)]`}
+            className="h-10 w-10 !border-0 !bg-transparent hover:!bg-[color:var(--color-bg-accent)]"
           />
           <button
             type="button"
             onClick={() => setIsMobileSearchOpen((prev) => !prev)}
-            className={`store-focus inline-flex items-center justify-center rounded-lg border-0 bg-transparent text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:h-10 md:w-10 ${mobileIconButtonSize}`}
+            className="store-focus inline-flex h-10 w-10 items-center justify-center rounded-lg border-0 bg-transparent text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:h-10 md:w-10"
             aria-label={isMobileSearchOpen ? "Скрыть поиск" : "Открыть поиск"}
             aria-expanded={isMobileSearchOpen}
             data-testid="mobile-search-toggle"
@@ -86,9 +85,7 @@ export function StoreHeaderClient() {
           </button>
         </div>
 
-        <div
-          className={`absolute left-1/2 z-10 min-w-0 -translate-x-1/2 transition-transform duration-200 ease-out md:static md:left-auto md:translate-x-0 md:shrink-0 ${isScrolled ? "max-md:scale-95" : ""}`}
-        >
+        <div className="absolute left-1/2 z-10 min-w-0 -translate-x-1/2 md:static md:left-auto md:translate-x-0 md:shrink-0">
           <EastlaneLogo compact className="max-w-full" />
         </div>
 
@@ -113,7 +110,7 @@ export function StoreHeaderClient() {
         <div className="ml-auto flex shrink-0 items-center gap-1.5 md:ml-0 md:gap-2">
           <Link
             href="/favorites"
-            className={`store-focus relative inline-flex items-center justify-center rounded-lg border-0 bg-transparent text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:h-10 md:w-10 md:border md:border-[color:var(--color-border-primary)] md:bg-[color:var(--color-bg-primary)] ${mobileIconButtonSize}`}
+            className="store-focus relative inline-flex h-10 w-10 items-center justify-center rounded-lg border-0 bg-transparent text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:h-10 md:w-10 md:border md:border-[color:var(--color-border-primary)] md:bg-[color:var(--color-bg-primary)]"
             aria-label="Открыть избранное"
             data-testid="mobile-favorites-link"
           >
@@ -124,7 +121,7 @@ export function StoreHeaderClient() {
           <button
             type="button"
             onClick={openCart}
-            className={`store-focus relative inline-flex items-center justify-center rounded-lg border-0 bg-transparent text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:h-10 md:w-10 md:border md:border-[color:var(--color-border-primary)] md:bg-[color:var(--color-bg-primary)] ${mobileIconButtonSize}`}
+            className="store-focus relative inline-flex h-10 w-10 items-center justify-center rounded-lg border-0 bg-transparent text-[color:var(--color-brand-forest-light)] transition hover:bg-[color:var(--color-bg-accent)] md:h-10 md:w-10 md:border md:border-[color:var(--color-border-primary)] md:bg-[color:var(--color-bg-primary)]"
             aria-label="Открыть корзину"
             data-testid="mobile-cart-toggle"
           >
