@@ -8,6 +8,7 @@ type AddToCartInput = Omit<CartItem, "quantity" | "lineId">
 type CartContextValue = {
   items: CartItem[]
   total: number
+  isHydrated: boolean
   addItem: (item: AddToCartInput, quantity?: number) => void
   removeItem: (lineId: string) => void
   increment: (lineId: string) => void
@@ -107,7 +108,7 @@ export function CartProvider({ children }: CartProviderProps) {
 
   return (
     <CartContext.Provider
-      value={{ items, total, addItem, removeItem, increment, decrement, clear }}
+      value={{ items, total, isHydrated: isStorageReady, addItem, removeItem, increment, decrement, clear }}
     >
       {children}
     </CartContext.Provider>

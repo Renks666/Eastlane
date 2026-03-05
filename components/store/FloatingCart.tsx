@@ -28,9 +28,10 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
   const [customerName, setCustomerName] = useState("")
   const [isPending, startTransition] = useTransition()
   const rateTooltipRootRef = useRef<HTMLDivElement | null>(null)
-  const { items, increment, decrement, removeItem, clear } = useCart()
+  const { items, increment, decrement, removeItem, clear, isHydrated } = useCart()
 
   const itemsCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])
+  const hasItems = itemsCount > 0
 
   const totalAmountCny = useMemo(() => {
     return items.reduce((sum, item) => {
@@ -154,40 +155,80 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
   }
 
   return (
-    <div className="fixed right-4 z-50 w-[calc(100%-2rem)] max-w-[420px] bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+1rem)] sm:w-[390px]">
-      <div className="rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] shadow-2xl max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
-        {!isOpen && (
+    <div
+      className={`fixed right-5 sm:right-6 z-50 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+1rem)] ${
+        isOpen || hasItems ? "w-[calc(100%-2rem)] max-w-[420px] sm:w-[390px]" : "w-auto"
+      }`}
+    >
+      {!isOpen && !isHydrated ? (
+        <div aria-hidden className="h-11 w-11 rounded-full opacity-0" />
+      ) : null}
+
+      {!isOpen && isHydrated && !hasItems ? (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="store-focus inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest)] shadow-2xl transition hover:bg-[color:var(--color-bg-accent)]"
+          aria-label="Открыть корзину"
+        >
+          <ShoppingCart className="h-5 w-5" />
+        </button>
+      ) : null}
+
+      {!isOpen && hasItems ? (
+        <>
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="store-focus flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left transition hover:bg-[color:var(--color-bg-accent)]"
+            className="store-focus ml-auto flex min-h-11 w-auto max-w-[280px] items-center gap-2 rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 py-2 text-left text-[color:var(--color-text-primary)] shadow-2xl transition hover:bg-[color:var(--color-bg-accent)] sm:hidden"
             aria-label="Открыть корзину"
           >
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--color-bg-image)]">
-                <ShoppingCart className="h-5 w-5 text-[color:var(--color-brand-forest)]" />
-              </span>
-              <span className="text-sm text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
-                Корзина{itemsCount > 0 ? ` (${itemsCount})` : ""}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <p className="font-price tabular-nums text-base font-semibold text-black" suppressHydrationWarning>
-                  {primaryTotal}
-                </p>
-                {secondaryTotal ? (
-                  <p className="font-price tabular-nums text-xs text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
-                    {secondaryTotal}
-                  </p>
-                ) : null}
-              </div>
-              <ChevronUp className="h-4 w-4 text-[color:var(--color-text-tertiary)]" />
-            </div>
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--color-bg-image)]">
+              <ShoppingCart className="h-4 w-4 text-[color:var(--color-brand-forest)]" />
+            </span>
+            <span className="min-w-0 truncate text-sm text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
+              {itemsCount}
+            </span>
+            <span className="font-price tabular-nums min-w-0 truncate text-sm font-semibold text-black" suppressHydrationWarning>
+              {primaryTotal}
+            </span>
           </button>
-        )}
 
-        {isOpen && (
+          <div className="hidden rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] shadow-2xl sm:block">
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="store-focus flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left transition hover:bg-[color:var(--color-bg-accent)]"
+              aria-label="Открыть корзину"
+            >
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--color-bg-image)]">
+                  <ShoppingCart className="h-5 w-5 text-[color:var(--color-brand-forest)]" />
+                </span>
+                <span className="text-sm text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
+                  Корзина ({itemsCount})
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-right">
+                  <p className="font-price tabular-nums text-base font-semibold text-black" suppressHydrationWarning>
+                    {primaryTotal}
+                  </p>
+                  {secondaryTotal ? (
+                    <p className="font-price tabular-nums text-xs text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
+                      {secondaryTotal}
+                    </p>
+                  ) : null}
+                </div>
+                <ChevronUp className="h-4 w-4 text-[color:var(--color-text-tertiary)]" />
+              </div>
+            </button>
+          </div>
+        </>
+      ) : null}
+
+      {isOpen && (
+        <div className="rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] shadow-2xl max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
           <div className="p-4">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-[color:var(--color-brand-forest-light)]">Корзина</h3>
@@ -340,8 +381,8 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
               Оформить заказ
             </button>
           </div>
+        </div>
         )}
-      </div>
 
       {isCheckoutOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
