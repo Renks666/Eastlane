@@ -156,7 +156,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
 
   return (
     <div
-      className={`fixed right-5 sm:right-6 z-50 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+1rem)] ${
+      className={`fixed right-2 z-50 bottom-[calc(env(safe-area-inset-bottom)+0.25rem)] sm:right-6 sm:bottom-[calc(env(safe-area-inset-bottom)+1rem)] ${
         isOpen || hasItems ? "w-[calc(100%-2rem)] max-w-[420px] sm:w-[390px]" : "w-auto"
       }`}
     >
@@ -168,7 +168,7 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="store-focus inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest)] shadow-2xl transition hover:bg-[color:var(--color-bg-accent)]"
+          className="store-focus inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-brand-forest)] shadow-2xl transition hover:bg-[color:var(--color-bg-accent)] sm:-translate-x-4 sm:-translate-y-6"
           aria-label="Открыть корзину"
         >
           <ShoppingCart className="h-5 w-5" />
@@ -180,18 +180,22 @@ export function FloatingCart({ cnyPerRub }: FloatingCartProps) {
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="store-focus ml-auto flex min-h-11 w-auto max-w-[280px] items-center gap-2 rounded-full border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 py-2 text-left text-[color:var(--color-text-primary)] shadow-2xl transition hover:bg-[color:var(--color-bg-accent)] sm:hidden"
+            className="store-focus ml-auto flex min-h-11 w-auto max-w-[300px] items-center gap-2 rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] px-3 py-2 text-left text-[color:var(--color-text-primary)] shadow-2xl transition hover:bg-[color:var(--color-bg-accent)] sm:hidden"
             aria-label="Открыть корзину"
           >
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--color-bg-image)]">
               <ShoppingCart className="h-4 w-4 text-[color:var(--color-brand-forest)]" />
             </span>
-            <span className="min-w-0 truncate text-sm text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
-              {itemsCount}
-            </span>
-            <span className="font-price tabular-nums min-w-0 truncate text-sm font-semibold text-black" suppressHydrationWarning>
-              {primaryTotal}
-            </span>
+            <div className="min-w-0">
+              <p className="truncate text-xs text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
+                Корзина ({itemsCount}) · <span className="font-price tabular-nums text-sm font-semibold text-black">{primaryTotal}</span>
+              </p>
+              {secondaryTotal ? (
+                <p className="font-price tabular-nums truncate text-xs text-[color:var(--color-text-secondary)]" suppressHydrationWarning>
+                  {secondaryTotal}
+                </p>
+              ) : null}
+            </div>
           </button>
 
           <div className="hidden rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] text-[color:var(--color-text-primary)] shadow-2xl sm:block">
