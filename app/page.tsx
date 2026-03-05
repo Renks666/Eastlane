@@ -125,7 +125,13 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <FaqSection />
+      <FaqSection
+        importantBlock={{
+          importantTitle: content.eastlaneTariffs.importantTitle,
+          importantItems: content.eastlaneTariffs.importantItems,
+          returnPolicy: content.eastlaneTariffs.returnPolicy,
+        }}
+      />
 
       <section className="store-section pb-16">
         <div className="store-card p-5 md:p-6">

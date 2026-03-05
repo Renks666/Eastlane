@@ -14,7 +14,6 @@ export async function getStorefrontContent() {
     "contacts",
     "about",
     "delivery_rates",
-    "eastlane_tariffs",
     "exchange_rate",
   ])
 

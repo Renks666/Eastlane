@@ -78,19 +78,43 @@ describe("resolveStorefrontContentSections", () => {
     expect(result.eastlaneTariffs).toEqual(defaultEastlaneTariffsSection)
   })
 
-  it("uses eastlane tariffs from payload when section is published", () => {
+  it("ignores eastlane tariffs payload when section is published", () => {
     const result = resolveStorefrontContentSections({
       eastlane_tariffs: section({
         key: "eastlane_tariffs",
         payload: {
-          ...defaultEastlaneTariffsSection,
-          title: "Тарифы EASTLANE NEW",
+          title: "Кастомный заголовок",
+          formulaText: "Кастомная формула",
+          tiers: [
+            {
+              id: "retail",
+              minItems: 2,
+              serviceFeeCny: 77,
+              serviceFeeRubApprox: 770,
+            },
+            {
+              id: "wholesale",
+              minItems: 8,
+              serviceFeeCny: 33,
+              serviceFeeRubApprox: 330,
+            },
+          ],
         },
         isPublished: true,
       }),
     })
 
-    expect(result.eastlaneTariffs.title).toBe("Тарифы EASTLANE NEW")
+    expect(result.eastlaneTariffs.title).toBe(defaultEastlaneTariffsSection.title)
+    expect(result.eastlaneTariffs.formulaText).toBe(defaultEastlaneTariffsSection.formulaText)
+    expect(result.eastlaneTariffs.tiers[0].minItems).toBe(
+      defaultEastlaneTariffsSection.tiers[0].minItems
+    )
+    expect(result.eastlaneTariffs.tiers[0].serviceFeeCny).toBe(
+      defaultEastlaneTariffsSection.tiers[0].serviceFeeCny
+    )
+    expect(result.eastlaneTariffs.tiers[0].serviceFeeRubApprox).toBe(
+      defaultEastlaneTariffsSection.tiers[0].serviceFeeRubApprox
+    )
   })
 
   it("uses default exchange rate when section is missing", () => {

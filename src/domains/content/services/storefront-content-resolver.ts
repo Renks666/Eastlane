@@ -11,7 +11,6 @@ import {
 } from "../default-content"
 import { parseDeliveryRatesSectionPayload } from "../delivery-rates-schema"
 import { parseExchangeRateSectionPayload } from "../exchange-rate-schema"
-import { parseEastlaneTariffsSectionPayload } from "../eastlane-tariffs-schema"
 import type {
   AboutSectionContent,
   BenefitsSectionContent,
@@ -35,20 +34,6 @@ function selectPayload<T>(value: unknown, fallback: T): T {
 
 type SiteContentSections = Partial<Record<ContentSectionKey, ContentSection>>
 
-const LEGACY_FORMULA_TITLE = "Итоговая формула расчета"
-const LEGACY_FORMULA_TEXT = "Итоговая стоимость = цена товара × количество + сервис × количество + доставка"
-const UPDATED_FORMULA_TITLE = "Формула / Как формируется цена"
-const UPDATED_FORMULA_TEXT = "Итоговая сумма = Стоимость товара + Сервис + Доставка по Китаю + Международная доставка"
-
-function normalizeEastlaneTariffs(content: EastlaneTariffsSectionContent): EastlaneTariffsSectionContent {
-  const formulaTitle =
-    content.formulaTitle.trim() === LEGACY_FORMULA_TITLE ? UPDATED_FORMULA_TITLE : content.formulaTitle
-  const formulaText =
-    content.formulaText.trim() === LEGACY_FORMULA_TEXT ? UPDATED_FORMULA_TEXT : content.formulaText
-
-  return { ...content, formulaTitle, formulaText }
-}
-
 export function resolveStorefrontContentSections(sections: SiteContentSections) {
   const hero = sections.hero?.isPublished
     ? selectPayload<HeroSectionContent>(sections.hero.payload, defaultHeroSection)
@@ -71,10 +56,7 @@ export function resolveStorefrontContentSections(sections: SiteContentSections) 
   const deliveryRates: DeliveryRatesSectionContent = sections.delivery_rates?.isPublished
     ? parseDeliveryRatesSectionPayload(sections.delivery_rates.payload, defaultDeliveryRatesSection)
     : defaultDeliveryRatesSection
-  const eastlaneTariffsRaw: EastlaneTariffsSectionContent = sections.eastlane_tariffs?.isPublished
-    ? parseEastlaneTariffsSectionPayload(sections.eastlane_tariffs.payload, defaultEastlaneTariffsSection)
-    : defaultEastlaneTariffsSection
-  const eastlaneTariffs = normalizeEastlaneTariffs(eastlaneTariffsRaw)
+  const eastlaneTariffs: EastlaneTariffsSectionContent = defaultEastlaneTariffsSection
   const exchangeRate: ExchangeRateSectionContent = sections.exchange_rate?.isPublished
     ? parseExchangeRateSectionPayload(sections.exchange_rate.payload, defaultExchangeRateSection)
     : defaultExchangeRateSection

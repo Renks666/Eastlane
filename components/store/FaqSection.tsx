@@ -1,8 +1,36 @@
-﻿import { ChevronDown } from "lucide-react"
+import { AlertTriangle, Building2, ChevronDown, CircleDot, Package, Search, ShieldCheck, Truck } from "lucide-react"
+import type { EastlaneTariffsSectionContent } from "@/src/domains/content/types"
 
 type FaqItem = {
   question: string
   answer: string[]
+}
+
+type FaqSectionProps = {
+  importantBlock: Pick<EastlaneTariffsSectionContent, "importantTitle" | "importantItems" | "returnPolicy">
+}
+
+const CDEK_DELIVERY_ITEM =
+  "По желанию клиента возможна доставка СДЭК до пункта выдачи или курьером до двери. Стоимость рассчитывается индивидуально."
+const IMPORTANT_ICON_COLOR = "text-cyan-500"
+
+function resolveImportantItemIcon(item: string) {
+  const normalizedItem = item.toLowerCase()
+
+  if (normalizedItem.includes("оптов")) return Building2
+  if (normalizedItem.includes("поиск") || normalizedItem.includes("найти")) return Search
+  if (normalizedItem.includes("страх")) return ShieldCheck
+  if (
+    normalizedItem.includes("достав") ||
+    normalizedItem.includes("сдэк") ||
+    normalizedItem.includes("курьер") ||
+    normalizedItem.includes("пункт выдачи")
+  ) {
+    return Truck
+  }
+  if (normalizedItem.includes("минимальн") || normalizedItem.includes("единичн")) return Package
+
+  return CircleDot
 }
 
 const faqItems: FaqItem[] = [
@@ -50,7 +78,11 @@ const faqItems: FaqItem[] = [
   },
 ]
 
-export function FaqSection() {
+export function FaqSection({ importantBlock }: FaqSectionProps) {
+  const importantItems = importantBlock.importantItems.includes(CDEK_DELIVERY_ITEM)
+    ? importantBlock.importantItems
+    : [...importantBlock.importantItems, CDEK_DELIVERY_ITEM]
+
   return (
     <section id="faq" className="store-section pb-14">
       <div className="store-card p-5 md:p-6">
@@ -92,6 +124,25 @@ export function FaqSection() {
               </div>
             </details>
           ))}
+        </div>
+
+        <div className="mt-5 rounded-xl border border-[color:var(--color-border-secondary)] bg-white p-4">
+          <h3 className="text-base font-semibold text-black">{importantBlock.importantTitle}</h3>
+          <ul className="mt-3 space-y-2.5 text-sm md:space-y-3">
+            {importantItems.map((item, index) => {
+              const Icon = resolveImportantItemIcon(item)
+              return (
+                <li key={`${item}-${index}`} className="flex items-start gap-2.5 text-black">
+                  <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${IMPORTANT_ICON_COLOR}`} />
+                  <span className="break-words leading-snug md:leading-relaxed">{item}</span>
+                </li>
+              )
+            })}
+            <li className="flex items-start gap-2.5">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+              <span className="break-words leading-snug text-black md:leading-relaxed">{importantBlock.returnPolicy}</span>
+            </li>
+          </ul>
         </div>
       </div>
     </section>

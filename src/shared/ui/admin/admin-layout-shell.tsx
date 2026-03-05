@@ -17,7 +17,6 @@ import {
   Shapes,
   Tags,
   Truck,
-  WalletCards,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
@@ -50,7 +49,6 @@ const navItems: NavItem[] = [
   { title: "Бренды", href: "/admin/brands", icon: Tags },
   { title: "Заказы", href: "/admin/orders", icon: ShoppingCart },
   { title: "Тарифы и доставка", href: "/admin/content/delivery", icon: Truck },
-  { title: "Тарифы EASTLANE", href: "/admin/content/eastlane-tariffs", icon: WalletCards },
 ]
 
 function isNavItemActive(pathname: string, href: string) {
@@ -61,7 +59,6 @@ function isNavItemActive(pathname: string, href: string) {
 }
 
 function resolveTitle(pathname: string) {
-  if (pathname.startsWith("/admin/content/eastlane-tariffs")) return "Тарифы EASTLANE"
   if (pathname.startsWith("/admin/content/delivery")) return "Тарифы и доставка"
   if (pathname.startsWith("/admin/orders")) return "Заказы"
   if (pathname.startsWith("/admin/attributes")) return "Attributes"
@@ -72,7 +69,6 @@ function resolveTitle(pathname: string) {
 }
 
 function resolveSearchRoute(pathname: string) {
-  if (pathname.startsWith("/admin/content/eastlane-tariffs")) return null
   if (pathname.startsWith("/admin/content/delivery")) return null
   if (pathname.startsWith("/admin/attributes")) return "/admin/attributes"
   if (pathname.startsWith("/admin/products")) return "/admin/products"

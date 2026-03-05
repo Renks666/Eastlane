@@ -92,6 +92,17 @@ export type EastlaneTariffsTier = {
   warning: string
 }
 
+export type EastlaneTariffsEditableTier = {
+  id: "retail" | "wholesale"
+  minItems: number
+  serviceFeeCny: number
+  serviceFeeRubApprox: number
+}
+
+export type EastlaneTariffsEditablePayload = {
+  tiers: [EastlaneTariffsEditableTier, EastlaneTariffsEditableTier]
+}
+
 export type EastlaneTariffsSectionContent = {
   title: string
   subtitle: string

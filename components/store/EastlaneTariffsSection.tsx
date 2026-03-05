@@ -1,27 +1,9 @@
-﻿import {
-  AlertTriangle,
-  Building2,
-  CircleDot,
-  Search,
-  ShieldCheck,
-  Sigma,
-  Truck,
-} from "lucide-react"
+import { Sigma } from "lucide-react"
 import type { EastlaneTariffsSectionContent } from "@/src/domains/content/types"
 
 type EastlaneTariffsSectionProps = {
   content: EastlaneTariffsSectionContent
 }
-
-const IMPORTANT_ITEM_ICONS = [CircleDot, Building2, Search, ShieldCheck, Truck]
-const IMPORTANT_ITEMS = [
-  "Минимальный заказ не обязателен — можно брать единичные позиции.",
-  "Оптовые заказы рассчитываются индивидуально.",
-  "Возможен поиск любых товаров по вашей просьбе.",
-  "Рекомендуется страховка. Покрывает стоимость товара. Частично может покрывать стоимость доставки в зависимости от перевозчика.",
-  "Международная доставка включает транспортировку до страны получателя. Доставка до конкретного адреса или пункта выдачи оформляется через курьерскую службу дополнительно.",
-  "Возврат возможен только на территории Китая и только по уважительной причине (брак, неправильный цвет/размер). После отправки товара к вам возврат невозможен.",
-]
 
 const CALC_ROWS = [
   { priceRange: "0 - 500", percent: "-", commission: "50" },
@@ -34,8 +16,6 @@ const CALC_ROWS = [
 ]
 
 export function EastlaneTariffsSection({ content }: EastlaneTariffsSectionProps) {
-  const importantItems = IMPORTANT_ITEMS
-
   return (
     <section className="store-section pb-12 md:pb-16">
       <div className="relative overflow-hidden rounded-2xl border border-[color:var(--color-border-primary)] bg-[color:var(--color-bg-primary)] p-4 shadow-[0_20px_60px_-40px_rgba(15,63,51,0.28)] md:p-6">
@@ -97,26 +77,6 @@ export function EastlaneTariffsSection({ content }: EastlaneTariffsSectionProps)
             {content.formulaTitle}
           </p>
           <p className="break-words font-medium leading-snug text-cyan-50 md:text-[15px]">{content.formulaText}</p>
-        </div>
-
-        <div className="relative mt-4 rounded-xl border border-[color:var(--color-brand-forest-light)]/35 bg-[linear-gradient(160deg,#07120f_0%,#0b221c_60%,#102f27_100%)] p-3.5 text-cyan-50 md:p-4">
-          <h3 className="text-base font-semibold uppercase tracking-[0.08em] text-cyan-200">{content.importantTitle}</h3>
-          <ul className="mt-3 space-y-2.5 text-sm md:space-y-3">
-            {importantItems.map((item, index) => {
-              const isReturnPolicy = index === importantItems.length - 1
-              const Icon = isReturnPolicy ? AlertTriangle : IMPORTANT_ITEM_ICONS[index] ?? CircleDot
-              return (
-                <li key={`${item}-${index}`} className="flex items-start gap-2.5">
-                  <Icon
-                    className={`mt-0.5 h-4 w-4 shrink-0 ${isReturnPolicy ? "text-amber-200" : "text-cyan-300"}`}
-                  />
-                  <span className={`break-words leading-snug md:leading-relaxed ${isReturnPolicy ? "text-amber-50" : ""}`}>
-                    {item}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
         </div>
       </div>
     </section>
